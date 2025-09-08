@@ -7,8 +7,8 @@ import net.minecraft.client.gui.DrawContext;
 import net.minecraft.client.option.Perspective;
 import net.minecraft.client.render.RenderTickCounter;
 import net.minecraft.entity.EquipmentSlot;
-import net.minecraft.item.ElytraItem;
 import net.minecraft.item.ItemStack;
+import net.minecraft.item.Items;
 
 public class ElytraPitchHelperClient implements ClientModInitializer {
 	// In Minecraft, pitch increases when looking down and is negative when looking up.
@@ -30,11 +30,14 @@ public class ElytraPitchHelperClient implements ClientModInitializer {
 		if (mc == null || mc.player == null || mc.options.getPerspective() != Perspective.FIRST_PERSON || mc.currentScreen != null) {
 			return;
 		}
-		if (!(mc.player.isFallFlying() && hasUsableElytra(mc))) {
+		if (!hasUsableElytra(mc)) {
 			return;
 		}
-		float tickDelta = tickCounter.getTickDelta(false);
-		float pitch = mc.player.getPitch(tickDelta);
+		// Only show while actually gliding with Elytra
+		if (mc.player.getGlidingTicks() <= 0) {
+			return;
+		}
+		float pitch = mc.player.getPitch();
 		int w = context.getScaledWindowWidth();
 		int h = context.getScaledWindowHeight();
 		int cx = w / 2;
@@ -62,7 +65,12 @@ public class ElytraPitchHelperClient implements ClientModInitializer {
 
 	private boolean hasUsableElytra(MinecraftClient mc) {
 		ItemStack chest = mc.player.getEquippedStack(EquipmentSlot.CHEST);
-		return chest.getItem() instanceof ElytraItem && ElytraItem.isUsable(chest);
+		// Elytra detection and usability without depending on ElytraItem class location
+		if (!chest.isOf(Items.ELYTRA)) {
+			return false;
+		}
+		// Equivalent to ElytraItem.isUsable(stack): allow if not about to break
+		return chest.getDamage() < chest.getMaxDamage() - 1;
 	}
 
 	private float computeAlpha(float diff) {

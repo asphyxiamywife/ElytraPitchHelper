@@ -1,6 +1,6 @@
 {
 	"schemaVersion": 1,
-	"id": "modid",
+	"id": "elytrapitchhelper",
 	"version": "${version}",
 	"name": "Elytra Pitch Helper",
 	"description": "Shows ±40° pitch guides near crosshair while Elytra flying.",
@@ -11,11 +11,11 @@
 		"sources": "https://github.com/asphyxiamywife/ElytraPitchHelper"
 	},
 	"license": "CC0-1.0",
-	"icon": "assets/modid/icon.png",
+	"icon": "assets/elytrapitchhelper/icon.png",
 	"environment": "*",
 	"entrypoints": {
-		"main": [
-			"com.example.ExampleMod"
+		"client": [
+			"com.asphyxiamywife.elytrapitchhelper.ElytraPitchHelperClient"
 		]
 	},
 	"depends": {
