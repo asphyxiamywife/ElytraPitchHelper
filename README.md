@@ -1,9 +1,1 @@
-# Fabric Example Mod
-
-## Setup
-
-For setup instructions please see the [fabric documentation page](https://docs.fabricmc.net/develop/getting-started/setting-up-a-development-environment) that relates to the IDE that you are using.
-
-## License
-
-This template is available under the CC0 license. Feel free to learn from it and incorporate it in your own projects.
+While gliding, it shows subtle guide lines at +40° and –40° pitch, so you don’t have to rely on the cluttered F3 debug screen. This makes it easier to stay focused on smooth and efficient flight. The indicators appear only when you’re wearing Elytra and are close to these pitch angles, keeping your screen clean the rest of the time.
