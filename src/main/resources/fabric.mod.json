@@ -8,6 +8,8 @@
 		"asphyxiamywife"
 	],
 	"contact": {
+		"homepage": "https://modrinth.com/mod/elytrapitchhelper",
+		"issues": "https://github.com/MisterPeModder/ShulkerBoxTooltip/issues",
 		"sources": "https://github.com/asphyxiamywife/ElytraPitchHelper"
 	},
 	"license": "CC0-1.0",
