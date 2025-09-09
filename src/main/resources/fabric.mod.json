@@ -16,6 +16,9 @@
 	"entrypoints": {
 		"client": [
 			"com.asphyxiamywife.elytrapitchhelper.ElytraPitchHelperClient"
+		],
+		"modmenu": [
+			"com.asphyxiamywife.elytrapitchhelper.ModMenuIntegration"
 		]
 	},
 	"depends": {
