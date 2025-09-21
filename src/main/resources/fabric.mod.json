@@ -9,7 +9,7 @@
 	],
 	"contact": {
 		"homepage": "https://modrinth.com/mod/elytrapitchhelper",
-		"issues": "https://github.com/MisterPeModder/ShulkerBoxTooltip/issues",
+		"issues": "https://github.com/asphyxiamywife/ElytraPitchHelper/issues",
 		"sources": "https://github.com/asphyxiamywife/ElytraPitchHelper"
 	},
 	"license": "CC0-1.0",
@@ -18,14 +18,11 @@
 	"entrypoints": {
 		"client": [
 			"com.asphyxiamywife.elytrapitchhelper.ElytraPitchHelperClient"
-		],
-		"modmenu": [
-			"com.asphyxiamywife.elytrapitchhelper.ModMenuIntegration"
 		]
 	},
 	"depends": {
 		"fabricloader": ">=0.16.14",
-		"minecraft": "~1.21.8",
+		"minecraft": ">=1.21",
 		"java": ">=21",
 		"fabric-api": "*"
 	}
