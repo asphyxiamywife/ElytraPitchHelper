@@ -2,13 +2,13 @@ package com.asphyxiamywife.elytrapitchhelper;
 
 import net.fabricmc.api.ClientModInitializer;
 import net.fabricmc.fabric.api.client.rendering.v1.HudRenderCallback;
-import net.minecraft.client.MinecraftClient;
-import net.minecraft.client.gui.DrawContext;
-import net.minecraft.client.option.Perspective;
-import net.minecraft.client.render.RenderTickCounter;
-import net.minecraft.entity.EquipmentSlot;
-import net.minecraft.item.ItemStack;
-import net.minecraft.item.Items;
+import net.minecraft.client.Minecraft;
+import net.minecraft.client.DeltaTracker;
+import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.client.CameraType;
+import net.minecraft.world.entity.EquipmentSlot;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.Items;
 
 public class ElytraPitchHelperClient implements ClientModInitializer {
 	private static Config CONFIG;
@@ -27,20 +27,20 @@ public class ElytraPitchHelperClient implements ClientModInitializer {
 		return CONFIG;
 	}
 
-	private void onHudRender(DrawContext context, RenderTickCounter tickCounter) {
-		MinecraftClient mc = MinecraftClient.getInstance();
-		if (mc == null || mc.player == null || mc.options.getPerspective() != Perspective.FIRST_PERSON || mc.currentScreen != null) {
+	private void onHudRender(GuiGraphics context, DeltaTracker tickCounter) {
+		Minecraft mc = Minecraft.getInstance();
+		if (mc == null || mc.player == null || mc.options.getCameraType() != CameraType.FIRST_PERSON || mc.screen != null) {
 			return;
 		}
 		if (!hasUsableElytra(mc)) {
 			return;
 		}
-		if (mc.player.getGlidingTicks() <= 0) {
+		if (mc.player.getFallFlyingTicks() <= 0) {
 			return;
 		}
-		float pitch = mc.player.getPitch();
-		int w = context.getScaledWindowWidth();
-		int h = context.getScaledWindowHeight();
+		float pitch = mc.player.getXRot();
+		int w = context.guiWidth();
+		int h = context.guiHeight();
 		int cx = w / 2;
 		int cy = h / 2;
 
@@ -61,12 +61,12 @@ public class ElytraPitchHelperClient implements ClientModInitializer {
 		}
 	}
 
-	private boolean hasUsableElytra(MinecraftClient mc) {
-		ItemStack chest = mc.player.getEquippedStack(EquipmentSlot.CHEST);
-		if (!chest.isOf(Items.ELYTRA)) {
+	private boolean hasUsableElytra(Minecraft mc) {
+		ItemStack chest = mc.player.getItemBySlot(EquipmentSlot.CHEST);
+		if (!chest.is(Items.ELYTRA)) {
 			return false;
 		}
-		return chest.getDamage() < chest.getMaxDamage() - 1;
+		return chest.getDamageValue() < chest.getMaxDamage() - 1;
 	}
 
 	private float computeAlpha(float diff) {
@@ -78,7 +78,7 @@ public class ElytraPitchHelperClient implements ClientModInitializer {
 		return Math.max(min, Math.min(max, value));
 	}
 
-	private void drawGuideLine(DrawContext ctx, int cx, int guideY, float alpha) {
+	private void drawGuideLine(GuiGraphics ctx, int cx, int guideY, float alpha) {
 		int length = 26;
 		int thickness = 2;
 		int x = cx - length / 2;
