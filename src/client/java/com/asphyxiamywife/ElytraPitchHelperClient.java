@@ -29,7 +29,8 @@ public class ElytraPitchHelperClient implements ClientModInitializer {
 
 	private void onHudRender(DrawContext context, RenderTickCounter tickCounter) {
 		MinecraftClient mc = MinecraftClient.getInstance();
-		if (mc == null || mc.player == null || mc.options.getPerspective() != Perspective.FIRST_PERSON || mc.currentScreen != null) {
+		if (mc == null || mc.player == null || mc.options.getPerspective() != Perspective.FIRST_PERSON
+				|| mc.currentScreen != null) {
 			return;
 		}
 		if (!hasUsableElytra(mc)) {
@@ -47,8 +48,10 @@ public class ElytraPitchHelperClient implements ClientModInitializer {
 		float diffUp = CONFIG.targetUpMinecraft - pitch;
 		float diffDown = CONFIG.targetDownMinecraft - pitch;
 
-		int offsetUp = (int) Math.round(clamp(diffUp * CONFIG.offsetPerDegree, -CONFIG.maxOffsetPixels, CONFIG.maxOffsetPixels));
-		int offsetDown = (int) Math.round(clamp(diffDown * CONFIG.offsetPerDegree, -CONFIG.maxOffsetPixels, CONFIG.maxOffsetPixels));
+		int offsetUp = (int) Math
+				.round(clamp(diffUp * CONFIG.offsetPerDegree, -CONFIG.maxOffsetPixels, CONFIG.maxOffsetPixels));
+		int offsetDown = (int) Math
+				.round(clamp(diffDown * CONFIG.offsetPerDegree, -CONFIG.maxOffsetPixels, CONFIG.maxOffsetPixels));
 
 		float alphaUp = computeAlpha(Math.abs(CONFIG.targetUpMinecraft - pitch));
 		float alphaDown = computeAlpha(Math.abs(CONFIG.targetDownMinecraft - pitch));
@@ -63,14 +66,21 @@ public class ElytraPitchHelperClient implements ClientModInitializer {
 
 	private boolean hasUsableElytra(MinecraftClient mc) {
 		ItemStack chest = mc.player.getEquippedStack(EquipmentSlot.CHEST);
-		if (!chest.isOf(Items.ELYTRA)) {
-			return false;
+		if (chest.isOf(Items.ELYTRA)) {
+			return chest.getDamage() < chest.getMaxDamage() - 1;
 		}
-		return chest.getDamage() < chest.getMaxDamage() - 1;
+		if (net.fabricmc.loader.api.FabricLoader.getInstance().isModLoaded("trinkets")) {
+			ItemStack trinketElytra = TrinketsIntegration.getElytraItem(mc.player);
+			if (!trinketElytra.isEmpty()) {
+				return trinketElytra.getDamage() < trinketElytra.getMaxDamage() - 1;
+			}
+		}
+		return false;
 	}
 
 	private float computeAlpha(float diff) {
-		if (diff > CONFIG.toleranceDegrees) return 0.0f;
+		if (diff > CONFIG.toleranceDegrees)
+			return 0.0f;
 		return 0.15f + 0.85f * (1.0f - (diff / CONFIG.toleranceDegrees));
 	}
 
@@ -82,7 +92,7 @@ public class ElytraPitchHelperClient implements ClientModInitializer {
 		int length = 26;
 		int thickness = 2;
 		int x = cx - length / 2;
-		int a = (int)(alpha * 255.0f) & 0xFF;
+		int a = (int) (alpha * 255.0f) & 0xFF;
 		int color = (a << 24) | (CONFIG.lineColorRgb & 0x00FFFFFF);
 		ctx.fill(x, guideY, x + length, guideY + thickness, color);
 		// small center tick
