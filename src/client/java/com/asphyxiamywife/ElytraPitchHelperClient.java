@@ -36,6 +36,13 @@ public class ElytraPitchHelperClient implements ClientModInitializer {
 		if (!hasUsableElytra(mc)) {
 			return;
 		}
+		if (CONFIG.showOnlyWithFirework) {
+			boolean hasFirework = mc.player.getMainHandStack().isOf(Items.FIREWORK_ROCKET)
+					|| mc.player.getOffHandStack().isOf(Items.FIREWORK_ROCKET);
+			if (!hasFirework) {
+				return;
+			}
+		}
 		if (mc.player.getGlidingTicks() <= 0) {
 			return;
 		}
