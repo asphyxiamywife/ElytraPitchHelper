@@ -19,6 +19,7 @@ public final class Config {
     public float offsetPerDegree = 2.0f;
     public int lineColorRgb = 0xFFFFFF;
     public int centerTickColorRgb = 0xFF80FF;
+    public boolean showOnlyWithFirework = false;
 
     private static final String FILE_NAME = "elytra-pitch-helper.json";
     private static final Gson GSON = new GsonBuilder().setPrettyPrinting().create();
@@ -32,7 +33,11 @@ public final class Config {
         if (Files.exists(path)) {
             try (BufferedReader reader = Files.newBufferedReader(path, StandardCharsets.UTF_8)) {
                 Config cfg = GSON.fromJson(reader, Config.class);
-                return cfg != null ? cfg : createAndSaveDefault();
+                if (cfg != null) {
+                    cfg.save();
+                    return cfg;
+                }
+                return createAndSaveDefault();
             } catch (IOException e) {
                 return createAndSaveDefault();
             }
@@ -58,5 +63,3 @@ public final class Config {
         }
     }
 }
-
-

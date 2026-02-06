@@ -17,6 +17,40 @@ public class ElytraPitchHelperClient implements ClientModInitializer {
 	public void onInitializeClient() {
 		CONFIG = Config.load();
 		HudRenderCallback.EVENT.register(this::onHudRender);
+		startConfigWatcher();
+	}
+
+	private void startConfigWatcher() {
+		Thread t = new Thread(() -> {
+			try (java.nio.file.WatchService watchService = java.nio.file.FileSystems.getDefault().newWatchService()) {
+				java.nio.file.Path configPath = Config.getConfigPath();
+				java.nio.file.Path parent = configPath.getParent();
+				if (parent == null)
+					return;
+
+				if (!java.nio.file.Files.exists(parent)) {
+					java.nio.file.Files.createDirectories(parent);
+				}
+
+				parent.register(watchService, java.nio.file.StandardWatchEventKinds.ENTRY_MODIFY);
+
+				while (true) {
+					java.nio.file.WatchKey key = watchService.take();
+					for (java.nio.file.WatchEvent<?> event : key.pollEvents()) {
+						if (event.context() instanceof java.nio.file.Path && ((java.nio.file.Path) event.context())
+								.getFileName().equals(configPath.getFileName())) {
+							reloadConfig();
+						}
+					}
+					if (!key.reset()) {
+						break;
+					}
+				}
+			} catch (java.io.IOException | InterruptedException e) {
+			}
+		}, "ElytraPitchHelper Config Watcher");
+		t.setDaemon(true);
+		t.start();
 	}
 
 	public static void reloadConfig() {
@@ -35,6 +69,13 @@ public class ElytraPitchHelperClient implements ClientModInitializer {
 		}
 		if (!hasUsableElytra(mc)) {
 			return;
+		}
+		if (CONFIG.showOnlyWithFirework) {
+			boolean hasFirework = mc.player.getMainHandStack().isOf(Items.FIREWORK_ROCKET)
+					|| mc.player.getOffHandStack().isOf(Items.FIREWORK_ROCKET);
+			if (!hasFirework) {
+				return;
+			}
 		}
 		if (mc.player.getGlidingTicks() <= 0) {
 			return;
