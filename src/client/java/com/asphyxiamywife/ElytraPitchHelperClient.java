@@ -36,7 +36,8 @@ public class ElytraPitchHelperClient implements ClientModInitializer {
 				CONFIG.enabled = !CONFIG.enabled;
 				CONFIG.save();
 				if (client.player != null) {
-					Text message = Text.literal("Elytra Pitch Helper: " + (CONFIG.enabled ? "ON" : "OFF"));
+					Text message = Text
+							.translatable("message.elytrapitchhelper.toggle." + (CONFIG.enabled ? "on" : "off"));
 					client.player.sendMessage(message, true);
 				}
 			}
