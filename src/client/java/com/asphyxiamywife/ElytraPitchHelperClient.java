@@ -14,6 +14,9 @@ import net.minecraft.entity.EquipmentSlot;
 import net.minecraft.item.ItemStack;
 import net.minecraft.item.Items;
 import net.minecraft.text.Text;
+import net.minecraft.util.Identifier;
+import net.minecraft.item.Items;
+import net.minecraft.text.Text;
 import org.lwjgl.glfw.GLFW;
 
 public class ElytraPitchHelperClient implements ClientModInitializer {
@@ -25,14 +28,16 @@ public class ElytraPitchHelperClient implements ClientModInitializer {
 		CONFIG = Config.load();
 		HudRenderCallback.EVENT.register(this::onHudRender);
 
+		KeyBinding.Category category = KeyBinding.Category.create(Identifier.of("elytrapitchhelper", "keys"));
+
 		toggleKeyBinding = KeyBindingHelper.registerKeyBinding(new KeyBinding(
 				"key.elytrapitchhelper.toggle",
 				InputUtil.Type.KEYSYM,
 				GLFW.GLFW_KEY_UNKNOWN,
-				"category.elytrapitchhelper.keys"));
+				category));
 
 		ClientTickEvents.END_CLIENT_TICK.register(client -> {
-			while (toggleKeyBinding.wasPressed()) {
+			while (toggleKeyBinding != null && toggleKeyBinding.wasPressed()) {
 				CONFIG.enabled = !CONFIG.enabled;
 				CONFIG.save();
 				if (client.player != null) {
