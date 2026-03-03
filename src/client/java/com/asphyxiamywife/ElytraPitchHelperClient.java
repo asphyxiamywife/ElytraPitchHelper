@@ -1,22 +1,47 @@
 package com.asphyxiamywife.elytrapitchhelper;
 
 import net.fabricmc.api.ClientModInitializer;
+import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
+import net.fabricmc.fabric.api.client.keybinding.v1.KeyBindingHelper;
 import net.fabricmc.fabric.api.client.rendering.v1.HudRenderCallback;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.gui.DrawContext;
+import net.minecraft.client.option.KeyBinding;
 import net.minecraft.client.option.Perspective;
 import net.minecraft.client.render.RenderTickCounter;
+import net.minecraft.client.util.InputUtil;
 import net.minecraft.entity.EquipmentSlot;
 import net.minecraft.item.ItemStack;
 import net.minecraft.item.Items;
+import net.minecraft.text.Text;
+import org.lwjgl.glfw.GLFW;
 
 public class ElytraPitchHelperClient implements ClientModInitializer {
 	private static Config CONFIG;
+	private static KeyBinding toggleKeyBinding;
 
 	@Override
 	public void onInitializeClient() {
 		CONFIG = Config.load();
 		HudRenderCallback.EVENT.register(this::onHudRender);
+
+		toggleKeyBinding = KeyBindingHelper.registerKeyBinding(new KeyBinding(
+				"key.elytrapitchhelper.toggle",
+				InputUtil.Type.KEYSYM,
+				GLFW.GLFW_KEY_UNKNOWN,
+				"category.elytrapitchhelper.keys"));
+
+		ClientTickEvents.END_CLIENT_TICK.register(client -> {
+			while (toggleKeyBinding.wasPressed()) {
+				CONFIG.enabled = !CONFIG.enabled;
+				CONFIG.save();
+				if (client.player != null) {
+					Text message = Text.literal("Elytra Pitch Helper: " + (CONFIG.enabled ? "ON" : "OFF"));
+					client.player.sendMessage(message, true);
+				}
+			}
+		});
+
 		startConfigWatcher();
 	}
 
@@ -62,6 +87,9 @@ public class ElytraPitchHelperClient implements ClientModInitializer {
 	}
 
 	private void onHudRender(DrawContext context, RenderTickCounter tickCounter) {
+		if (!CONFIG.enabled) {
+			return;
+		}
 		MinecraftClient mc = MinecraftClient.getInstance();
 		if (mc == null || mc.player == null || mc.options.getPerspective() != Perspective.FIRST_PERSON
 				|| mc.currentScreen != null) {

@@ -12,6 +12,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 
 public final class Config {
+    public boolean enabled = true;
     public float targetUpMinecraft = -40.0f;
     public float targetDownMinecraft = 40.0f;
     public float toleranceDegrees = 6.0f;
