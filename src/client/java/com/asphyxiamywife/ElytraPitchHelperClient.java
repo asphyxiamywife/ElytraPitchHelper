@@ -17,6 +17,40 @@ public class ElytraPitchHelperClient implements ClientModInitializer {
 	public void onInitializeClient() {
 		CONFIG = Config.load();
 		HudRenderCallback.EVENT.register(this::onHudRender);
+		startConfigWatcher();
+	}
+
+	private void startConfigWatcher() {
+		Thread t = new Thread(() -> {
+			try (java.nio.file.WatchService watchService = java.nio.file.FileSystems.getDefault().newWatchService()) {
+				java.nio.file.Path configPath = Config.getConfigPath();
+				java.nio.file.Path parent = configPath.getParent();
+				if (parent == null)
+					return;
+
+				if (!java.nio.file.Files.exists(parent)) {
+					java.nio.file.Files.createDirectories(parent);
+				}
+
+				parent.register(watchService, java.nio.file.StandardWatchEventKinds.ENTRY_MODIFY);
+
+				while (true) {
+					java.nio.file.WatchKey key = watchService.take();
+					for (java.nio.file.WatchEvent<?> event : key.pollEvents()) {
+						if (event.context() instanceof java.nio.file.Path && ((java.nio.file.Path) event.context())
+								.getFileName().equals(configPath.getFileName())) {
+							reloadConfig();
+						}
+					}
+					if (!key.reset()) {
+						break;
+					}
+				}
+			} catch (java.io.IOException | InterruptedException e) {
+			}
+		}, "ElytraPitchHelper Config Watcher");
+		t.setDaemon(true);
+		t.start();
 	}
 
 	public static void reloadConfig() {
@@ -29,11 +63,19 @@ public class ElytraPitchHelperClient implements ClientModInitializer {
 
 	private void onHudRender(GuiGraphics context, DeltaTracker tickCounter) {
 		Minecraft mc = Minecraft.getInstance();
-		if (mc == null || mc.player == null || mc.options.getCameraType() != CameraType.FIRST_PERSON || mc.screen != null) {
+		if (mc == null || mc.player == null || mc.options.getCameraType() != CameraType.FIRST_PERSON
+				|| mc.screen != null) {
 			return;
 		}
 		if (!hasUsableElytra(mc)) {
 			return;
+		}
+		if (CONFIG.showOnlyWithFirework) {
+			boolean hasFirework = mc.player.getMainHandItem().is(Items.FIREWORK_ROCKET)
+					|| mc.player.getOffhandItem().is(Items.FIREWORK_ROCKET);
+			if (!hasFirework) {
+				return;
+			}
 		}
 		if (mc.player.getFallFlyingTicks() <= 0) {
 			return;
@@ -47,8 +89,10 @@ public class ElytraPitchHelperClient implements ClientModInitializer {
 		float diffUp = CONFIG.targetUpMinecraft - pitch;
 		float diffDown = CONFIG.targetDownMinecraft - pitch;
 
-		int offsetUp = (int) Math.round(clamp(diffUp * CONFIG.offsetPerDegree, -CONFIG.maxOffsetPixels, CONFIG.maxOffsetPixels));
-		int offsetDown = (int) Math.round(clamp(diffDown * CONFIG.offsetPerDegree, -CONFIG.maxOffsetPixels, CONFIG.maxOffsetPixels));
+		int offsetUp = (int) Math
+				.round(clamp(diffUp * CONFIG.offsetPerDegree, -CONFIG.maxOffsetPixels, CONFIG.maxOffsetPixels));
+		int offsetDown = (int) Math
+				.round(clamp(diffDown * CONFIG.offsetPerDegree, -CONFIG.maxOffsetPixels, CONFIG.maxOffsetPixels));
 
 		float alphaUp = computeAlpha(Math.abs(CONFIG.targetUpMinecraft - pitch));
 		float alphaDown = computeAlpha(Math.abs(CONFIG.targetDownMinecraft - pitch));
@@ -70,7 +114,8 @@ public class ElytraPitchHelperClient implements ClientModInitializer {
 	}
 
 	private float computeAlpha(float diff) {
-		if (diff > CONFIG.toleranceDegrees) return 0.0f;
+		if (diff > CONFIG.toleranceDegrees)
+			return 0.0f;
 		return 0.15f + 0.85f * (1.0f - (diff / CONFIG.toleranceDegrees));
 	}
 
@@ -82,7 +127,7 @@ public class ElytraPitchHelperClient implements ClientModInitializer {
 		int length = 26;
 		int thickness = 2;
 		int x = cx - length / 2;
-		int a = (int)(alpha * 255.0f) & 0xFF;
+		int a = (int) (alpha * 255.0f) & 0xFF;
 		int color = (a << 24) | (CONFIG.lineColorRgb & 0x00FFFFFF);
 		ctx.fill(x, guideY, x + length, guideY + thickness, color);
 		// small center tick
