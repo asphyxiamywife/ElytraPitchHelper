@@ -1,22 +1,50 @@
 package com.asphyxiamywife.elytrapitchhelper;
 
 import net.fabricmc.api.ClientModInitializer;
+import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
+import net.fabricmc.fabric.api.client.keymapping.v1.KeyMappingHelper;
 import net.fabricmc.fabric.api.client.rendering.v1.HudRenderCallback;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.DeltaTracker;
+import net.minecraft.client.KeyMapping;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.CameraType;
+import net.minecraft.network.chat.Component;
 import net.minecraft.world.entity.EquipmentSlot;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
 
+import org.lwjgl.glfw.GLFW;
+
+import com.mojang.blaze3d.platform.InputConstants;
+
 public class ElytraPitchHelperClient implements ClientModInitializer {
 	private static Config CONFIG;
+	private static KeyMapping toggleKeyBinding;
 
 	@Override
 	public void onInitializeClient() {
 		CONFIG = Config.load();
 		HudRenderCallback.EVENT.register(this::onHudRender);
+
+		toggleKeyBinding = KeyMappingHelper.registerKeyMapping(new KeyMapping(
+				"key.elytrapitchhelper.toggle",
+				InputConstants.Type.KEYSYM,
+				GLFW.GLFW_KEY_UNKNOWN,
+				KeyMapping.Category.MISC));
+
+		ClientTickEvents.END_CLIENT_TICK.register(client -> {
+			while (toggleKeyBinding.consumeClick()) {
+				CONFIG.enabled = !CONFIG.enabled;
+				CONFIG.save();
+				// if (client.player != null) {
+				//	Component message = Component
+				//	        .translatable("message.elytrapitchhelper.toggle." + (CONFIG.enabled ? "on" : "off"));
+				//	client.player.displayClientMessage(message, true);
+				// }
+			}
+		});
+
 		startConfigWatcher();
 	}
 
@@ -62,6 +90,9 @@ public class ElytraPitchHelperClient implements ClientModInitializer {
 	}
 
 	private void onHudRender(GuiGraphics context, DeltaTracker tickCounter) {
+		if (!CONFIG.enabled) {
+			return;
+		}
 		Minecraft mc = Minecraft.getInstance();
 		if (mc == null || mc.player == null || mc.options.getCameraType() != CameraType.FIRST_PERSON
 				|| mc.screen != null) {
@@ -72,7 +103,7 @@ public class ElytraPitchHelperClient implements ClientModInitializer {
 		}
 		if (CONFIG.showOnlyWithFirework) {
 			boolean hasFirework = mc.player.getMainHandItem().is(Items.FIREWORK_ROCKET)
-					|| mc.player.getOffhandItem().is(Items.FIREWORK_ROCKET);
+					|| mc.player.getItemInHand(net.minecraft.world.InteractionHand.OFF_HAND).is(Items.FIREWORK_ROCKET);
 			if (!hasFirework) {
 				return;
 			}
