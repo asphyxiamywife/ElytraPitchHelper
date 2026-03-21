@@ -3,14 +3,16 @@ package com.asphyxiamywife.elytrapitchhelper;
 import net.fabricmc.api.ClientModInitializer;
 import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
 import net.fabricmc.fabric.api.client.keymapping.v1.KeyMappingHelper;
-import net.fabricmc.fabric.api.client.rendering.v1.HudRenderCallback;
+import net.fabricmc.fabric.api.client.rendering.v1.hud.HudElementRegistry;
+import net.fabricmc.fabric.api.client.rendering.v1.hud.VanillaHudElements;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.DeltaTracker;
 import net.minecraft.client.KeyMapping;
-import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.client.CameraType;
-import net.minecraft.network.chat.Component;
 import net.minecraft.world.entity.EquipmentSlot;
+import net.minecraft.resources.Identifier;
+import net.minecraft.network.chat.Component;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
 
@@ -25,7 +27,8 @@ public class ElytraPitchHelperClient implements ClientModInitializer {
 	@Override
 	public void onInitializeClient() {
 		CONFIG = Config.load();
-		HudRenderCallback.EVENT.register(this::onHudRender);
+		HudElementRegistry.attachElementAfter(VanillaHudElements.CROSSHAIR,
+				Identifier.fromNamespaceAndPath("elytrapitchhelper", "pitch_guides"), this::renderPitchGuides);
 
 		toggleKeyBinding = KeyMappingHelper.registerKeyMapping(new KeyMapping(
 				"key.elytrapitchhelper.toggle",
@@ -37,11 +40,11 @@ public class ElytraPitchHelperClient implements ClientModInitializer {
 			while (toggleKeyBinding.consumeClick()) {
 				CONFIG.enabled = !CONFIG.enabled;
 				CONFIG.save();
-				// if (client.player != null) {
-				//	Component message = Component
-				//	        .translatable("message.elytrapitchhelper.toggle." + (CONFIG.enabled ? "on" : "off"));
-				//	client.player.displayClientMessage(message, true);
-				// }
+				if (client.player != null) {
+					Component message = Component
+					        .translatable("message.elytrapitchhelper.toggle." + (CONFIG.enabled ? "on" : "off"));
+					client.player.sendOverlayMessage(message);
+				}
 			}
 		});
 
@@ -89,7 +92,7 @@ public class ElytraPitchHelperClient implements ClientModInitializer {
 		return CONFIG;
 	}
 
-	private void onHudRender(GuiGraphics context, DeltaTracker tickCounter) {
+	private void renderPitchGuides(GuiGraphicsExtractor context, DeltaTracker tickCounter) {
 		if (!CONFIG.enabled) {
 			return;
 		}
@@ -154,7 +157,7 @@ public class ElytraPitchHelperClient implements ClientModInitializer {
 		return Math.max(min, Math.min(max, value));
 	}
 
-	private void drawGuideLine(GuiGraphics ctx, int cx, int guideY, float alpha) {
+	private void drawGuideLine(GuiGraphicsExtractor ctx, int cx, int guideY, float alpha) {
 		int length = 26;
 		int thickness = 2;
 		int x = cx - length / 2;
