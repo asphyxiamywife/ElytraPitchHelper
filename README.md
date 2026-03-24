@@ -1,4 +1,4 @@
-[this modrinth page](https://modrinth.com/mod/elytrapitchhelper) (modrinth[dot]com/mod/elytrapitchhelper) and [github actions](https://github.com/asphyxiamywife/ElytraPitchHelper/actions) are the only officially maintained places to download
+[this modrinth page](https://modrinth.com/mod/elytrapitchhelper) (modrinth[dot]com/mod/elytrapitchhelper) and [github releases](https://github.com/asphyxiamywife/ElytraPitchHelper/releases) are the only officially maintained places to download
 
 While gliding, it shows subtle guide lines at +40° and –40° pitch, so you don’t have to rely on the cluttered F3 debug screen. This makes it easier to stay focused on smooth and efficient flight. The indicators appear only when you’re wearing Elytra and are close to these pitch angles, keeping your screen clean the rest of the time.
 
@@ -107,3 +107,4 @@ Default: false
 
 Change when: You fly with fireworks and want minimal setup.
 </details>
+
