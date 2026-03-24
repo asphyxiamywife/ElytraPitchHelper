@@ -8,7 +8,6 @@ import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.gui.DrawContext;
 import net.minecraft.client.option.KeyBinding;
 import net.minecraft.client.option.Perspective;
-import net.minecraft.client.render.RenderTickCounter;
 import net.minecraft.client.util.InputUtil;
 import net.minecraft.entity.EquipmentSlot;
 import net.minecraft.item.ItemStack;
@@ -28,13 +27,11 @@ public class ElytraPitchHelperClient implements ClientModInitializer {
 		CONFIG = Config.load();
 		HudRenderCallback.EVENT.register(this::onHudRender);
 
-		KeyBinding.Category category = KeyBinding.Category.create(Identifier.of("elytrapitchhelper", "keys"));
-
 		toggleKeyBinding = KeyBindingHelper.registerKeyBinding(new KeyBinding(
 				"key.elytrapitchhelper.toggle",
 				InputUtil.Type.KEYSYM,
 				GLFW.GLFW_KEY_UNKNOWN,
-				category));
+				"key.categories.elytrapitchhelper"));
 
 		ClientTickEvents.END_CLIENT_TICK.register(client -> {
 			while (toggleKeyBinding != null && toggleKeyBinding.wasPressed()) {
@@ -92,7 +89,7 @@ public class ElytraPitchHelperClient implements ClientModInitializer {
 		return CONFIG;
 	}
 
-	private void onHudRender(DrawContext context, RenderTickCounter tickCounter) {
+	private void onHudRender(DrawContext context, float tickDelta) {
 		if (!CONFIG.enabled) {
 			return;
 		}
@@ -111,7 +108,7 @@ public class ElytraPitchHelperClient implements ClientModInitializer {
 				return;
 			}
 		}
-		if (mc.player.getGlidingTicks() <= 0) {
+		if (!mc.player.isFallFlying()) {
 			return;
 		}
 		float pitch = mc.player.getPitch();
