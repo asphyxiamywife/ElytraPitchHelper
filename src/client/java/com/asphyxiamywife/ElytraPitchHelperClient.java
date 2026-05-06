@@ -98,7 +98,7 @@ public class ElytraPitchHelperClient implements ClientModInitializer {
 		}
 		Minecraft mc = Minecraft.getInstance();
 		if (mc == null || mc.player == null || mc.options.getCameraType() != CameraType.FIRST_PERSON
-				|| mc.screen != null) {
+				|| mc.gui.screen() != null) {
 			return;
 		}
 		if (!hasUsableElytra(mc)) {
