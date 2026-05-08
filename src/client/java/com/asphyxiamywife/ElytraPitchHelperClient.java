@@ -15,6 +15,7 @@ import net.minecraft.resources.Identifier;
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
+import net.fabricmc.loader.api.FabricLoader;
 
 import org.lwjgl.glfw.GLFW;
 
@@ -141,10 +142,16 @@ public class ElytraPitchHelperClient implements ClientModInitializer {
 
 	private boolean hasUsableElytra(Minecraft mc) {
 		ItemStack chest = mc.player.getItemBySlot(EquipmentSlot.CHEST);
-		if (!chest.is(Items.ELYTRA)) {
-			return false;
+		if (chest.is(Items.ELYTRA)) {
+			return chest.getDamageValue() < chest.getMaxDamage() - 1;
 		}
-		return chest.getDamageValue() < chest.getMaxDamage() - 1;
+		if (FabricLoader.getInstance().isModLoaded("trinkets_updated")) {
+			ItemStack trinketElytra = TrinketsIntegration.getElytraItem(mc.player);
+			if (!trinketElytra.isEmpty()) {
+				return trinketElytra.getDamageValue() < trinketElytra.getMaxDamage() - 1;
+			}
+		}
+		return false;
 	}
 
 	private float computeAlpha(float diff) {
