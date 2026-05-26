@@ -1,7 +1,7 @@
 package com.asphyxiamywife.elytrapitchhelper.screen.widget;
 
-import net.minecraft.client.gui.GuiGraphicsExtractor;
-import net.minecraft.client.gui.GuiGraphicsExtractor.HoveredTextEffects;
+import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.client.gui.GuiGraphics.HoveredTextEffects;
 import net.minecraft.client.gui.components.Button;
 import net.minecraft.network.chat.Component;
 
@@ -22,9 +22,9 @@ public final class ColorEditButton extends Button {
     }
 
     @Override
-    protected void extractContents(GuiGraphicsExtractor context, int mouseX, int mouseY, float delta) {
-        extractDefaultSprite(context);
-        extractDefaultLabel(context.textRendererForWidget(this, HoveredTextEffects.NONE));
+    protected void renderContents(GuiGraphics context, int mouseX, int mouseY, float delta) {
+        renderDefaultSprite(context);
+        renderDefaultLabel(context.textRendererForWidget(this, HoveredTextEffects.NONE));
 
         int swatchSize = 10;
         int swatchX = getX() + 6;
@@ -43,7 +43,7 @@ public final class ColorEditButton extends Button {
                 }
             }
         }
-        context.outline(swatchX - 1, swatchY - 1, swatchSize + 2, swatchSize + 2, 0xFF000000);
-        context.outline(swatchX, swatchY, swatchSize, swatchSize, 0xFFFFFFFF);
+        context.renderOutline(swatchX - 1, swatchY - 1, swatchSize + 2, swatchSize + 2, 0xFF000000);
+        context.renderOutline(swatchX, swatchY, swatchSize, swatchSize, 0xFFFFFFFF);
     }
 }

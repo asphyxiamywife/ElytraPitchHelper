@@ -1,10 +1,11 @@
 package com.asphyxiamywife.elytrapitchhelper.screen;
 
+import com.asphyxiamywife.elytrapitchhelper.ModConstants;
 import com.asphyxiamywife.elytrapitchhelper.config.PrideFlag;
 import com.asphyxiamywife.elytrapitchhelper.screen.widget.NumberSlider;
 import com.asphyxiamywife.elytrapitchhelper.util.MathUtil;
 import com.mojang.blaze3d.platform.NativeImage;
-import net.minecraft.client.gui.GuiGraphicsExtractor;
+import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.components.AbstractWidget;
 import net.minecraft.client.gui.components.Button;
 import net.minecraft.client.gui.components.EditBox;
@@ -14,6 +15,7 @@ import net.minecraft.client.input.MouseButtonEvent;
 import net.minecraft.client.renderer.texture.DynamicTexture;
 import net.minecraft.network.chat.CommonComponents;
 import net.minecraft.network.chat.Component;
+import net.minecraft.resources.Identifier;
 import org.lwjgl.glfw.GLFW;
 
 import java.util.function.IntConsumer;
@@ -24,6 +26,9 @@ final class ColorEditorScreen extends Screen {
     private static final int RGB_SLIDER_GAP = 4;
     private static final int INVALID_HEX_TEXT_COLOR = 0xFFFF5555;
     private static final double TWO_PI = Math.PI * 2.0;
+    private static final Identifier PALETTE_TEXTURE_ID = ModConstants.id("color_editor/palette");
+    private static final Identifier HUE_MARKER_TEXTURE_ID = ModConstants.id("color_editor/hue_marker");
+    private static final Identifier SHADE_MARKER_TEXTURE_ID = ModConstants.id("color_editor/shade_marker");
 
     private final Screen lastScreen;
     private final IntConsumer onChange;
@@ -128,20 +133,20 @@ final class ColorEditorScreen extends Screen {
     }
 
     @Override
-    public void extractRenderState(GuiGraphicsExtractor context, int mouseX, int mouseY, float delta) {
+    public void render(GuiGraphics context, int mouseX, int mouseY, float delta) {
         ColorEditorLayout layout = colorEditorLayout();
         int previewWidth = layout.controlWidth;
         int previewX = layout.controlX;
         int previewY = layout.previewY;
         int previewHeight = previewHeight();
 
-        context.centeredText(font, title, width / 2, 15, 0xFFFFFF);
+        context.drawCenteredString(font, title, width / 2, 15, 0xFFFFFF);
         renderPalette(context, layout);
         renderLinePreview(context, previewX, previewY, previewWidth, previewHeight);
 
-        context.text(font, Component.translatable("option.elytrapitchhelper.color.hex"), previewX, layout.hexY + 6,
+        context.drawString(font, Component.translatable("option.elytrapitchhelper.color.hex"), previewX, layout.hexY + 6,
                 0xFFFFFF);
-        super.extractRenderState(context, mouseX, mouseY, delta);
+        super.render(context, mouseX, mouseY, delta);
     }
 
     @Override
@@ -390,8 +395,8 @@ final class ColorEditorScreen extends Screen {
         return Math.max(24, previewLineWidth + cueExtraHeight);
     }
 
-    private void renderLinePreview(GuiGraphicsExtractor context, int x, int y, int width, int height) {
-        context.outline(x, y, width, height, 0x99FFFFFF);
+    private void renderLinePreview(GuiGraphics context, int x, int y, int width, int height) {
+        context.renderOutline(x, y, width, height, 0x99FFFFFF);
 
         int lineLength = Math.min(previewLineLength, Math.max(1, width - 8));
         int centerX = x + width / 2;
@@ -411,14 +416,14 @@ final class ColorEditorScreen extends Screen {
         drawPreviewRect(context, lineX, lineY, lineLength, previewLineWidth, 1.0f, rgb, prideColors);
     }
 
-    private static void drawCenteredPreviewRect(GuiGraphicsExtractor context, int centerX, int centerY, int width,
+    private static void drawCenteredPreviewRect(GuiGraphics context, int centerX, int centerY, int width,
             int height, float alpha, int rgb, int[] prideColors) {
         int x = centerX - width / 2;
         int y = centerY - height / 2;
         drawPreviewRect(context, x, y, width, height, alpha, rgb, prideColors);
     }
 
-    private static void drawPreviewRect(GuiGraphicsExtractor context, int x, int y, int width, int height, float alpha,
+    private static void drawPreviewRect(GuiGraphics context, int x, int y, int width, int height, float alpha,
             int rgb, int[] prideColors) {
         if (prideColors == null || prideColors.length == 0) {
             context.fill(x, y, x + width, y + height, MathUtil.argb(alpha, rgb));
@@ -437,12 +442,12 @@ final class ColorEditorScreen extends Screen {
         }
     }
 
-    private void renderPalette(GuiGraphicsExtractor context, ColorEditorLayout layout) {
+    private void renderPalette(GuiGraphics context, ColorEditorLayout layout) {
         ensurePaletteTexture(layout);
         if (paletteTexture != null) {
-            context.blit(paletteTexture.getTextureView(), paletteTexture.getSampler(), layout.paletteX,
-                    layout.paletteY, layout.paletteX + layout.paletteSize, layout.paletteY + layout.paletteSize,
-                    0.0f, 1.0f, 0.0f, 1.0f);
+            context.blit(PALETTE_TEXTURE_ID, layout.paletteX, layout.paletteY,
+                    layout.paletteX + layout.paletteSize, layout.paletteY + layout.paletteSize, 0.0f, 1.0f, 0.0f,
+                    1.0f);
         }
 
         if (prideEnabled) {
@@ -476,6 +481,7 @@ final class ColorEditorScreen extends Screen {
             NativeImage image = new NativeImage(layout.paletteSize, layout.paletteSize, true);
             writePalettePixels(image, layout);
             paletteTexture = new DynamicTexture(() -> "elytrapitchhelper color palette", image);
+            minecraft.getTextureManager().register(PALETTE_TEXTURE_ID, paletteTexture);
             paletteTextureSize = layout.paletteSize;
         } else {
             writePalettePixels(paletteTexture.getPixels(), layout);
@@ -510,7 +516,7 @@ final class ColorEditorScreen extends Screen {
 
     private void closePaletteTexture() {
         if (paletteTexture != null) {
-            paletteTexture.close();
+            releaseTexture(PALETTE_TEXTURE_ID, paletteTexture);
             paletteTexture = null;
             paletteTextureSize = 0;
             paletteTextureHue = -1.0;
@@ -518,11 +524,12 @@ final class ColorEditorScreen extends Screen {
         closeMarkerTextures();
     }
 
-    private void drawMarker(GuiGraphicsExtractor context, int centerX, int centerY, int radius, boolean hueMarker) {
+    private void drawMarker(GuiGraphics context, int centerX, int centerY, int radius, boolean hueMarker) {
         DynamicTexture markerTexture = markerTexture(radius, hueMarker);
         int halfSize = markerTexture.getPixels().getWidth() / 2;
-        context.blit(markerTexture.getTextureView(), markerTexture.getSampler(), centerX - halfSize,
-                centerY - halfSize, centerX + halfSize + 1, centerY + halfSize + 1, 0.0f, 1.0f, 0.0f, 1.0f);
+        Identifier textureId = hueMarker ? HUE_MARKER_TEXTURE_ID : SHADE_MARKER_TEXTURE_ID;
+        context.blit(textureId, centerX - halfSize, centerY - halfSize, centerX + halfSize + 1,
+                centerY + halfSize + 1, 0.0f, 1.0f, 0.0f, 1.0f);
     }
 
     private DynamicTexture markerTexture(int radius, boolean hueMarker) {
@@ -533,11 +540,12 @@ final class ColorEditorScreen extends Screen {
         }
 
         if (texture != null) {
-            texture.close();
+            releaseTexture(hueMarker ? HUE_MARKER_TEXTURE_ID : SHADE_MARKER_TEXTURE_ID, texture);
         }
 
         NativeImage image = markerImage(radius);
         texture = new DynamicTexture(() -> "elytrapitchhelper color marker", image);
+        minecraft.getTextureManager().register(hueMarker ? HUE_MARKER_TEXTURE_ID : SHADE_MARKER_TEXTURE_ID, texture);
         if (hueMarker) {
             hueMarkerTexture = texture;
             hueMarkerRadius = radius;
@@ -576,14 +584,22 @@ final class ColorEditorScreen extends Screen {
 
     private void closeMarkerTextures() {
         if (hueMarkerTexture != null) {
-            hueMarkerTexture.close();
+            releaseTexture(HUE_MARKER_TEXTURE_ID, hueMarkerTexture);
             hueMarkerTexture = null;
             hueMarkerRadius = 0;
         }
         if (shadeMarkerTexture != null) {
-            shadeMarkerTexture.close();
+            releaseTexture(SHADE_MARKER_TEXTURE_ID, shadeMarkerTexture);
             shadeMarkerTexture = null;
             shadeMarkerRadius = 0;
+        }
+    }
+
+    private void releaseTexture(Identifier textureId, DynamicTexture texture) {
+        if (minecraft != null) {
+            minecraft.getTextureManager().release(textureId);
+        } else {
+            texture.close();
         }
     }
 

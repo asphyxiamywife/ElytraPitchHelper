@@ -3,10 +3,10 @@ package com.asphyxiamywife.elytrapitchhelper.hud;
 import com.asphyxiamywife.elytrapitchhelper.config.Config;
 import com.asphyxiamywife.elytrapitchhelper.config.PrideFlag;
 import com.asphyxiamywife.elytrapitchhelper.util.MathUtil;
-import net.minecraft.client.gui.GuiGraphicsExtractor;
+import net.minecraft.client.gui.GuiGraphics;
 
 final class GuideLineRenderer {
-    void draw(GuiGraphicsExtractor ctx, int cx, int guideY, float alpha, AmplitudeCue amplitudeCue, Config config) {
+    void draw(GuiGraphics ctx, int cx, int guideY, float alpha, AmplitudeCue amplitudeCue, Config config) {
         int length = config.lineLengthPixels;
         int thickness = config.lineWidthPixels;
         int x = cx - length / 2;
@@ -37,20 +37,20 @@ final class GuideLineRenderer {
                 colorMix);
     }
 
-    private static void drawCenteredRect(GuiGraphicsExtractor ctx, int cx, int cy, int width, int height, int color) {
+    private static void drawCenteredRect(GuiGraphics ctx, int cx, int cy, int width, int height, int color) {
         int x = cx - width / 2;
         int y = cy - height / 2;
         ctx.fill(x, y, x + width, y + height, color);
     }
 
-    private static void drawCenteredCueRect(GuiGraphicsExtractor ctx, int cx, int cy, int width, int height,
+    private static void drawCenteredCueRect(GuiGraphics ctx, int cx, int cy, int width, int height,
             float alpha, int cueRgb, int[] cuePrideColors) {
         int x = cx - width / 2;
         int y = cy - height / 2;
         drawStripedRect(ctx, x, y, width, height, alpha, cueRgb, cuePrideColors);
     }
 
-    private static void drawStripedRect(GuiGraphicsExtractor ctx, int x, int y, int width, int height, float alpha,
+    private static void drawStripedRect(GuiGraphics ctx, int x, int y, int width, int height, float alpha,
             int fallbackRgb, int[] prideColors) {
         if (prideColors == null || prideColors.length == 0) {
             ctx.fill(x, y, x + width, y + height, MathUtil.argb(alpha, fallbackRgb));
@@ -69,7 +69,7 @@ final class GuideLineRenderer {
         }
     }
 
-    private static void drawBlendedRect(GuiGraphicsExtractor ctx, int x, int y, int width, int height, float alpha,
+    private static void drawBlendedRect(GuiGraphics ctx, int x, int y, int width, int height, float alpha,
             int baseRgb, int[] basePrideColors, int cueRgb, int[] cuePrideColors, float mix) {
         mix = MathUtil.clamp(mix, 0.0f, 1.0f);
         if (mix <= 0.0001f) {

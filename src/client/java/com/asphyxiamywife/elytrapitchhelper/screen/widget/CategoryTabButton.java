@@ -1,7 +1,7 @@
 package com.asphyxiamywife.elytrapitchhelper.screen.widget;
 
-import net.minecraft.client.gui.GuiGraphicsExtractor;
-import net.minecraft.client.gui.GuiGraphicsExtractor.HoveredTextEffects;
+import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.client.gui.GuiGraphics.HoveredTextEffects;
 import net.minecraft.client.gui.components.Button;
 import net.minecraft.network.chat.Component;
 
@@ -24,21 +24,21 @@ public final class CategoryTabButton extends Button {
     }
 
     @Override
-    protected void extractContents(GuiGraphicsExtractor context, int mouseX, int mouseY, float delta) {
+    protected void renderContents(GuiGraphics context, int mouseX, int mouseY, float delta) {
         boolean focused = isFocused();
         boolean highlighted = isHoveredOrFocused();
         int fillColor = fillColor(focused, highlighted);
         int outlineColor = outlineColor(highlighted);
         context.fill(getX(), getY(), getX() + getWidth(), getY() + getHeight(), fillColor);
-        context.outline(getX(), getY(), getWidth(), getHeight(), outlineColor);
+        context.renderOutline(getX(), getY(), getWidth(), getHeight(), outlineColor);
         if (focused) {
-            context.outline(getX() + 1, getY() + 1, getWidth() - 2, getHeight() - 2, FOCUS_OUTLINE_COLOR);
+            context.renderOutline(getX() + 1, getY() + 1, getWidth() - 2, getHeight() - 2, FOCUS_OUTLINE_COLOR);
         }
         if (selected) {
             context.fill(getX() + 2, getY() + getHeight() - 3, getX() + getWidth() - 2,
                     getY() + getHeight() - 1, 0xFFFFFFFF);
         }
-        extractDefaultLabel(context.textRendererForWidget(this, HoveredTextEffects.NONE));
+        renderDefaultLabel(context.textRendererForWidget(this, HoveredTextEffects.NONE));
     }
 
     private int fillColor(boolean focused, boolean highlighted) {

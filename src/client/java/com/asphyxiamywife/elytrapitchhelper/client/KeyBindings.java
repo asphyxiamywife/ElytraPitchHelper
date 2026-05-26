@@ -4,7 +4,7 @@ import com.asphyxiamywife.elytrapitchhelper.config.Config;
 import com.asphyxiamywife.elytrapitchhelper.screen.ConfigScreen;
 import com.asphyxiamywife.elytrapitchhelper.ModConstants;
 import com.mojang.blaze3d.platform.InputConstants;
-import net.fabricmc.fabric.api.client.keymapping.v1.KeyMappingHelper;
+import net.fabricmc.fabric.api.client.keybinding.v1.KeyBindingHelper;
 import net.minecraft.client.KeyMapping;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.screens.Screen;
@@ -24,13 +24,13 @@ public final class KeyBindings {
     }
 
     public static KeyBindings register() {
-        KeyMapping toggleGuides = KeyMappingHelper.registerKeyMapping(new KeyMapping(
+        KeyMapping toggleGuides = KeyBindingHelper.registerKeyBinding(new KeyMapping(
                 "key.elytrapitchhelper.toggle",
                 InputConstants.Type.KEYSYM,
                 GLFW.GLFW_KEY_UNKNOWN,
                 KEY_CATEGORY));
 
-        KeyMapping openConfig = KeyMappingHelper.registerKeyMapping(new KeyMapping(
+        KeyMapping openConfig = KeyBindingHelper.registerKeyBinding(new KeyMapping(
                 "key.elytrapitchhelper.open_config",
                 InputConstants.Type.KEYSYM,
                 GLFW.GLFW_KEY_UNKNOWN,
@@ -55,7 +55,7 @@ public final class KeyBindings {
         if (client.player != null) {
             Component message = Component
                     .translatable("message.elytrapitchhelper.toggle." + (config.enabled ? "on" : "off"));
-            client.player.sendOverlayMessage(message);
+            client.player.displayClientMessage(message, true);
         }
     }
 

@@ -8,7 +8,7 @@ import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
 
 public final class ElytraDetector {
-    private final boolean trinketsLoaded = FabricLoader.getInstance().isModLoaded("trinkets_updated");
+    private final boolean trinketsLoaded = FabricLoader.getInstance().isModLoaded("trinkets");
 
     public boolean hasUsableElytra(Player player) {
         ItemStack chest = player.getItemBySlot(EquipmentSlot.CHEST);

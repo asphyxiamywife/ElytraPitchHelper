@@ -11,7 +11,7 @@ import com.asphyxiamywife.elytrapitchhelper.screen.widget.CategoryTabButton;
 import com.asphyxiamywife.elytrapitchhelper.screen.widget.ColorEditButton;
 import com.asphyxiamywife.elytrapitchhelper.screen.widget.NumberSlider;
 import net.minecraft.client.gui.Font;
-import net.minecraft.client.gui.GuiGraphicsExtractor;
+import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.components.AbstractScrollArea;
 import net.minecraft.client.gui.components.AbstractSliderButton;
 import net.minecraft.client.gui.components.AbstractWidget;
@@ -447,13 +447,13 @@ public final class ConfigScreen extends Screen {
     }
 
     @Override
-    public void extractRenderState(GuiGraphicsExtractor context, int mouseX, int mouseY, float delta) {
+    public void render(GuiGraphics context, int mouseX, int mouseY, float delta) {
         Component renderedTitle = editingProfile
                 ? Component.translatable("screen.elytrapitchhelper.profile_editor.title",
                         config.profileName(editingProfileIndex))
                 : Component.translatable("screen.elytrapitchhelper.profiles.title");
-        context.centeredText(font, renderedTitle, width / 2, 15, 0xFFFFFF);
-        super.extractRenderState(context, mouseX, mouseY, delta);
+        context.drawCenteredString(font, renderedTitle, width / 2, 15, 0xFFFFFF);
+        super.render(context, mouseX, mouseY, delta);
     }
 
     @Override
@@ -913,7 +913,7 @@ public final class ConfigScreen extends Screen {
 
     private void sendOverlay(Component message) {
         if (minecraft != null && minecraft.player != null) {
-            minecraft.player.sendOverlayMessage(message);
+            minecraft.player.displayClientMessage(message, true);
         }
     }
 
@@ -995,20 +995,24 @@ public final class ConfigScreen extends Screen {
 
         private ProfileScrollBar(int x, int y, int width, int height, int profileCount, int visibleRows,
                 int scrollRow) {
-            super(x, y, width, height, Component.translatable("screen.elytrapitchhelper.profile.scrollbar"),
-                    AbstractScrollArea.defaultSettings(ROW_HEIGHT));
+            super(x, y, width, height, Component.translatable("screen.elytrapitchhelper.profile.scrollbar"));
             this.profileCount = profileCount;
             setScrollRow(scrollRow);
         }
 
         @Override
-        protected void extractWidgetRenderState(GuiGraphicsExtractor context, int mouseX, int mouseY, float delta) {
-            extractScrollbar(context, mouseX, mouseY);
+        protected void renderWidget(GuiGraphics context, int mouseX, int mouseY, float delta) {
+            renderScrollbar(context, mouseX, mouseY);
         }
 
         @Override
         protected int contentHeight() {
             return profileCount * ROW_HEIGHT;
+        }
+
+        @Override
+        protected double scrollRate() {
+            return ROW_HEIGHT;
         }
 
         @Override
@@ -1041,14 +1045,14 @@ public final class ConfigScreen extends Screen {
         }
 
         @Override
-        public void extractWidgetRenderState(GuiGraphicsExtractor context, int mouseX, int mouseY, float delta) {
+        public void renderWidget(GuiGraphics context, int mouseX, int mouseY, float delta) {
             String value = getValue();
             int innerWidth = getInnerWidth();
             int textWidth = textRenderer.width(value);
             boolean hovered = isHovered();
             if (!hovered || isFocused() || value.isEmpty() || textWidth <= innerWidth) {
                 marqueeHovered = false;
-                super.extractWidgetRenderState(context, mouseX, mouseY, delta);
+                super.renderWidget(context, mouseX, mouseY, delta);
                 return;
             }
 
@@ -1056,7 +1060,7 @@ public final class ConfigScreen extends Screen {
             marqueeHovered = true;
             super.setTextColor(TRANSPARENT_TEXT_COLOR);
             try {
-                super.extractWidgetRenderState(context, mouseX, mouseY, delta);
+                super.renderWidget(context, mouseX, mouseY, delta);
             } finally {
                 super.setTextColor(textColor);
             }
@@ -1066,7 +1070,7 @@ public final class ConfigScreen extends Screen {
             int overflow = textWidth - innerWidth;
             int offset = marqueeOffset(overflow);
             context.enableScissor(textX, getY(), textX + innerWidth, getY() + getHeight());
-            context.text(textRenderer, value, textX - offset, textY, textColor, true);
+            context.drawString(textRenderer, value, textX - offset, textY, textColor, true);
             context.disableScissor();
         }
 

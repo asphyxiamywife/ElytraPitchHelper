@@ -7,7 +7,7 @@ import com.asphyxiamywife.elytrapitchhelper.util.MathUtil;
 import net.minecraft.client.CameraType;
 import net.minecraft.client.DeltaTracker;
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.gui.GuiGraphicsExtractor;
+import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.Items;
@@ -23,7 +23,7 @@ public final class PitchGuideHud {
         this.elytraDetector = elytraDetector;
     }
 
-    public void render(GuiGraphicsExtractor context, DeltaTracker tickCounter) {
+    public void render(GuiGraphics context, DeltaTracker tickCounter) {
         Config config = ClientConfigStore.get();
         if (!config.enabled) {
             amplitudeTracker.reset();
@@ -46,7 +46,7 @@ public final class PitchGuideHud {
         renderGuides(context, config, minecraft.player);
     }
 
-    private void renderGuides(GuiGraphicsExtractor context, Config config, Player player) {
+    private void renderGuides(GuiGraphics context, Config config, Player player) {
         float pitch = player.getXRot();
         int centerX = context.guiWidth() / 2;
         int centerY = context.guiHeight() / 2;
@@ -59,7 +59,7 @@ public final class PitchGuideHud {
                 AmplitudeLeg.DESCENDING, amplitudeCue);
     }
 
-    private void renderLineForTarget(GuiGraphicsExtractor context, Config config, int centerX, int centerY, float pitch,
+    private void renderLineForTarget(GuiGraphics context, Config config, int centerX, int centerY, float pitch,
             float targetPitch, AmplitudeLeg leg, AmplitudeCue amplitudeCue) {
         float diff = targetPitch - pitch;
         int offset = (int) Math.round(MathUtil.clamp(diff * config.offsetPerDegree, -config.maxOffsetPixels,
