@@ -3,7 +3,7 @@
 	"id": "elytrapitchhelper",
 	"version": "${version}",
 	"name": "Elytra Pitch Helper",
-	"description": "Shows ±40° pitch guides near crosshair while Elytra flying.",
+	"description": "Shows pitch and relative height guides for energy-sustaining Elytra flight.",
 	"authors": [
 		"asphyxiamywife"
 	],
@@ -18,6 +18,9 @@
 	"entrypoints": {
 		"client": [
 			"com.asphyxiamywife.elytrapitchhelper.ElytraPitchHelperClient"
+		],
+		"modmenu": [
+			"com.asphyxiamywife.elytrapitchhelper.integration.ModMenuIntegration"
 		]
 	},
 	"depends": {
@@ -25,5 +28,8 @@
 		"minecraft": ">=26.1-pre.1",
 		"java": ">=25",
 		"fabric-api": "*"
+	},
+	"suggests": {
+		"modmenu": "*"
 	}
 }

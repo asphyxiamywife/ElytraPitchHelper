@@ -45,6 +45,9 @@ dependencies {
 	// Trinkets Integration
 	compileOnly("eu.pb4:trinkets:${trinkets_version}")
 
+	// Optional Mod Menu integration
+	compileOnly("com.terraformersmc:modmenu:${modmenu_version}")
+
 }
 
 processResources {
