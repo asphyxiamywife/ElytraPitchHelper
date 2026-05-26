@@ -35,7 +35,7 @@ public final class PitchGuideHud {
             amplitudeTracker.reset();
             return;
         }
-        if (minecraft.screen != null) {
+        if (minecraft.gui.screen() != null) {
             return;
         }
         if (!canRenderGuides(minecraft, config)) {

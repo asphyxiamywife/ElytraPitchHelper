@@ -148,7 +148,7 @@ final class ColorEditorScreen extends Screen {
     public void onClose() {
         applyColorChange();
         applyPrideChange();
-        minecraft.setScreen(lastScreen);
+        minecraft.gui.setScreen(lastScreen);
     }
 
     @Override

@@ -468,7 +468,7 @@ public final class ConfigScreen extends Screen {
             requestCancelProfileDeletes();
         } else {
             flushSaveIfPending();
-            minecraft.setScreen(lastScreen);
+            minecraft.gui.setScreen(lastScreen);
         }
     }
 
@@ -582,9 +582,9 @@ public final class ConfigScreen extends Screen {
         }
 
         deleteModeConfirmationOpen = true;
-        minecraft.setScreen(new ConfirmScreen(confirmed -> {
+        minecraft.gui.setScreen(new ConfirmScreen(confirmed -> {
             deleteModeConfirmationOpen = false;
-            minecraft.setScreen(this);
+            minecraft.gui.setScreen(this);
             if (confirmed) {
                 commitProfileDeletes();
             } else {
@@ -603,9 +603,9 @@ public final class ConfigScreen extends Screen {
         }
 
         deleteModeConfirmationOpen = true;
-        minecraft.setScreen(new ConfirmScreen(confirmed -> {
+        minecraft.gui.setScreen(new ConfirmScreen(confirmed -> {
             deleteModeConfirmationOpen = false;
-            minecraft.setScreen(this);
+            minecraft.gui.setScreen(this);
             if (confirmed) {
                 cancelProfileDeletes();
             }
@@ -842,15 +842,15 @@ public final class ConfigScreen extends Screen {
                 : ScreenText.colorComponent(color);
         int[] stripeColors = prideEnabled ? prideFlag.colors() : null;
         return new ColorEditButton(CommonComponents.optionNameValue(label, value), color, stripeColors,
-                button -> minecraft.setScreen(new ColorEditorScreen(this, label, color, prideEnabled,
+                button -> minecraft.gui.setScreen(new ColorEditorScreen(this, label, color, prideEnabled,
                         prideFlag.id(), previewLineLength.getAsInt(), previewLineWidth.getAsInt(), previewCuePeak,
                         onChange, onPrideChange, this::flushSaveIfPending)));
     }
 
     private void openResetProfileConfirmation() {
         String profileName = config.profileName(editingProfileIndex);
-        minecraft.setScreen(new ConfirmScreen(confirmed -> {
-            minecraft.setScreen(this);
+        minecraft.gui.setScreen(new ConfirmScreen(confirmed -> {
+            minecraft.gui.setScreen(this);
             if (confirmed) {
                 config.resetProfileToDefaults(editingProfileIndex);
                 save();

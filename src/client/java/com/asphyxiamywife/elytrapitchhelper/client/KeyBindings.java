@@ -60,9 +60,9 @@ public final class KeyBindings {
     }
 
     private static void openConfig(Minecraft client) {
-        Screen currentScreen = client.screen;
+        Screen currentScreen = client.gui.screen();
         if (!(currentScreen instanceof ConfigScreen)) {
-            client.setScreen(new ConfigScreen(currentScreen));
+            client.gui.setScreen(new ConfigScreen(currentScreen));
         }
     }
 }
