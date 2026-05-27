@@ -54,9 +54,9 @@ final class ProfileMetadataStore {
 
     ProfileMetadata profile(String fileName) {
         sanitize();
-        String normalized = Config.normalizeProfileFileName(fileName);
+        String normalized = ProfileFileNames.normalize(fileName);
         if (normalized == null) {
-            normalized = "profile" + Config.JSON_SUFFIX;
+            normalized = "profile" + ProfileFileNames.JSON_SUFFIX;
         }
         for (ProfileMetadata profile : profiles) {
             if (normalized.equalsIgnoreCase(profile.fileName)) {
@@ -87,7 +87,7 @@ final class ProfileMetadataStore {
             if (profile == null) {
                 return true;
             }
-            String normalized = Config.normalizeProfileFileName(profile.fileName);
+            String normalized = ProfileFileNames.normalize(profile.fileName);
             if (normalized == null) {
                 return true;
             }

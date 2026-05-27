@@ -48,6 +48,11 @@ dependencies {
 	// Optional Mod Menu integration
 	compileOnly("com.terraformersmc:modmenu:${modmenu_version}")
 
+	testImplementation sourceSets.client.output
+	testImplementation platform("org.junit:junit-bom:5.10.3")
+	testImplementation "org.junit.jupiter:junit-jupiter"
+	testRuntimeOnly "org.junit.platform:junit-platform-launcher"
+
 }
 
 processResources {
@@ -62,6 +67,30 @@ processResources {
 tasks.withType(JavaCompile).configureEach {
 	it.options.release = 25
 }
+
+tasks.withType(Test).configureEach {
+	useJUnitPlatform()
+}
+
+test {
+	useJUnitPlatform {
+		excludeTags "smoke"
+	}
+}
+
+tasks.register("smokeTest", Test) {
+	description = "Runs headless smoke tests for packaged entrypoints and client config startup."
+	group = "verification"
+
+	testClassesDirs = sourceSets.test.output.classesDirs
+	classpath = sourceSets.test.runtimeClasspath
+	useJUnitPlatform {
+		includeTags "smoke"
+	}
+	shouldRunAfter test
+}
+
+check.dependsOn smokeTest
 
 java {
 	// Loom will automatically attach sourcesJar to a RemapSourcesJar task and to the "build" task

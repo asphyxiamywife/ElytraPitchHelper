@@ -3,12 +3,12 @@ package com.asphyxiamywife.elytrapitchhelper.config;
 import static com.asphyxiamywife.elytrapitchhelper.config.Config.AMPLITUDE_TRIGGER_EITHER;
 import static com.asphyxiamywife.elytrapitchhelper.config.Config.AMPLITUDE_TRIGGER_HEIGHT;
 import static com.asphyxiamywife.elytrapitchhelper.config.Config.CURRENT_VERSION;
-import static com.asphyxiamywife.elytrapitchhelper.config.Config.clamp;
-import static com.asphyxiamywife.elytrapitchhelper.config.Config.repair;
-import static com.asphyxiamywife.elytrapitchhelper.config.Config.repairColor;
-import static com.asphyxiamywife.elytrapitchhelper.config.Config.repairFloat;
-import static com.asphyxiamywife.elytrapitchhelper.config.Config.repairInt;
-import static com.asphyxiamywife.elytrapitchhelper.config.Config.repairPrideFlag;
+import static com.asphyxiamywife.elytrapitchhelper.config.ConfigRepair.clamp;
+import static com.asphyxiamywife.elytrapitchhelper.config.ConfigRepair.repair;
+import static com.asphyxiamywife.elytrapitchhelper.config.ConfigRepair.repairColor;
+import static com.asphyxiamywife.elytrapitchhelper.config.ConfigRepair.repairFloat;
+import static com.asphyxiamywife.elytrapitchhelper.config.ConfigRepair.repairInt;
+import static com.asphyxiamywife.elytrapitchhelper.config.ConfigRepair.repairPrideFlag;
 
 public final class Profile {
     public int version = CURRENT_VERSION;

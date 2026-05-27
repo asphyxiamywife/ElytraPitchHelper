@@ -15,6 +15,7 @@ import java.nio.file.WatchKey;
 import java.nio.file.WatchService;
 
 public final class ConfigWatcher {
+    private static final long RELOAD_DEBOUNCE_MILLIS = 250L;
     private static final Logger LOGGER = LoggerFactory.getLogger(ModConstants.MOD_ID);
 
     private ConfigWatcher() {
@@ -38,7 +39,8 @@ public final class ConfigWatcher {
             Files.createDirectories(configDirectory);
             Files.createDirectories(profileDirectory);
             registerDirectories(watchService, configDirectory, profileDirectory);
-            processEvents(watchService, configPath, configDirectory, profileDirectory);
+            processEvents(watchService, configPath, configDirectory, profileDirectory,
+                    new ConfigWatchDebouncer(RELOAD_DEBOUNCE_MILLIS));
         } catch (InterruptedException e) {
             Thread.currentThread().interrupt();
         } catch (IOException e) {
@@ -55,14 +57,18 @@ public final class ConfigWatcher {
     }
 
     private static void processEvents(WatchService watchService, Path configPath, Path configDirectory,
-            Path profileDirectory) throws InterruptedException {
+            Path profileDirectory, ConfigWatchDebouncer debouncer) throws InterruptedException {
         while (true) {
             WatchKey key = watchService.take();
             Path watchedDirectory = (Path) key.watchable();
+            boolean changed = false;
             for (WatchEvent<?> event : key.pollEvents()) {
                 if (changedConfigFile(event, watchedDirectory, configPath, configDirectory, profileDirectory)) {
-                    ClientConfigStore.reloadFromDiskIfIdle();
+                    changed = true;
                 }
+            }
+            if (changed && debouncer.shouldReload(System.currentTimeMillis())) {
+                ClientConfigStore.reloadFromDiskIfIdle();
             }
             if (!key.reset()) {
                 break;
@@ -70,7 +76,7 @@ public final class ConfigWatcher {
         }
     }
 
-    private static boolean changedConfigFile(WatchEvent<?> event, Path watchedDirectory, Path configPath,
+    static boolean changedConfigFile(WatchEvent<?> event, Path watchedDirectory, Path configPath,
             Path configDirectory, Path profileDirectory) {
         if (!(event.context() instanceof Path changedPath)) {
             return false;

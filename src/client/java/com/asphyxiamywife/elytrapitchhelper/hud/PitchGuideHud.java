@@ -10,6 +10,7 @@ import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
 
 public final class PitchGuideHud {
@@ -71,21 +72,17 @@ public final class PitchGuideHud {
     }
 
     private boolean canRenderGuides(Minecraft minecraft, Config config) {
-        if (!config.showInThirdPerson && minecraft.options.getCameraType() != CameraType.FIRST_PERSON) {
-            return false;
-        }
-        if (!elytraDetector.hasUsableElytra(minecraft.player)) {
-            return false;
-        }
-        if (config.showOnlyWithFirework && !hasFireworkRocket(minecraft.player)) {
-            return false;
-        }
-        return minecraft.player.getFallFlyingTicks() > 0;
+        return HudVisibility.canRender(config, minecraft.options.getCameraType() == CameraType.FIRST_PERSON,
+                elytraDetector.hasUsableElytra(minecraft.player), hasFireworkRocket(minecraft.player),
+                minecraft.player.getFallFlyingTicks());
     }
 
     private static boolean hasFireworkRocket(Player player) {
-        return player.getMainHandItem().is(Items.FIREWORK_ROCKET)
-                || player.getItemInHand(InteractionHand.OFF_HAND).is(Items.FIREWORK_ROCKET);
+        return hasFireworkRocket(player.getMainHandItem(), player.getItemInHand(InteractionHand.OFF_HAND));
+    }
+
+    static boolean hasFireworkRocket(ItemStack mainHand, ItemStack offHand) {
+        return mainHand.is(Items.FIREWORK_ROCKET) || offHand.is(Items.FIREWORK_ROCKET);
     }
 
     private static float computeAlpha(Config config, float diff) {
