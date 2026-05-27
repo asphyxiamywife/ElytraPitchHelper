@@ -1,26 +1,34 @@
 {
-  "version": 1,
+  "version": 2,
   "name": "Default",
-  "showOnlyWithFirework": false,
-  "showInThirdPerson": false,
-  "targetUpMinecraft": -40.0,
-  "targetDownMinecraft": 40.0,
-  "toleranceDegrees": 6.0,
-  "maxOffsetPixels": 42,
-  "offsetPerDegree": 2.0,
-  "lineLengthPixels": 26,
-  "lineWidthPixels": 2,
-  "lineColorRgb": 16777215,
-  "linePrideEnabled": false,
-  "linePrideFlag": "rainbow",
-  "amplitudeHelperEnabled": true,
-  "amplitudeTriggerMode": 1,
-  "amplitudeDownBlocks": 50,
-  "amplitudeUpBlocks": 50,
-  "amplitudeToleranceBlocks": 4,
-  "amplitudeDownVelocity": 2.0,
-  "amplitudeUpVelocity": 0.2,
-  "amplitudeCueColorRgb": 16711680,
-  "amplitudeCuePrideEnabled": false,
-  "amplitudeCuePrideFlag": "rainbow"
+  "visibility": {
+    "showOnlyWithFirework": false,
+    "showInThirdPerson": false
+  },
+  "pitch": {
+    "targetUpMinecraft": -40.0,
+    "targetDownMinecraft": 40.0,
+    "toleranceDegrees": 6.0,
+    "maxOffsetPixels": 42,
+    "offsetPerDegree": 2.0
+  },
+  "line": {
+    "lengthPixels": 26,
+    "widthPixels": 2,
+    "colorRgb": 16777215,
+    "prideEnabled": false,
+    "prideFlag": "rainbow"
+  },
+  "amplitude": {
+    "enabled": true,
+    "triggerMode": 1,
+    "downBlocks": 50,
+    "upBlocks": 50,
+    "toleranceBlocks": 4,
+    "downVelocity": 2.0,
+    "upVelocity": 0.2,
+    "cueColorRgb": 16711680,
+    "cuePrideEnabled": false,
+    "cuePrideFlag": "rainbow"
+  }
 }

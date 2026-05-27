@@ -35,20 +35,20 @@ final class LegacyConfigMigration {
             Profile migratedProfile = defaults.copy();
             migratedProfile.name = defaults.name == null || defaults.name.isBlank() ? "Default" : defaults.name;
             migratedProfile.fileName = ProfileDefaults.DEFAULT_PROFILE_FILE_NAME;
-            migratedProfile.showOnlyWithFirework = ConfigJsonReader.readOptionalBoolean(root, "showOnlyWithFirework",
-                    migratedProfile.showOnlyWithFirework, repairs);
-            migratedProfile.targetUpMinecraft = ConfigJsonReader.readLegacyFloat(root, "targetUpMinecraft",
-                    migratedProfile.targetUpMinecraft, -90.0f, 0.0f, repairs);
-            migratedProfile.targetDownMinecraft = ConfigJsonReader.readLegacyFloat(root, "targetDownMinecraft",
-                    migratedProfile.targetDownMinecraft, 0.0f, 90.0f, repairs);
-            migratedProfile.toleranceDegrees = ConfigJsonReader.readLegacyFloat(root, "toleranceDegrees",
-                    migratedProfile.toleranceDegrees, 1.0f, 45.0f, repairs);
-            migratedProfile.maxOffsetPixels = ConfigJsonReader.readLegacyInt(root, "maxOffsetPixels",
-                    migratedProfile.maxOffsetPixels, 0, 200, repairs);
-            migratedProfile.offsetPerDegree = ConfigJsonReader.readLegacyFloat(root, "offsetPerDegree",
-                    migratedProfile.offsetPerDegree, 0.25f, 10.0f, repairs);
-            migratedProfile.lineColorRgb = ConfigJsonReader.readLegacyColor(root, "lineColorRgb",
-                    migratedProfile.lineColorRgb, repairs);
+            migratedProfile.visibility.showOnlyWithFirework = ConfigJsonReader.readOptionalBoolean(root,
+                    "showOnlyWithFirework", migratedProfile.visibility.showOnlyWithFirework, repairs);
+            migratedProfile.pitch.targetUpMinecraft = ConfigJsonReader.readLegacyFloat(root, "targetUpMinecraft",
+                    migratedProfile.pitch.targetUpMinecraft, -90.0f, 0.0f, repairs);
+            migratedProfile.pitch.targetDownMinecraft = ConfigJsonReader.readLegacyFloat(root, "targetDownMinecraft",
+                    migratedProfile.pitch.targetDownMinecraft, 0.0f, 90.0f, repairs);
+            migratedProfile.pitch.toleranceDegrees = ConfigJsonReader.readLegacyFloat(root, "toleranceDegrees",
+                    migratedProfile.pitch.toleranceDegrees, 1.0f, 45.0f, repairs);
+            migratedProfile.pitch.maxOffsetPixels = ConfigJsonReader.readLegacyInt(root, "maxOffsetPixels",
+                    migratedProfile.pitch.maxOffsetPixels, 0, 200, repairs);
+            migratedProfile.pitch.offsetPerDegree = ConfigJsonReader.readLegacyFloat(root, "offsetPerDegree",
+                    migratedProfile.pitch.offsetPerDegree, 0.25f, 10.0f, repairs);
+            migratedProfile.line.colorRgb = ConfigJsonReader.readLegacyColor(root, "lineColorRgb",
+                    migratedProfile.line.colorRgb, repairs);
             migratedProfile.sanitize(repairs, defaults);
 
             Config cfg = new Config();

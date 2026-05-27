@@ -13,7 +13,7 @@ final class HudVisibilityTest {
 
         assertFalse(HudVisibility.canRender(config, false, true, true, 1));
 
-        config.showInThirdPerson = true;
+        config.visibility.showInThirdPerson = true;
         assertTrue(HudVisibility.canRender(config, false, true, true, 1));
     }
 
@@ -31,15 +31,15 @@ final class HudVisibilityTest {
 
         assertTrue(HudVisibility.canRender(config, true, true, false, 1));
 
-        config.showOnlyWithFirework = true;
+        config.visibility.showOnlyWithFirework = true;
         assertFalse(HudVisibility.canRender(config, true, true, false, 1));
         assertTrue(HudVisibility.canRender(config, true, true, true, 1));
     }
 
     private static Config config() {
         Config config = new Config();
-        config.showInThirdPerson = false;
-        config.showOnlyWithFirework = false;
+        config.visibility.showInThirdPerson = false;
+        config.visibility.showOnlyWithFirework = false;
         return config;
     }
 }

@@ -17,90 +17,144 @@ final class ProfileJsonTest {
 
         assertEquals("speed_run.json", profile.fileName);
         assertEquals("Speed Run", profile.name);
-        assertEquals(defaults.targetUpMinecraft, profile.targetUpMinecraft);
-        assertEquals(defaults.amplitudeDownVelocity, profile.amplitudeDownVelocity);
+        assertEquals(defaults.pitch.targetUpMinecraft, profile.pitch.targetUpMinecraft);
+        assertEquals(defaults.amplitude.downVelocity, profile.amplitude.downVelocity);
     }
 
     @Test
     void invalidFieldTypesFallBackToDefaults() {
         Profile defaults = defaults();
         JsonObject json = new JsonObject();
+        JsonObject visibility = new JsonObject();
+        JsonObject pitch = new JsonObject();
+        JsonObject line = new JsonObject();
         json.addProperty("name", "   ");
-        json.addProperty("showInThirdPerson", "yes");
-        json.addProperty("targetUpMinecraft", "fast");
-        json.addProperty("maxOffsetPixels", "42");
-        json.addProperty("linePrideFlag", "progress");
+        visibility.addProperty("showInThirdPerson", "yes");
+        pitch.addProperty("targetUpMinecraft", "fast");
+        pitch.addProperty("maxOffsetPixels", "42");
+        line.addProperty("prideFlag", "progress");
+        json.add("visibility", visibility);
+        json.add("pitch", pitch);
+        json.add("line", line);
 
         Profile profile = ProfileJson.parse(json, "custom.json", defaults, null);
 
         assertEquals(defaults.name, profile.name);
-        assertEquals(defaults.showInThirdPerson, profile.showInThirdPerson);
-        assertEquals(defaults.targetUpMinecraft, profile.targetUpMinecraft);
-        assertEquals(defaults.maxOffsetPixels, profile.maxOffsetPixels);
-        assertEquals("progress", profile.linePrideFlag);
+        assertEquals(defaults.visibility.showInThirdPerson, profile.visibility.showInThirdPerson);
+        assertEquals(defaults.pitch.targetUpMinecraft, profile.pitch.targetUpMinecraft);
+        assertEquals(defaults.pitch.maxOffsetPixels, profile.pitch.maxOffsetPixels);
+        assertEquals("progress", profile.line.prideFlag);
     }
 
     @Test
-    void populatedJsonOverridesDefaults() {
-        Profile profile = ProfileJson.parse(populatedJson(), "profiles/tuned", defaults(), null);
+    void populatedGroupedJsonOverridesDefaults() {
+        Profile profile = ProfileJson.parse(groupedJson(), "profiles/tuned", defaults(), null);
 
+        assertPopulatedProfile(profile);
+    }
+
+    @Test
+    void legacyFlatJsonOverridesDefaults() {
+        Profile profile = ProfileJson.parse(legacyFlatJson(), "profiles/tuned", defaults(), null);
+
+        assertPopulatedProfile(profile);
+    }
+
+    private static void assertPopulatedProfile(Profile profile) {
         assertEquals("tuned.json", profile.fileName);
         assertEquals("Tuned", profile.name);
-        assertTrue(profile.showOnlyWithFirework);
-        assertFalse(profile.showInThirdPerson);
-        assertEquals(-35.0f, profile.targetUpMinecraft);
-        assertEquals(45.0f, profile.targetDownMinecraft);
-        assertEquals(8.0f, profile.toleranceDegrees);
-        assertEquals(60, profile.maxOffsetPixels);
-        assertEquals(3.0f, profile.offsetPerDegree);
-        assertEquals(36, profile.lineLengthPixels);
-        assertEquals(3, profile.lineWidthPixels);
-        assertEquals(0x00AAFF, profile.lineColorRgb);
-        assertTrue(profile.linePrideEnabled);
-        assertEquals("trans", profile.linePrideFlag);
-        assertFalse(profile.amplitudeHelperEnabled);
-        assertEquals(Config.AMPLITUDE_TRIGGER_EITHER, profile.amplitudeTriggerMode);
-        assertEquals(70, profile.amplitudeDownBlocks);
-        assertEquals(55, profile.amplitudeUpBlocks);
-        assertEquals(6, profile.amplitudeToleranceBlocks);
-        assertEquals(2.4f, profile.amplitudeDownVelocity);
-        assertEquals(0.4f, profile.amplitudeUpVelocity);
-        assertEquals(0xFF3300, profile.amplitudeCueColorRgb);
-        assertTrue(profile.amplitudeCuePrideEnabled);
-        assertEquals("rainbow", profile.amplitudeCuePrideFlag);
+        assertTrue(profile.visibility.showOnlyWithFirework);
+        assertFalse(profile.visibility.showInThirdPerson);
+        assertEquals(-35.0f, profile.pitch.targetUpMinecraft);
+        assertEquals(45.0f, profile.pitch.targetDownMinecraft);
+        assertEquals(8.0f, profile.pitch.toleranceDegrees);
+        assertEquals(60, profile.pitch.maxOffsetPixels);
+        assertEquals(3.0f, profile.pitch.offsetPerDegree);
+        assertEquals(36, profile.line.lengthPixels);
+        assertEquals(3, profile.line.widthPixels);
+        assertEquals(0x00AAFF, profile.line.colorRgb);
+        assertTrue(profile.line.prideEnabled);
+        assertEquals("trans", profile.line.prideFlag);
+        assertFalse(profile.amplitude.enabled);
+        assertEquals(Config.AMPLITUDE_TRIGGER_EITHER, profile.amplitude.triggerMode);
+        assertEquals(70, profile.amplitude.downBlocks);
+        assertEquals(55, profile.amplitude.upBlocks);
+        assertEquals(6, profile.amplitude.toleranceBlocks);
+        assertEquals(2.4f, profile.amplitude.downVelocity);
+        assertEquals(0.4f, profile.amplitude.upVelocity);
+        assertEquals(0xFF3300, profile.amplitude.cueColorRgb);
+        assertTrue(profile.amplitude.cuePrideEnabled);
+        assertEquals("rainbow", profile.amplitude.cuePrideFlag);
     }
 
     private static Profile defaults() {
         Profile profile = new Profile();
         profile.name = "Default";
-        profile.showOnlyWithFirework = false;
-        profile.showInThirdPerson = true;
-        profile.targetUpMinecraft = -40.0f;
-        profile.targetDownMinecraft = 40.0f;
-        profile.toleranceDegrees = 6.0f;
-        profile.maxOffsetPixels = 42;
-        profile.offsetPerDegree = 2.0f;
-        profile.lineLengthPixels = 26;
-        profile.lineWidthPixels = 2;
-        profile.lineColorRgb = 0xFFFFFF;
-        profile.linePrideEnabled = false;
-        profile.linePrideFlag = "rainbow";
-        profile.amplitudeHelperEnabled = true;
-        profile.amplitudeTriggerMode = Config.AMPLITUDE_TRIGGER_HEIGHT;
-        profile.amplitudeDownBlocks = 50;
-        profile.amplitudeUpBlocks = 50;
-        profile.amplitudeToleranceBlocks = 4;
-        profile.amplitudeDownVelocity = 2.0f;
-        profile.amplitudeUpVelocity = 0.2f;
-        profile.amplitudeCueColorRgb = 0xFF0000;
-        profile.amplitudeCuePrideEnabled = false;
-        profile.amplitudeCuePrideFlag = "trans";
+        profile.visibility.showOnlyWithFirework = false;
+        profile.visibility.showInThirdPerson = true;
+        profile.pitch.targetUpMinecraft = -40.0f;
+        profile.pitch.targetDownMinecraft = 40.0f;
+        profile.pitch.toleranceDegrees = 6.0f;
+        profile.pitch.maxOffsetPixels = 42;
+        profile.pitch.offsetPerDegree = 2.0f;
+        profile.line.lengthPixels = 26;
+        profile.line.widthPixels = 2;
+        profile.line.colorRgb = 0xFFFFFF;
+        profile.line.prideEnabled = false;
+        profile.line.prideFlag = "rainbow";
+        profile.amplitude.enabled = true;
+        profile.amplitude.triggerMode = Config.AMPLITUDE_TRIGGER_HEIGHT;
+        profile.amplitude.downBlocks = 50;
+        profile.amplitude.upBlocks = 50;
+        profile.amplitude.toleranceBlocks = 4;
+        profile.amplitude.downVelocity = 2.0f;
+        profile.amplitude.upVelocity = 0.2f;
+        profile.amplitude.cueColorRgb = 0xFF0000;
+        profile.amplitude.cuePrideEnabled = false;
+        profile.amplitude.cuePrideFlag = "trans";
         return profile;
     }
 
-    private static JsonObject populatedJson() {
+    private static JsonObject groupedJson() {
         JsonObject json = new JsonObject();
         json.addProperty("version", Config.CURRENT_VERSION);
+        json.addProperty("name", "Tuned");
+        JsonObject visibility = new JsonObject();
+        visibility.addProperty("showOnlyWithFirework", true);
+        visibility.addProperty("showInThirdPerson", false);
+        JsonObject pitch = new JsonObject();
+        pitch.addProperty("targetUpMinecraft", -35.0f);
+        pitch.addProperty("targetDownMinecraft", 45.0f);
+        pitch.addProperty("toleranceDegrees", 8.0f);
+        pitch.addProperty("maxOffsetPixels", 60);
+        pitch.addProperty("offsetPerDegree", 3.0f);
+        JsonObject line = new JsonObject();
+        line.addProperty("lengthPixels", 36);
+        line.addProperty("widthPixels", 3);
+        line.addProperty("colorRgb", 0x00AAFF);
+        line.addProperty("prideEnabled", true);
+        line.addProperty("prideFlag", "trans");
+        JsonObject amplitude = new JsonObject();
+        amplitude.addProperty("enabled", false);
+        amplitude.addProperty("triggerMode", Config.AMPLITUDE_TRIGGER_EITHER);
+        amplitude.addProperty("downBlocks", 70);
+        amplitude.addProperty("upBlocks", 55);
+        amplitude.addProperty("toleranceBlocks", 6);
+        amplitude.addProperty("downVelocity", 2.4f);
+        amplitude.addProperty("upVelocity", 0.4f);
+        amplitude.addProperty("cueColorRgb", 0xFF3300);
+        amplitude.addProperty("cuePrideEnabled", true);
+        amplitude.addProperty("cuePrideFlag", "rainbow");
+        json.add("visibility", visibility);
+        json.add("pitch", pitch);
+        json.add("line", line);
+        json.add("amplitude", amplitude);
+        return json;
+    }
+
+    private static JsonObject legacyFlatJson() {
+        JsonObject json = new JsonObject();
+        json.addProperty("version", 1);
         json.addProperty("name", "Tuned");
         json.addProperty("showOnlyWithFirework", true);
         json.addProperty("showInThirdPerson", false);

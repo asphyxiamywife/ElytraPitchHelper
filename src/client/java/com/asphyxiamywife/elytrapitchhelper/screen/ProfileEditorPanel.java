@@ -56,20 +56,20 @@ final class ProfileEditorPanel {
 
     private int addGeneralControls(int index, int startX, int startY, int columns, int controlWidth, Profile profile) {
         addControl(index++, startX, startY, columns, controlWidth,
-                host.tooltip(CycleButton.onOffBuilder(profile.showOnlyWithFirework)
+                host.tooltip(CycleButton.onOffBuilder(profile.visibility.showOnlyWithFirework)
                         .create(0, 0, controlWidth, ConfigScreen.CONTROL_HEIGHT,
                                 Component.translatable("option.elytrapitchhelper.show_only_with_firework"),
                                 (button, value) -> {
-                                    profile.showOnlyWithFirework = value;
+                                    profile.visibility.showOnlyWithFirework = value;
                                     host.saveProfileChange();
                                 }), "tooltip.elytrapitchhelper.show_only_with_firework"));
 
         addControl(index++, startX, startY, columns, controlWidth,
-                host.tooltip(CycleButton.onOffBuilder(profile.showInThirdPerson)
+                host.tooltip(CycleButton.onOffBuilder(profile.visibility.showInThirdPerson)
                         .create(0, 0, controlWidth, ConfigScreen.CONTROL_HEIGHT,
                                 Component.translatable("option.elytrapitchhelper.show_in_third_person"),
                                 (button, value) -> {
-                                    profile.showInThirdPerson = value;
+                                    profile.visibility.showInThirdPerson = value;
                                     host.saveProfileChange();
                                 }), "tooltip.elytrapitchhelper.show_in_third_person"));
         return index;
@@ -78,36 +78,36 @@ final class ProfileEditorPanel {
     private int addPitchControls(int index, int startX, int startY, int columns, int controlWidth, Profile profile) {
         addControl(index++, startX, startY, columns, controlWidth,
                 host.tooltip(host.floatSlider(Component.translatable("option.elytrapitchhelper.target_up"),
-                        profile.targetUpMinecraft, -90.0, 0.0, 1.0, "deg", value -> {
-                            profile.targetUpMinecraft = (float) value;
+                        profile.pitch.targetUpMinecraft, -90.0, 0.0, 1.0, "deg", value -> {
+                            profile.pitch.targetUpMinecraft = (float) value;
                             host.saveProfileChange();
                         }), "tooltip.elytrapitchhelper.target_up"));
 
         addControl(index++, startX, startY, columns, controlWidth,
                 host.tooltip(host.floatSlider(Component.translatable("option.elytrapitchhelper.target_down"),
-                        profile.targetDownMinecraft, 0.0, 90.0, 1.0, "deg", value -> {
-                            profile.targetDownMinecraft = (float) value;
+                        profile.pitch.targetDownMinecraft, 0.0, 90.0, 1.0, "deg", value -> {
+                            profile.pitch.targetDownMinecraft = (float) value;
                             host.saveProfileChange();
                         }), "tooltip.elytrapitchhelper.target_down"));
 
         addControl(index++, startX, startY, columns, controlWidth,
                 host.tooltip(host.floatSlider(Component.translatable("option.elytrapitchhelper.tolerance"),
-                        profile.toleranceDegrees, 1.0, 45.0, 0.5, "deg", value -> {
-                            profile.toleranceDegrees = (float) value;
+                        profile.pitch.toleranceDegrees, 1.0, 45.0, 0.5, "deg", value -> {
+                            profile.pitch.toleranceDegrees = (float) value;
                             host.saveProfileChange();
                         }), "tooltip.elytrapitchhelper.tolerance"));
 
         addControl(index++, startX, startY, columns, controlWidth,
                 host.tooltip(host.intSlider(Component.translatable("option.elytrapitchhelper.max_offset"),
-                        profile.maxOffsetPixels, 0, 200, "px", value -> {
-                            profile.maxOffsetPixels = value;
+                        profile.pitch.maxOffsetPixels, 0, 200, "px", value -> {
+                            profile.pitch.maxOffsetPixels = value;
                             host.saveProfileChange();
                         }), "tooltip.elytrapitchhelper.max_offset"));
 
         addControl(index++, startX, startY, columns, controlWidth,
                 host.tooltip(host.floatSlider(Component.translatable("option.elytrapitchhelper.offset_per_degree"),
-                        profile.offsetPerDegree, 0.25, 10.0, 0.25, "px/deg", value -> {
-                            profile.offsetPerDegree = (float) value;
+                        profile.pitch.offsetPerDegree, 0.25, 10.0, 0.25, "px/deg", value -> {
+                            profile.pitch.offsetPerDegree = (float) value;
                             host.saveProfileChange();
                         }), "tooltip.elytrapitchhelper.offset_per_degree"));
         return index;
@@ -116,11 +116,11 @@ final class ProfileEditorPanel {
     private int addAmplitudeControls(int index, int startX, int startY, int columns, int controlWidth,
             Profile profile) {
         addControl(index++, startX, startY, columns, controlWidth,
-                host.tooltip(CycleButton.onOffBuilder(profile.amplitudeHelperEnabled)
+                host.tooltip(CycleButton.onOffBuilder(profile.amplitude.enabled)
                         .create(0, 0, controlWidth, ConfigScreen.CONTROL_HEIGHT,
                                 Component.translatable("option.elytrapitchhelper.amplitude_helper"),
                                 (button, value) -> {
-                                    profile.amplitudeHelperEnabled = value;
+                                    profile.amplitude.enabled = value;
                                     host.saveProfileChange();
                                 }), "tooltip.elytrapitchhelper.amplitude_helper"));
 
@@ -131,36 +131,36 @@ final class ProfileEditorPanel {
 
         addControl(index++, startX, startY, columns, controlWidth,
                 host.tooltip(host.intSlider(Component.translatable("option.elytrapitchhelper.amplitude_down"),
-                        profile.amplitudeDownBlocks, 10, 300, "blocks", value -> {
-                            profile.amplitudeDownBlocks = value;
+                        profile.amplitude.downBlocks, 10, 300, "blocks", value -> {
+                            profile.amplitude.downBlocks = value;
                             host.saveProfileChange();
                         }), "tooltip.elytrapitchhelper.amplitude_down"));
 
         addControl(index++, startX, startY, columns, controlWidth,
                 host.tooltip(host.intSlider(Component.translatable("option.elytrapitchhelper.amplitude_up"),
-                        profile.amplitudeUpBlocks, 10, 300, "blocks", value -> {
-                            profile.amplitudeUpBlocks = value;
+                        profile.amplitude.upBlocks, 10, 300, "blocks", value -> {
+                            profile.amplitude.upBlocks = value;
                             host.saveProfileChange();
                         }), "tooltip.elytrapitchhelper.amplitude_up"));
 
         addControl(index++, startX, startY, columns, controlWidth,
                 host.tooltip(host.intSlider(Component.translatable("option.elytrapitchhelper.amplitude_tolerance"),
-                        profile.amplitudeToleranceBlocks, 0, 30, "blocks", value -> {
-                            profile.amplitudeToleranceBlocks = value;
+                        profile.amplitude.toleranceBlocks, 0, 30, "blocks", value -> {
+                            profile.amplitude.toleranceBlocks = value;
                             host.saveProfileChange();
                         }), "tooltip.elytrapitchhelper.amplitude_tolerance"));
 
         addControl(index++, startX, startY, columns, controlWidth,
                 host.tooltip(host.floatSlider(Component.translatable("option.elytrapitchhelper.amplitude_down_velocity"),
-                        profile.amplitudeDownVelocity, 0.5, 5.0, 0.1, "b/t", value -> {
-                            profile.amplitudeDownVelocity = (float) value;
+                        profile.amplitude.downVelocity, 0.5, 5.0, 0.1, "b/t", value -> {
+                            profile.amplitude.downVelocity = (float) value;
                             host.saveProfileChange();
                         }), "tooltip.elytrapitchhelper.amplitude_down_velocity"));
 
         addControl(index++, startX, startY, columns, controlWidth,
                 host.tooltip(host.floatSlider(Component.translatable("option.elytrapitchhelper.amplitude_up_velocity"),
-                        profile.amplitudeUpVelocity, 0.0, 2.0, 0.1, "b/t", value -> {
-                            profile.amplitudeUpVelocity = (float) value;
+                        profile.amplitude.upVelocity, 0.0, 2.0, 0.1, "b/t", value -> {
+                            profile.amplitude.upVelocity = (float) value;
                             host.saveProfileChange();
                         }), "tooltip.elytrapitchhelper.amplitude_up_velocity"));
         return index;
@@ -169,40 +169,40 @@ final class ProfileEditorPanel {
     private void addVisualControls(int index, int startX, int startY, int columns, int controlWidth, Profile profile) {
         addControl(index++, startX, startY, columns, controlWidth,
                 host.tooltip(host.intSlider(Component.translatable("option.elytrapitchhelper.line_length"),
-                        profile.lineLengthPixels, 2, 200, "px", value -> {
-                            profile.lineLengthPixels = value;
+                        profile.line.lengthPixels, 2, 200, "px", value -> {
+                            profile.line.lengthPixels = value;
                             host.saveProfileChange();
                         }), "tooltip.elytrapitchhelper.line_length"));
 
         addControl(index++, startX, startY, columns, controlWidth,
                 host.tooltip(host.intSlider(Component.translatable("option.elytrapitchhelper.line_width"),
-                        profile.lineWidthPixels, 1, 20, "px", value -> {
-                            profile.lineWidthPixels = value;
+                        profile.line.widthPixels, 1, 20, "px", value -> {
+                            profile.line.widthPixels = value;
                             host.saveProfileChange();
                         }), "tooltip.elytrapitchhelper.line_width"));
 
         addControl(index++, startX, startY, columns, controlWidth,
                 host.tooltip(host.colorButton(Component.translatable("option.elytrapitchhelper.line_color"),
-                        profile.lineColorRgb, profile.linePrideEnabled, profile.linePrideFlag,
-                        () -> profile.lineLengthPixels, () -> profile.lineWidthPixels, false, value -> {
-                            profile.lineColorRgb = value;
+                        profile.line.colorRgb, profile.line.prideEnabled, profile.line.prideFlag,
+                        () -> profile.line.lengthPixels, () -> profile.line.widthPixels, false, value -> {
+                            profile.line.colorRgb = value;
                             host.saveProfileChange();
                         }, (enabled, flagId) -> {
-                            profile.linePrideEnabled = enabled;
-                            profile.linePrideFlag = flagId;
+                            profile.line.prideEnabled = enabled;
+                            profile.line.prideFlag = flagId;
                             host.saveProfileChange();
                         }), "tooltip.elytrapitchhelper.line_color"));
 
         addControl(index, startX, startY, columns, controlWidth,
                 host.tooltip(host.colorButton(Component.translatable("option.elytrapitchhelper.amplitude_color"),
-                        profile.amplitudeCueColorRgb, profile.amplitudeCuePrideEnabled,
-                        profile.amplitudeCuePrideFlag, () -> profile.lineLengthPixels,
-                        () -> profile.lineWidthPixels, true, value -> {
-                            profile.amplitudeCueColorRgb = value;
+                        profile.amplitude.cueColorRgb, profile.amplitude.cuePrideEnabled,
+                        profile.amplitude.cuePrideFlag, () -> profile.line.lengthPixels,
+                        () -> profile.line.widthPixels, true, value -> {
+                            profile.amplitude.cueColorRgb = value;
                             host.saveProfileChange();
                         }, (enabled, flagId) -> {
-                            profile.amplitudeCuePrideEnabled = enabled;
-                            profile.amplitudeCuePrideFlag = flagId;
+                            profile.amplitude.cuePrideEnabled = enabled;
+                            profile.amplitude.cuePrideFlag = flagId;
                             host.saveProfileChange();
                         }), "tooltip.elytrapitchhelper.amplitude_color"));
     }

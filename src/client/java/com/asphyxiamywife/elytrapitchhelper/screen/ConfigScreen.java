@@ -549,14 +549,14 @@ public final class ConfigScreen extends Screen implements ProfileEditorPanel.Hos
     @Override
     public Button amplitudeTriggerModeButton(Component label, Profile profile) {
         return Button.builder(amplitudeTriggerModeMessage(label), button -> {
-            profile.amplitudeTriggerMode = Config.nextAmplitudeTriggerMode(profile.amplitudeTriggerMode);
-            button.setMessage(amplitudeTriggerModeMessage(label, profile.amplitudeTriggerMode));
+            profile.amplitude.triggerMode = Config.nextAmplitudeTriggerMode(profile.amplitude.triggerMode);
+            button.setMessage(amplitudeTriggerModeMessage(label, profile.amplitude.triggerMode));
             saveProfileChange();
         }).bounds(0, 0, 1, CONTROL_HEIGHT).build();
     }
 
     private Component amplitudeTriggerModeMessage(Component label) {
-        return amplitudeTriggerModeMessage(label, config.profile(editingProfileIndex).amplitudeTriggerMode);
+        return amplitudeTriggerModeMessage(label, config.profile(editingProfileIndex).amplitude.triggerMode);
     }
 
     private Component amplitudeTriggerModeMessage(Component label, int mode) {

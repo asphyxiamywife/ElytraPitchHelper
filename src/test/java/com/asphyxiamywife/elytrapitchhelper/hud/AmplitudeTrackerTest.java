@@ -71,22 +71,22 @@ final class AmplitudeTrackerTest {
         AmplitudeCue triggered = tracker.update(config, 90.0, 1.0);
         assertEquals(AmplitudeLeg.DESCENDING, triggered.flashLeg);
 
-        config.amplitudeHelperEnabled = false;
+        config.amplitude.enabled = false;
         assertSame(AmplitudeCue.NONE, tracker.update(config, 80.0, 1.0));
 
-        config.amplitudeHelperEnabled = true;
+        config.amplitude.enabled = true;
         assertSame(AmplitudeCue.NONE, tracker.update(config, 70.0, 1.0));
     }
 
     private static Config amplitudeConfig(int triggerMode) {
         Config config = new Config();
-        config.amplitudeHelperEnabled = true;
-        config.amplitudeTriggerMode = triggerMode;
-        config.amplitudeDownBlocks = 10;
-        config.amplitudeUpBlocks = 10;
-        config.amplitudeToleranceBlocks = 2;
-        config.amplitudeDownVelocity = 2.0f;
-        config.amplitudeUpVelocity = 0.2f;
+        config.amplitude.enabled = true;
+        config.amplitude.triggerMode = triggerMode;
+        config.amplitude.downBlocks = 10;
+        config.amplitude.upBlocks = 10;
+        config.amplitude.toleranceBlocks = 2;
+        config.amplitude.downVelocity = 2.0f;
+        config.amplitude.upVelocity = 0.2f;
         return config;
     }
 }

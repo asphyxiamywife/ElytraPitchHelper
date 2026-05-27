@@ -54,17 +54,17 @@ public final class PitchGuideHud {
         AmplitudeCue amplitudeCue = amplitudeTracker.update(config, player.getY(),
                 player.getDeltaMovement().horizontalDistance());
 
-        renderLineForTarget(context, config, centerX, centerY, pitch, config.targetUpMinecraft, AmplitudeLeg.ASCENDING,
-                amplitudeCue);
-        renderLineForTarget(context, config, centerX, centerY, pitch, config.targetDownMinecraft,
+        renderLineForTarget(context, config, centerX, centerY, pitch, config.pitch.targetUpMinecraft,
+                AmplitudeLeg.ASCENDING, amplitudeCue);
+        renderLineForTarget(context, config, centerX, centerY, pitch, config.pitch.targetDownMinecraft,
                 AmplitudeLeg.DESCENDING, amplitudeCue);
     }
 
     private void renderLineForTarget(GuiGraphicsExtractor context, Config config, int centerX, int centerY, float pitch,
             float targetPitch, AmplitudeLeg leg, AmplitudeCue amplitudeCue) {
         float diff = targetPitch - pitch;
-        int offset = (int) Math.round(MathUtil.clamp(diff * config.offsetPerDegree, -config.maxOffsetPixels,
-                config.maxOffsetPixels));
+        int offset = (int) Math.round(MathUtil.clamp(diff * config.pitch.offsetPerDegree,
+                -config.pitch.maxOffsetPixels, config.pitch.maxOffsetPixels));
         float alpha = computeAlpha(config, Math.abs(diff));
         if (alpha > MIN_VISIBLE_ALPHA) {
             guideLineRenderer.draw(context, centerX, centerY + offset, alpha, amplitudeCue.forLeg(leg), config);
@@ -86,9 +86,9 @@ public final class PitchGuideHud {
     }
 
     private static float computeAlpha(Config config, float diff) {
-        if (diff > config.toleranceDegrees) {
+        if (diff > config.pitch.toleranceDegrees) {
             return 0.0f;
         }
-        return 0.15f + 0.85f * (1.0f - (diff / config.toleranceDegrees));
+        return 0.15f + 0.85f * (1.0f - (diff / config.pitch.toleranceDegrees));
     }
 }

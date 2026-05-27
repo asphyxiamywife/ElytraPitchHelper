@@ -5,6 +5,8 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 
+import com.google.gson.JsonObject;
+
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
@@ -37,14 +39,14 @@ final class ProfilePersistenceTest {
         long loadedAt = Files.getLastModifiedTime(profilePath).toMillis();
         ProfileMetadataStore metadata = loadedMetadata("alpha.json", loadedAt);
         Profile updated = profile("Alpha Updated", "alpha.json");
-        updated.targetUpMinecraft = -35.0f;
+        updated.pitch.targetUpMinecraft = -35.0f;
 
         assertTrue(ProfilePersistence.saveProfiles(List.of(updated), metadata));
 
         Profile saved = ProfilePersistence.readProfileFile(profilePath, "alpha.json", "saved profile",
                 profile("Defaults", "default.json"));
         assertEquals("Alpha Updated", saved.name);
-        assertEquals(-35.0f, saved.targetUpMinecraft);
+        assertEquals(-35.0f, saved.pitch.targetUpMinecraft);
         assertEquals(1, jsonFileCount(profileBackupDirectory("alpha")));
         assertEquals(Files.getLastModifiedTime(profilePath).toMillis(),
                 metadata.profile("alpha.json").loadedFileModifiedAtMillis);
@@ -71,7 +73,7 @@ final class ProfilePersistenceTest {
     void loadProfilesRestoresNewestValidBackupWhenProfileJsonIsCorrupt() throws IOException {
         Path profilePath = Config.getProfileDirectory().resolve("broken.json");
         Profile backup = profile("Restored", "broken.json");
-        backup.targetDownMinecraft = 55.0f;
+        backup.pitch.targetDownMinecraft = 55.0f;
         ProfileBackups.save(profilePath, backup);
         Files.createDirectories(profilePath.getParent());
         Files.writeString(profilePath, "{broken", StandardCharsets.UTF_8);
@@ -80,10 +82,36 @@ final class ProfilePersistenceTest {
 
         assertEquals(1, result.profiles().size());
         assertEquals("Restored", result.profiles().get(0).name);
-        assertEquals(55.0f, result.profiles().get(0).targetDownMinecraft);
+        assertEquals(55.0f, result.profiles().get(0).pitch.targetDownMinecraft);
         Profile restored = ProfilePersistence.readProfileFile(profilePath, "broken.json", "restored profile",
                 profile("Defaults", "default.json"));
         assertEquals("Restored", restored.name);
+    }
+
+    @Test
+    void saveProfilesMigratesLegacyFlatProfileJsonToGroupedValueObjects() throws IOException {
+        Profile legacyProfile = profile("Legacy", "legacy.json");
+        Path profilePath = Config.getProfileDirectory().resolve(legacyProfile.fileName);
+        JsonObject legacyJson = legacyFlatJson(legacyProfile);
+        ConfigFiles.writeJsonAtomic(profilePath, legacyJson);
+        long loadedAt = Files.getLastModifiedTime(profilePath).toMillis();
+        Profile loaded = ProfilePersistence.readProfileFile(profilePath, "legacy.json", "legacy profile",
+                profile("Defaults", "default.json"));
+        ProfileMetadataStore metadata = loadedMetadata("legacy.json", loadedAt);
+
+        assertTrue(ProfilePersistence.saveProfiles(List.of(loaded), metadata));
+
+        JsonObject migrated = ConfigFiles.GSON.fromJson(Files.readString(profilePath, StandardCharsets.UTF_8),
+                JsonObject.class);
+        assertTrue(migrated.has("pitch"));
+        assertTrue(migrated.has("line"));
+        assertTrue(migrated.has("amplitude"));
+        assertFalse(migrated.has("targetUpMinecraft"));
+        assertFalse(migrated.has("lineColorRgb"));
+        assertFalse(migrated.has("amplitudeHelperEnabled"));
+        assertEquals(-40.0f, migrated.getAsJsonObject("pitch").get("targetUpMinecraft").getAsFloat());
+        assertEquals(0xFFFFFF, migrated.getAsJsonObject("line").get("colorRgb").getAsInt());
+        assertTrue(migrated.getAsJsonObject("amplitude").get("enabled").getAsBoolean());
     }
 
     private static Path writeProfile(Profile profile) throws IOException {
@@ -112,28 +140,57 @@ final class ProfilePersistenceTest {
         Profile profile = new Profile();
         profile.name = name;
         profile.fileName = fileName;
-        profile.showOnlyWithFirework = false;
-        profile.showInThirdPerson = false;
-        profile.targetUpMinecraft = -40.0f;
-        profile.targetDownMinecraft = 40.0f;
-        profile.toleranceDegrees = 6.0f;
-        profile.maxOffsetPixels = 42;
-        profile.offsetPerDegree = 2.0f;
-        profile.lineLengthPixels = 26;
-        profile.lineWidthPixels = 2;
-        profile.lineColorRgb = 0xFFFFFF;
-        profile.linePrideEnabled = false;
-        profile.linePrideFlag = "rainbow";
-        profile.amplitudeHelperEnabled = true;
-        profile.amplitudeTriggerMode = Config.AMPLITUDE_TRIGGER_HEIGHT;
-        profile.amplitudeDownBlocks = 50;
-        profile.amplitudeUpBlocks = 45;
-        profile.amplitudeToleranceBlocks = 4;
-        profile.amplitudeDownVelocity = 2.0f;
-        profile.amplitudeUpVelocity = 0.2f;
-        profile.amplitudeCueColorRgb = 0xFF0000;
-        profile.amplitudeCuePrideEnabled = false;
-        profile.amplitudeCuePrideFlag = "trans";
+        profile.visibility.showOnlyWithFirework = false;
+        profile.visibility.showInThirdPerson = false;
+        profile.pitch.targetUpMinecraft = -40.0f;
+        profile.pitch.targetDownMinecraft = 40.0f;
+        profile.pitch.toleranceDegrees = 6.0f;
+        profile.pitch.maxOffsetPixels = 42;
+        profile.pitch.offsetPerDegree = 2.0f;
+        profile.line.lengthPixels = 26;
+        profile.line.widthPixels = 2;
+        profile.line.colorRgb = 0xFFFFFF;
+        profile.line.prideEnabled = false;
+        profile.line.prideFlag = "rainbow";
+        profile.amplitude.enabled = true;
+        profile.amplitude.triggerMode = Config.AMPLITUDE_TRIGGER_HEIGHT;
+        profile.amplitude.downBlocks = 50;
+        profile.amplitude.upBlocks = 45;
+        profile.amplitude.toleranceBlocks = 4;
+        profile.amplitude.downVelocity = 2.0f;
+        profile.amplitude.upVelocity = 0.2f;
+        profile.amplitude.cueColorRgb = 0xFF0000;
+        profile.amplitude.cuePrideEnabled = false;
+        profile.amplitude.cuePrideFlag = "trans";
         return profile;
+    }
+
+    private static JsonObject legacyFlatJson(Profile profile) {
+        JsonObject json = new JsonObject();
+        json.addProperty("version", 1);
+        json.addProperty("name", profile.name);
+        json.addProperty("showOnlyWithFirework", profile.visibility.showOnlyWithFirework);
+        json.addProperty("showInThirdPerson", profile.visibility.showInThirdPerson);
+        json.addProperty("targetUpMinecraft", profile.pitch.targetUpMinecraft);
+        json.addProperty("targetDownMinecraft", profile.pitch.targetDownMinecraft);
+        json.addProperty("toleranceDegrees", profile.pitch.toleranceDegrees);
+        json.addProperty("maxOffsetPixels", profile.pitch.maxOffsetPixels);
+        json.addProperty("offsetPerDegree", profile.pitch.offsetPerDegree);
+        json.addProperty("lineLengthPixels", profile.line.lengthPixels);
+        json.addProperty("lineWidthPixels", profile.line.widthPixels);
+        json.addProperty("lineColorRgb", profile.line.colorRgb);
+        json.addProperty("linePrideEnabled", profile.line.prideEnabled);
+        json.addProperty("linePrideFlag", profile.line.prideFlag);
+        json.addProperty("amplitudeHelperEnabled", profile.amplitude.enabled);
+        json.addProperty("amplitudeTriggerMode", profile.amplitude.triggerMode);
+        json.addProperty("amplitudeDownBlocks", profile.amplitude.downBlocks);
+        json.addProperty("amplitudeUpBlocks", profile.amplitude.upBlocks);
+        json.addProperty("amplitudeToleranceBlocks", profile.amplitude.toleranceBlocks);
+        json.addProperty("amplitudeDownVelocity", profile.amplitude.downVelocity);
+        json.addProperty("amplitudeUpVelocity", profile.amplitude.upVelocity);
+        json.addProperty("amplitudeCueColorRgb", profile.amplitude.cueColorRgb);
+        json.addProperty("amplitudeCuePrideEnabled", profile.amplitude.cuePrideEnabled);
+        json.addProperty("amplitudeCuePrideFlag", profile.amplitude.cuePrideFlag);
+        return json;
     }
 }

@@ -34,8 +34,8 @@ public final class ClientConfigStore {
         reloadFromDisk(false);
     }
 
-    public static void reloadFromDiskIfIdle() {
-        reloadFromDisk(true);
+    public static boolean reloadFromDiskIfIdle() {
+        return reloadFromDisk(true);
     }
 
     public static void set(Config nextConfig) {
@@ -71,9 +71,9 @@ public final class ClientConfigStore {
         return REVISION.get();
     }
 
-    private static void reloadFromDisk(boolean skipDuringSave) {
+    private static boolean reloadFromDisk(boolean skipDuringSave) {
         if (skipDuringSave && (ACTIVE_SAVES.get() > 0 || UNSAVED_REVISION.get() != 0L)) {
-            return;
+            return false;
         }
 
         long observedRevision = REVISION.get();
@@ -81,8 +81,9 @@ public final class ClientConfigStore {
         if (!skipDuringSave) {
             publish(loaded);
             UNSAVED_REVISION.set(0L);
+            return true;
         } else {
-            publishIfUnchanged(loaded, observedRevision);
+            return publishIfUnchanged(loaded, observedRevision);
         }
     }
 
@@ -93,12 +94,14 @@ public final class ClientConfigStore {
         }
     }
 
-    private static void publishIfUnchanged(Config nextConfig, long observedRevision) {
+    private static boolean publishIfUnchanged(Config nextConfig, long observedRevision) {
         synchronized (PUBLISH_LOCK) {
             if (ACTIVE_SAVES.get() == 0 && UNSAVED_REVISION.get() == 0L && REVISION.get() == observedRevision) {
                 config = nextConfig;
                 REVISION.incrementAndGet();
+                return true;
             }
         }
+        return false;
     }
 }

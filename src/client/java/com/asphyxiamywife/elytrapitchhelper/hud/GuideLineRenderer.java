@@ -7,15 +7,15 @@ import net.minecraft.client.gui.GuiGraphicsExtractor;
 
 final class GuideLineRenderer {
     void draw(GuiGraphicsExtractor ctx, int cx, int guideY, float alpha, AmplitudeCue amplitudeCue, Config config) {
-        int length = config.lineLengthPixels;
-        int thickness = config.lineWidthPixels;
+        int length = config.line.lengthPixels;
+        int thickness = config.line.widthPixels;
         int x = cx - length / 2;
         int y = guideY - thickness / 2;
-        int baseRgb = config.lineColorRgb & 0x00FFFFFF;
-        int cueRgb = config.amplitudeCueColorRgb & 0x00FFFFFF;
-        int[] basePrideColors = config.linePrideEnabled ? PrideFlag.byId(config.linePrideFlag).colors() : null;
-        int[] cuePrideColors = config.amplitudeCuePrideEnabled
-                ? PrideFlag.byId(config.amplitudeCuePrideFlag).colors()
+        int baseRgb = config.line.colorRgb & 0x00FFFFFF;
+        int cueRgb = config.amplitude.cueColorRgb & 0x00FFFFFF;
+        int[] basePrideColors = config.line.prideEnabled ? PrideFlag.byId(config.line.prideFlag).colors() : null;
+        int[] cuePrideColors = config.amplitude.cuePrideEnabled
+                ? PrideFlag.byId(config.amplitude.cuePrideFlag).colors()
                 : null;
         float cueAmount = amplitudeCue.amount;
         float flash = amplitudeCue.flash;

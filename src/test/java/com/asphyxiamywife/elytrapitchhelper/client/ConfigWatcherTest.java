@@ -29,14 +29,24 @@ final class ConfigWatcherTest {
     }
 
     @Test
-    void debouncerSuppressesDuplicateReloadsInsideWindow() {
+    void debouncerReloadsAfterChangesBecomeQuiet() {
         ConfigWatchDebouncer debouncer = new ConfigWatchDebouncer(250L);
 
-        assertTrue(debouncer.shouldReload(1_000L));
-        assertFalse(debouncer.shouldReload(1_100L));
+        debouncer.recordChange(1_000L);
         assertFalse(debouncer.shouldReload(1_249L));
         assertTrue(debouncer.shouldReload(1_250L));
-        assertTrue(debouncer.shouldReload(1_500L));
+        assertFalse(debouncer.shouldReload(1_500L));
+    }
+
+    @Test
+    void debouncerExtendsWindowAfterFollowUpChange() {
+        ConfigWatchDebouncer debouncer = new ConfigWatchDebouncer(250L);
+
+        debouncer.recordChange(1_000L);
+        debouncer.recordChange(1_100L);
+
+        assertFalse(debouncer.shouldReload(1_250L));
+        assertTrue(debouncer.shouldReload(1_350L));
     }
 
     private static WatchEvent<Path> event(String fileName) {

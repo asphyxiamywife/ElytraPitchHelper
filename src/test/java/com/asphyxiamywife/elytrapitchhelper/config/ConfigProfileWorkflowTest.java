@@ -14,14 +14,14 @@ final class ConfigProfileWorkflowTest {
         Config config = configWithProfiles(profile("Cruise", "cruise.json", -40.0f),
                 profile("Dive", "dive.json", -20.0f));
         config.selectProfile(0);
-        config.targetUpMinecraft = -33.0f;
-        config.lineColorRgb = 0x123456;
+        config.pitch.targetUpMinecraft = -33.0f;
+        config.line.colorRgb = 0x123456;
 
         config.selectProfile(1);
 
-        assertEquals(-33.0f, config.profile(0).targetUpMinecraft);
-        assertEquals(0x123456, config.profile(0).lineColorRgb);
-        assertEquals(-20.0f, config.targetUpMinecraft);
+        assertEquals(-33.0f, config.profile(0).pitch.targetUpMinecraft);
+        assertEquals(0x123456, config.profile(0).line.colorRgb);
+        assertEquals(-20.0f, config.pitch.targetUpMinecraft);
         assertTrue(config.isActiveProfile(1));
         assertEquals("dive.json", config.activeProfileFile);
     }
@@ -59,28 +59,28 @@ final class ConfigProfileWorkflowTest {
         Profile profile = new Profile();
         profile.name = name;
         profile.fileName = fileName;
-        profile.showOnlyWithFirework = false;
-        profile.showInThirdPerson = false;
-        profile.targetUpMinecraft = targetUpMinecraft;
-        profile.targetDownMinecraft = 40.0f;
-        profile.toleranceDegrees = 6.0f;
-        profile.maxOffsetPixels = 42;
-        profile.offsetPerDegree = 2.0f;
-        profile.lineLengthPixels = 26;
-        profile.lineWidthPixels = 2;
-        profile.lineColorRgb = 0xFFFFFF;
-        profile.linePrideEnabled = false;
-        profile.linePrideFlag = "rainbow";
-        profile.amplitudeHelperEnabled = true;
-        profile.amplitudeTriggerMode = Config.AMPLITUDE_TRIGGER_HEIGHT;
-        profile.amplitudeDownBlocks = 50;
-        profile.amplitudeUpBlocks = 45;
-        profile.amplitudeToleranceBlocks = 4;
-        profile.amplitudeDownVelocity = 2.0f;
-        profile.amplitudeUpVelocity = 0.2f;
-        profile.amplitudeCueColorRgb = 0xFF0000;
-        profile.amplitudeCuePrideEnabled = false;
-        profile.amplitudeCuePrideFlag = "trans";
+        profile.visibility.showOnlyWithFirework = false;
+        profile.visibility.showInThirdPerson = false;
+        profile.pitch.targetUpMinecraft = targetUpMinecraft;
+        profile.pitch.targetDownMinecraft = 40.0f;
+        profile.pitch.toleranceDegrees = 6.0f;
+        profile.pitch.maxOffsetPixels = 42;
+        profile.pitch.offsetPerDegree = 2.0f;
+        profile.line.lengthPixels = 26;
+        profile.line.widthPixels = 2;
+        profile.line.colorRgb = 0xFFFFFF;
+        profile.line.prideEnabled = false;
+        profile.line.prideFlag = "rainbow";
+        profile.amplitude.enabled = true;
+        profile.amplitude.triggerMode = Config.AMPLITUDE_TRIGGER_HEIGHT;
+        profile.amplitude.downBlocks = 50;
+        profile.amplitude.upBlocks = 45;
+        profile.amplitude.toleranceBlocks = 4;
+        profile.amplitude.downVelocity = 2.0f;
+        profile.amplitude.upVelocity = 0.2f;
+        profile.amplitude.cueColorRgb = 0xFF0000;
+        profile.amplitude.cuePrideEnabled = false;
+        profile.amplitude.cuePrideFlag = "trans";
         return profile;
     }
 }

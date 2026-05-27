@@ -13,6 +13,7 @@ import java.nio.file.StandardWatchEventKinds;
 import java.nio.file.WatchEvent;
 import java.nio.file.WatchKey;
 import java.nio.file.WatchService;
+import java.util.concurrent.TimeUnit;
 
 public final class ConfigWatcher {
     private static final long RELOAD_DEBOUNCE_MILLIS = 250L;
@@ -59,7 +60,12 @@ public final class ConfigWatcher {
     private static void processEvents(WatchService watchService, Path configPath, Path configDirectory,
             Path profileDirectory, ConfigWatchDebouncer debouncer) throws InterruptedException {
         while (true) {
-            WatchKey key = watchService.take();
+            WatchKey key = takeNextKey(watchService, debouncer);
+            if (key == null) {
+                reloadIfReady(debouncer);
+                continue;
+            }
+
             Path watchedDirectory = (Path) key.watchable();
             boolean changed = false;
             for (WatchEvent<?> event : key.pollEvents()) {
@@ -67,12 +73,28 @@ public final class ConfigWatcher {
                     changed = true;
                 }
             }
-            if (changed && debouncer.shouldReload(System.currentTimeMillis())) {
-                ClientConfigStore.reloadFromDiskIfIdle();
+            if (changed) {
+                debouncer.recordChange(System.currentTimeMillis());
             }
             if (!key.reset()) {
                 break;
             }
+            reloadIfReady(debouncer);
+        }
+    }
+
+    private static WatchKey takeNextKey(WatchService watchService, ConfigWatchDebouncer debouncer)
+            throws InterruptedException {
+        long waitMillis = debouncer.waitMillis(System.currentTimeMillis());
+        if (waitMillis < 0L) {
+            return watchService.take();
+        }
+        return watchService.poll(waitMillis, TimeUnit.MILLISECONDS);
+    }
+
+    private static void reloadIfReady(ConfigWatchDebouncer debouncer) {
+        if (debouncer.shouldReload(System.currentTimeMillis()) && !ClientConfigStore.reloadFromDiskIfIdle()) {
+            debouncer.recordChange(System.currentTimeMillis());
         }
     }
 

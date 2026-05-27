@@ -8,13 +8,13 @@ final class HudVisibility {
 
     static boolean canRender(Config config, boolean firstPerson, boolean hasUsableElytra, boolean hasFireworkRocket,
             int fallFlyingTicks) {
-        if (!config.showInThirdPerson && !firstPerson) {
+        if (!config.visibility.showInThirdPerson && !firstPerson) {
             return false;
         }
         if (!hasUsableElytra) {
             return false;
         }
-        if (config.showOnlyWithFirework && !hasFireworkRocket) {
+        if (config.visibility.showOnlyWithFirework && !hasFireworkRocket) {
             return false;
         }
         return fallFlyingTicks > 0;

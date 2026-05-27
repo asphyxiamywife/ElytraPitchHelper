@@ -21,7 +21,7 @@ public final class AmplitudeTracker {
     private long flashStartedMillis = -FLASH_MILLIS;
 
     AmplitudeCue update(Config config, double currentY, double currentHorizontalSpeed) {
-        if (!config.amplitudeHelperEnabled) {
+        if (!config.amplitude.enabled) {
             reset();
             return AmplitudeCue.NONE;
         }
@@ -33,7 +33,7 @@ public final class AmplitudeTracker {
         }
 
         AmplitudeLeg detectedLeg = detectLeg(currentY);
-        boolean stateMachineMode = config.amplitudeTriggerMode != Config.AMPLITUDE_TRIGGER_HEIGHT;
+        boolean stateMachineMode = config.amplitude.triggerMode != Config.AMPLITUDE_TRIGGER_HEIGHT;
         updateLeg(config, detectedLeg, stateMachineMode, horizontalSpeed);
         lastPlayerY = currentY;
         if (leg == AmplitudeLeg.NONE) {
@@ -109,11 +109,11 @@ public final class AmplitudeTracker {
             return TriggerCue.NONE;
         }
 
-        float target = leg == AmplitudeLeg.DESCENDING ? config.amplitudeDownBlocks : config.amplitudeUpBlocks;
+        float target = leg == AmplitudeLeg.DESCENDING ? config.amplitude.downBlocks : config.amplitude.upBlocks;
         float distance = (float) (leg == AmplitudeLeg.DESCENDING ? anchorY - currentY : currentY - anchorY);
         distance = Math.max(0.0f, distance);
 
-        float fullCueDistance = Math.max(1.0f, target - config.amplitudeToleranceBlocks);
+        float fullCueDistance = Math.max(1.0f, target - config.amplitude.toleranceBlocks);
         float progress = MathUtil.clamp(distance / fullCueDistance, 0.0f, 1.0f);
         boolean triggered = distance >= target && (!hasPreviousDistance || previousDistance < target);
         previousDistance = distance;
@@ -129,7 +129,7 @@ public final class AmplitudeTracker {
         float cueAmount;
         boolean triggered;
         if (leg == AmplitudeLeg.DESCENDING) {
-            float target = config.amplitudeDownVelocity;
+            float target = config.amplitude.downVelocity;
             float progress = MathUtil.clamp(horizontalSpeed / target, 0.0f, 1.0f);
             cueAmount = cueFromProgress(progress);
             triggered = horizontalSpeed >= target && (!hasPreviousHorizontalSpeed || previousHorizontalSpeed < target);
@@ -137,7 +137,7 @@ public final class AmplitudeTracker {
             if (horizontalSpeed > velocityAnchorSpeed) {
                 velocityAnchorSpeed = horizontalSpeed;
             }
-            float target = config.amplitudeUpVelocity;
+            float target = config.amplitude.upVelocity;
             float startSpeed = Math.max(target + 0.1f, velocityAnchorSpeed);
             float progress = MathUtil.clamp((startSpeed - horizontalSpeed) / (startSpeed - target), 0.0f, 1.0f);
             cueAmount = cueFromProgress(progress);
@@ -160,30 +160,30 @@ public final class AmplitudeTracker {
     }
 
     private static boolean usesHeightTrigger(Config config) {
-        return config.amplitudeTriggerMode == Config.AMPLITUDE_TRIGGER_HEIGHT
-                || config.amplitudeTriggerMode == Config.AMPLITUDE_TRIGGER_EITHER;
+        return config.amplitude.triggerMode == Config.AMPLITUDE_TRIGGER_HEIGHT
+                || config.amplitude.triggerMode == Config.AMPLITUDE_TRIGGER_EITHER;
     }
 
     private static boolean usesVelocityTrigger(Config config) {
-        return config.amplitudeTriggerMode == Config.AMPLITUDE_TRIGGER_VELOCITY
-                || config.amplitudeTriggerMode == Config.AMPLITUDE_TRIGGER_EITHER;
+        return config.amplitude.triggerMode == Config.AMPLITUDE_TRIGGER_VELOCITY
+                || config.amplitude.triggerMode == Config.AMPLITUDE_TRIGGER_EITHER;
     }
 
     private static boolean selectedTriggerReached(Config config, boolean heightTriggered, boolean velocityTriggered) {
-        if (config.amplitudeTriggerMode == Config.AMPLITUDE_TRIGGER_HEIGHT) {
+        if (config.amplitude.triggerMode == Config.AMPLITUDE_TRIGGER_HEIGHT) {
             return heightTriggered;
         }
-        if (config.amplitudeTriggerMode == Config.AMPLITUDE_TRIGGER_VELOCITY) {
+        if (config.amplitude.triggerMode == Config.AMPLITUDE_TRIGGER_VELOCITY) {
             return velocityTriggered;
         }
         return heightTriggered || velocityTriggered;
     }
 
     private static float selectedCueAmount(Config config, float heightCue, float velocityCue) {
-        if (config.amplitudeTriggerMode == Config.AMPLITUDE_TRIGGER_HEIGHT) {
+        if (config.amplitude.triggerMode == Config.AMPLITUDE_TRIGGER_HEIGHT) {
             return heightCue;
         }
-        if (config.amplitudeTriggerMode == Config.AMPLITUDE_TRIGGER_VELOCITY) {
+        if (config.amplitude.triggerMode == Config.AMPLITUDE_TRIGGER_VELOCITY) {
             return velocityCue;
         }
         return Math.max(heightCue, velocityCue);

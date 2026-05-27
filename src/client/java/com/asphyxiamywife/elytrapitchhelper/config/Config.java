@@ -1,11 +1,6 @@
 package com.asphyxiamywife.elytrapitchhelper.config;
 
-import static com.asphyxiamywife.elytrapitchhelper.config.ConfigRepair.clamp;
-import static com.asphyxiamywife.elytrapitchhelper.config.ConfigRepair.repair;
-import static com.asphyxiamywife.elytrapitchhelper.config.ConfigRepair.repairColor;
-import static com.asphyxiamywife.elytrapitchhelper.config.ConfigRepair.repairFloat;
 import static com.asphyxiamywife.elytrapitchhelper.config.ConfigRepair.repairInt;
-import static com.asphyxiamywife.elytrapitchhelper.config.ConfigRepair.repairPrideFlag;
 
 import com.google.gson.Gson;
 import com.google.gson.JsonParseException;
@@ -34,32 +29,14 @@ public final class Config {
 
     public int version = CURRENT_VERSION;
     public boolean enabled = true;
-    public transient float targetUpMinecraft;
-    public transient float targetDownMinecraft;
-    public transient float toleranceDegrees;
-    public transient int maxOffsetPixels;
-    public transient float offsetPerDegree;
-    public transient int lineLengthPixels;
-    public transient int lineWidthPixels;
-    public transient int lineColorRgb;
-    public transient boolean linePrideEnabled;
-    public transient String linePrideFlag = PrideFlag.defaultId();
-    public transient boolean showOnlyWithFirework = false;
-    public transient boolean showInThirdPerson = false;
+    public transient VisibilitySettings visibility = new VisibilitySettings();
+    public transient PitchSettings pitch = new PitchSettings();
+    public transient LineSettings line = new LineSettings();
+    public transient AmplitudeSettings amplitude = new AmplitudeSettings();
     public int activeProfileIndex = 0;
     public String activeProfileFile;
     public int profileSortMode = PROFILE_SORT_CREATED;
     public transient List<Profile> profiles;
-    public transient boolean amplitudeHelperEnabled;
-    public transient int amplitudeTriggerMode;
-    public transient int amplitudeDownBlocks;
-    public transient int amplitudeUpBlocks;
-    public transient int amplitudeToleranceBlocks;
-    public transient float amplitudeDownVelocity;
-    public transient float amplitudeUpVelocity;
-    public transient int amplitudeCueColorRgb;
-    public transient boolean amplitudeCuePrideEnabled;
-    public transient String amplitudeCuePrideFlag = PrideFlag.defaultId();
     private transient boolean skipNextProfileSave;
     private transient boolean profilesNormalized;
     private transient ProfileMetadataStore profileMetadata = new ProfileMetadataStore();
@@ -71,7 +48,7 @@ public final class Config {
     private static final String INTERNAL_DIRECTORY_NAME = ".internal";
     private static final String PROFILE_METADATA_FILE_NAME = "profile-metadata.json";
     static final String JSON_SUFFIX = ProfileFileNames.JSON_SUFFIX;
-    static final int CURRENT_VERSION = 1;
+    static final int CURRENT_VERSION = 2;
     private static final Logger LOGGER = LoggerFactory.getLogger(MOD_ID);
     static final Gson GSON = ConfigFiles.GSON;
     private static Path configRootOverride;
@@ -409,36 +386,20 @@ public final class Config {
     }
 
     private void copyFrom(Config other) {
+        other.ensureValueObjects();
+        ensureValueObjects();
         version = other.version;
         enabled = other.enabled;
-        targetUpMinecraft = other.targetUpMinecraft;
-        targetDownMinecraft = other.targetDownMinecraft;
-        toleranceDegrees = other.toleranceDegrees;
-        maxOffsetPixels = other.maxOffsetPixels;
-        offsetPerDegree = other.offsetPerDegree;
-        lineLengthPixels = other.lineLengthPixels;
-        lineWidthPixels = other.lineWidthPixels;
-        lineColorRgb = other.lineColorRgb;
-        linePrideEnabled = other.linePrideEnabled;
-        linePrideFlag = other.linePrideFlag;
-        showOnlyWithFirework = other.showOnlyWithFirework;
-        showInThirdPerson = other.showInThirdPerson;
+        visibility = other.visibility.copy();
+        pitch = other.pitch.copy();
+        line = other.line.copy();
+        amplitude = other.amplitude.copy();
         activeProfileIndex = other.activeProfileIndex;
         activeProfileFile = other.activeProfileFile;
         profileSortMode = other.profileSortMode;
         profiles = ProfileDefaults.copyProfiles(other.profiles);
         profileMetadata = other.profileMetadata == null ? new ProfileMetadataStore() : other.profileMetadata.copy();
         profilesNormalized = false;
-        amplitudeHelperEnabled = other.amplitudeHelperEnabled;
-        amplitudeTriggerMode = other.amplitudeTriggerMode;
-        amplitudeDownBlocks = other.amplitudeDownBlocks;
-        amplitudeUpBlocks = other.amplitudeUpBlocks;
-        amplitudeToleranceBlocks = other.amplitudeToleranceBlocks;
-        amplitudeDownVelocity = other.amplitudeDownVelocity;
-        amplitudeUpVelocity = other.amplitudeUpVelocity;
-        amplitudeCueColorRgb = other.amplitudeCueColorRgb;
-        amplitudeCuePrideEnabled = other.amplitudeCuePrideEnabled;
-        amplitudeCuePrideFlag = other.amplitudeCuePrideFlag;
         ensureProfiles();
     }
 
@@ -463,53 +424,35 @@ public final class Config {
     }
 
     private void clampValues(RepairLog repairs) {
+        ensureValueObjects();
         ensureProfiles();
         Profile defaults = ProfileDefaults.template();
+        defaults.ensureValueObjects();
         version = repairInt(repairs, "version", version, CURRENT_VERSION, CURRENT_VERSION, CURRENT_VERSION);
         profileSortMode = repairInt(repairs, "profileSortMode", profileSortMode, PROFILE_SORT_CREATED,
                 PROFILE_SORT_CREATED, PROFILE_SORT_MODIFIED);
-        targetUpMinecraft = repairFloat(repairs, "targetUpMinecraft", targetUpMinecraft,
-                defaults.targetUpMinecraft, -90.0f, 0.0f);
-        targetDownMinecraft = repairFloat(repairs, "targetDownMinecraft", targetDownMinecraft,
-                defaults.targetDownMinecraft, 0.0f, 90.0f);
-        toleranceDegrees = repairFloat(repairs, "toleranceDegrees", toleranceDegrees,
-                defaults.toleranceDegrees, 1.0f, 45.0f);
-        maxOffsetPixels = repairInt(repairs, "maxOffsetPixels", maxOffsetPixels,
-                defaults.maxOffsetPixels, 0, 200);
-        offsetPerDegree = repairFloat(repairs, "offsetPerDegree", offsetPerDegree,
-                defaults.offsetPerDegree, 0.25f, 10.0f);
-        lineLengthPixels = repairInt(repairs, "lineLengthPixels", lineLengthPixels,
-                defaults.lineLengthPixels, 2, 200);
-        lineWidthPixels = repairInt(repairs, "lineWidthPixels", lineWidthPixels,
-                defaults.lineWidthPixels, 1, 20);
-        lineColorRgb = repairColor(repairs, "lineColorRgb", lineColorRgb, defaults.lineColorRgb);
-        linePrideFlag = repairPrideFlag(repairs, "linePrideFlag", linePrideFlag, defaults.linePrideFlag);
-        amplitudeTriggerMode = repairInt(repairs, "amplitudeTriggerMode", amplitudeTriggerMode,
-                defaults.amplitudeTriggerMode, AMPLITUDE_TRIGGER_HEIGHT, AMPLITUDE_TRIGGER_EITHER);
-        amplitudeDownBlocks = repairInt(repairs, "amplitudeDownBlocks", amplitudeDownBlocks,
-                defaults.amplitudeDownBlocks, 1, 1024);
-        amplitudeUpBlocks = repairInt(repairs, "amplitudeUpBlocks", amplitudeUpBlocks,
-                defaults.amplitudeUpBlocks, 1, 1024);
-        amplitudeToleranceBlocks = repairInt(repairs, "amplitudeToleranceBlocks", amplitudeToleranceBlocks,
-                defaults.amplitudeToleranceBlocks, 0, 128);
-        amplitudeDownVelocity = repairFloat(repairs, "amplitudeDownVelocity", amplitudeDownVelocity,
-                defaults.amplitudeDownVelocity, 0.1f, 10.0f);
-        amplitudeUpVelocity = repairFloat(repairs, "amplitudeUpVelocity", amplitudeUpVelocity,
-                defaults.amplitudeUpVelocity, 0.0f, 10.0f);
-        if (amplitudeUpVelocity >= amplitudeDownVelocity) {
-            float oldValue = amplitudeUpVelocity;
-            amplitudeUpVelocity = clamp(defaults.amplitudeUpVelocity, 0.0f, Math.max(0.0f,
-                    amplitudeDownVelocity - 0.1f));
-            repair(repairs, "amplitudeUpVelocity", oldValue, amplitudeUpVelocity);
-        }
-        amplitudeCueColorRgb = repairColor(repairs, "amplitudeCueColorRgb", amplitudeCueColorRgb,
-                defaults.amplitudeCueColorRgb);
-        amplitudeCuePrideFlag = repairPrideFlag(repairs, "amplitudeCuePrideFlag", amplitudeCuePrideFlag,
-                defaults.amplitudeCuePrideFlag);
+        pitch.sanitize(repairs, defaults.pitch);
+        line.sanitize(repairs, defaults.line);
+        amplitude.sanitize(repairs, defaults.amplitude);
         activeProfileIndex = clampIndex(activeProfileIndex);
         activeProfileFile = profiles.get(activeProfileIndex).fileName;
         for (Profile profile : profiles) {
             profile.sanitize(null, defaults);
+        }
+    }
+
+    void ensureValueObjects() {
+        if (visibility == null) {
+            visibility = new VisibilitySettings();
+        }
+        if (pitch == null) {
+            pitch = new PitchSettings();
+        }
+        if (line == null) {
+            line = new LineSettings();
+        }
+        if (amplitude == null) {
+            amplitude = new AmplitudeSettings();
         }
     }
 
