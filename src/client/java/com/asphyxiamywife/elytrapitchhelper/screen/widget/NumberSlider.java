@@ -49,6 +49,18 @@ public final class NumberSlider extends AbstractSliderButton {
         updateMessage();
     }
 
+    @Override
+    public boolean mouseScrolled(double mouseX, double mouseY, double scrollX, double scrollY) {
+        if (scrollY == 0.0 || !active || !visible || !isMouseOver(mouseX, mouseY)) {
+            return false;
+        }
+        double increment = step > 0.0 ? step : (max - min) / 100.0;
+        double next = currentValue() + (scrollY > 0.0 ? increment : -increment);
+        value = normalize(next, min, max);
+        applyValue();
+        return true;
+    }
+
     private double currentValue() {
         double current = min + (max - min) * value;
         if (step > 0.0) {

@@ -7,7 +7,7 @@ final class ConfigJsonReader {
     private ConfigJsonReader() {
     }
 
-    static String readString(JsonObject json, String field, String fallback, Config.RepairLog repairs) {
+    static String readString(JsonObject json, String field, String fallback, RepairLog repairs) {
         JsonElement element = json.get(field);
         if (element == null || element.isJsonNull()) {
             ConfigRepair.repair(repairs, field, "missing", fallback);
@@ -25,7 +25,7 @@ final class ConfigJsonReader {
         return value;
     }
 
-    static boolean readBoolean(JsonObject json, String field, boolean fallback, Config.RepairLog repairs) {
+    static boolean readBoolean(JsonObject json, String field, boolean fallback, RepairLog repairs) {
         JsonElement element = json.get(field);
         if (element == null || element.isJsonNull()) {
             ConfigRepair.repair(repairs, field, "missing", fallback);
@@ -38,11 +38,11 @@ final class ConfigJsonReader {
         return element.getAsBoolean();
     }
 
-    static boolean readOptionalBoolean(JsonObject json, String field, boolean fallback, Config.RepairLog repairs) {
+    static boolean readOptionalBoolean(JsonObject json, String field, boolean fallback, RepairLog repairs) {
         return json.has(field) ? readBoolean(json, field, fallback, repairs) : fallback;
     }
 
-    static int readInt(JsonObject json, String field, int fallback, Config.RepairLog repairs) {
+    static int readInt(JsonObject json, String field, int fallback, RepairLog repairs) {
         JsonElement element = json.get(field);
         if (element == null || element.isJsonNull()) {
             ConfigRepair.repair(repairs, field, "missing", fallback);
@@ -60,11 +60,11 @@ final class ConfigJsonReader {
         }
     }
 
-    static int readOptionalInt(JsonObject json, String field, int fallback, Config.RepairLog repairs) {
+    static int readOptionalInt(JsonObject json, String field, int fallback, RepairLog repairs) {
         return json.has(field) ? readInt(json, field, fallback, repairs) : fallback;
     }
 
-    static float readFloat(JsonObject json, String field, float fallback, Config.RepairLog repairs) {
+    static float readFloat(JsonObject json, String field, float fallback, RepairLog repairs) {
         JsonElement element = json.get(field);
         if (element == null || element.isJsonNull()) {
             ConfigRepair.repair(repairs, field, "missing", fallback);
@@ -82,12 +82,12 @@ final class ConfigJsonReader {
         }
     }
 
-    static float readOptionalFloat(JsonObject json, String field, float fallback, Config.RepairLog repairs) {
+    static float readOptionalFloat(JsonObject json, String field, float fallback, RepairLog repairs) {
         return json.has(field) ? readFloat(json, field, fallback, repairs) : fallback;
     }
 
     static int readLegacyInt(JsonObject json, String field, int fallback, int min, int max,
-            Config.RepairLog repairs) {
+            RepairLog repairs) {
         int value = readOptionalInt(json, field, fallback, repairs);
         int repaired = Math.max(min, Math.min(max, value));
         if (repaired != value) {
@@ -97,7 +97,7 @@ final class ConfigJsonReader {
     }
 
     static float readLegacyFloat(JsonObject json, String field, float fallback, float min, float max,
-            Config.RepairLog repairs) {
+            RepairLog repairs) {
         float value = readOptionalFloat(json, field, fallback, repairs);
         float repaired = Float.isFinite(value) ? ConfigRepair.clamp(value, min, max) : fallback;
         if (Float.compare(repaired, value) != 0) {
@@ -106,7 +106,7 @@ final class ConfigJsonReader {
         return repaired;
     }
 
-    static int readLegacyColor(JsonObject json, String field, int fallback, Config.RepairLog repairs) {
+    static int readLegacyColor(JsonObject json, String field, int fallback, RepairLog repairs) {
         int value = readOptionalInt(json, field, fallback, repairs);
         int repaired = value & 0x00FFFFFF;
         if (repaired != value) {

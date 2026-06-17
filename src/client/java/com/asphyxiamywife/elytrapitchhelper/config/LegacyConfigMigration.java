@@ -30,7 +30,7 @@ final class LegacyConfigMigration {
                 return null;
             }
 
-            Config.RepairLog repairs = new Config.RepairLog("legacy config " + legacyPath);
+            RepairLog repairs = new RepairLog("legacy config " + legacyPath);
             Profile defaults = ProfileDefaults.template();
             Profile migratedProfile = defaults.copy();
             migratedProfile.name = defaults.name == null || defaults.name.isBlank() ? "Default" : defaults.name;

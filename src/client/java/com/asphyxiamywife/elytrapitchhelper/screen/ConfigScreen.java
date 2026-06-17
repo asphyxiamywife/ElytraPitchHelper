@@ -2,11 +2,15 @@ package com.asphyxiamywife.elytrapitchhelper.screen;
 
 import com.asphyxiamywife.elytrapitchhelper.client.ClientConfigStore;
 import com.asphyxiamywife.elytrapitchhelper.config.Config;
+import com.asphyxiamywife.elytrapitchhelper.config.ConfigSaveException;
 import com.asphyxiamywife.elytrapitchhelper.config.Profile;
 import com.asphyxiamywife.elytrapitchhelper.config.PrideFlag;
 import com.asphyxiamywife.elytrapitchhelper.config.StagedProfileDelete;
+import com.asphyxiamywife.elytrapitchhelper.config.VoidWarningSettings;
 import com.asphyxiamywife.elytrapitchhelper.platform.PlatformFileOpener;
 import com.asphyxiamywife.elytrapitchhelper.screen.widget.ColorEditButton;
+import com.asphyxiamywife.elytrapitchhelper.screen.widget.CyclingOptionButton;
+import com.asphyxiamywife.elytrapitchhelper.screen.widget.DropdownButton;
 import com.asphyxiamywife.elytrapitchhelper.screen.widget.NumberSlider;
 import net.minecraft.client.gui.Font;
 import net.minecraft.client.gui.GuiGraphicsExtractor;
@@ -14,9 +18,10 @@ import net.minecraft.client.gui.components.AbstractScrollArea;
 import net.minecraft.client.gui.components.AbstractSliderButton;
 import net.minecraft.client.gui.components.AbstractWidget;
 import net.minecraft.client.gui.components.Button;
+import net.minecraft.client.gui.components.CycleButton;
 import net.minecraft.client.gui.components.EditBox;
+import net.minecraft.client.gui.components.events.GuiEventListener;
 import net.minecraft.client.gui.components.Tooltip;
-import net.minecraft.client.gui.narration.NarrationElementOutput;
 import net.minecraft.client.gui.screens.ConfirmScreen;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.client.input.KeyEvent;
@@ -40,9 +45,6 @@ public final class ConfigScreen extends Screen implements ProfileEditorPanel.Hos
     static final Duration TOOLTIP_DELAY = Duration.ofMillis(350L);
     private static final long SAVE_DEBOUNCE_MILLIS = 750L;
     static final int PROFILE_NAME_MAX_LENGTH = 512;
-    private static final long PROFILE_NAME_MARQUEE_EDGE_HOLD_MILLIS = 850L;
-    private static final int PROFILE_NAME_MARQUEE_PIXELS_PER_SECOND = 18;
-    private static final int TRANSPARENT_TEXT_COLOR = 0x00000000;
 
     private final Screen lastScreen;
     private Config config;
@@ -58,7 +60,9 @@ public final class ConfigScreen extends Screen implements ProfileEditorPanel.Hos
     private double profileScrollbarGrabOffset;
     private boolean deleteModeConfirmationOpen;
     private final List<StagedProfileDelete> stagedProfileDeletes = new ArrayList<>();
+    private final DropdownOverlayController dropdowns = new DropdownOverlayController();
     private ConfigCategory category = ConfigCategory.GENERAL;
+    private String selectedVoidWarningDimensionKey;
 
     public ConfigScreen(Screen lastScreen) {
         super(Component.translatable("screen.elytrapitchhelper.config.title"));
@@ -69,6 +73,7 @@ public final class ConfigScreen extends Screen implements ProfileEditorPanel.Hos
 
     @Override
     protected void init() {
+        dropdowns.clear();
         if (configRevision != ClientConfigStore.revision()) {
             loadConfigSnapshot();
         }
@@ -96,20 +101,26 @@ public final class ConfigScreen extends Screen implements ProfileEditorPanel.Hos
                 : Component.translatable("screen.elytrapitchhelper.profiles.title");
         context.centeredText(font, renderedTitle, width / 2, 15, 0xFFFFFF);
         super.extractRenderState(context, mouseX, mouseY, delta);
+        dropdowns.extractOverlays(context, font, mouseX, mouseY);
     }
 
     @Override
     public void onClose() {
         if (editingProfile) {
-            flushSaveIfPending();
+            if (!flushSaveIfPending()) {
+                return;
+            }
             editingProfile = false;
             editingProfileFile = null;
+            selectedVoidWarningDimensionKey = null;
             refreshConfigSnapshot();
             rebuildWidgets();
         } else if (deleteMode) {
             requestCancelProfileDeletes();
         } else {
-            flushSaveIfPending();
+            if (!flushSaveIfPending()) {
+                return;
+            }
             minecraft.setScreen(lastScreen);
         }
     }
@@ -126,6 +137,12 @@ public final class ConfigScreen extends Screen implements ProfileEditorPanel.Hos
 
     @Override
     public boolean mouseScrolled(double mouseX, double mouseY, double scrollX, double scrollY) {
+        if (dropdowns.handleMouseScrolled(mouseX, mouseY, scrollY, height)) {
+            return true;
+        }
+        if (super.mouseScrolled(mouseX, mouseY, scrollX, scrollY)) {
+            return true;
+        }
         if (!editingProfile && config.profileCount() > 0) {
             int maxScroll = maxProfileScroll();
             int nextScroll = Math.max(0, Math.min(maxScroll, profileScroll - (int) Math.signum(scrollY)));
@@ -135,11 +152,17 @@ public final class ConfigScreen extends Screen implements ProfileEditorPanel.Hos
                 return true;
             }
         }
-        return super.mouseScrolled(mouseX, mouseY, scrollX, scrollY);
+        return false;
     }
 
     @Override
     public boolean mouseClicked(MouseButtonEvent event, boolean doubleClick) {
+        if (dropdowns.handleMouseClicked(event, height)) {
+            return true;
+        }
+        if (handleCycleButtonRightClick(event)) {
+            return true;
+        }
         if (startProfileScrollbarDrag(event)) {
             return true;
         }
@@ -166,6 +189,9 @@ public final class ConfigScreen extends Screen implements ProfileEditorPanel.Hos
 
     @Override
     public boolean keyPressed(KeyEvent event) {
+        if (dropdowns.handleKeyPressed(event)) {
+            return true;
+        }
         if ((event.key() == GLFW.GLFW_KEY_ENTER || event.key() == GLFW.GLFW_KEY_KP_ENTER)
                 && commitFocusedTextField()) {
             return true;
@@ -348,22 +374,22 @@ public final class ConfigScreen extends Screen implements ProfileEditorPanel.Hos
         profileScrollbarDragging = true;
         setDragging(true);
         profileScrollbarGrabOffset = geometry.containsScroller(event.y())
-                ? event.y() - geometry.scrollerY
-                : geometry.scrollerHeight / 2.0;
+                ? event.y() - geometry.scrollerY()
+                : geometry.scrollerHeight() / 2.0;
         scrollProfileListToMouse(event.y());
         return true;
     }
 
     private void scrollProfileListToMouse(double mouseY) {
         ProfileScrollGeometry geometry = profileScrollGeometry();
-        if (geometry == null || geometry.movableHeight <= 0 || geometry.maxScrollAmount <= 0) {
+        if (geometry == null || geometry.movableHeight() <= 0 || geometry.maxScrollAmount() <= 0) {
             stopProfileScrollbarDrag();
             return;
         }
 
         double scrollerTop = Math.max(0.0,
-                Math.min(geometry.movableHeight, mouseY - geometry.y - profileScrollbarGrabOffset));
-        double scrollAmount = scrollerTop * geometry.maxScrollAmount / geometry.movableHeight;
+                Math.min(geometry.movableHeight(), mouseY - geometry.y() - profileScrollbarGrabOffset));
+        double scrollAmount = scrollerTop * geometry.maxScrollAmount() / geometry.movableHeight();
         setProfileScroll((int) Math.round(scrollAmount / ROW_HEIGHT));
     }
 
@@ -449,7 +475,26 @@ public final class ConfigScreen extends Screen implements ProfileEditorPanel.Hos
 
     @Override
     public void addWidget(AbstractWidget widget) {
+        if (widget instanceof DropdownButton<?> dropdown) {
+            dropdowns.register(dropdown);
+        }
         addRenderableWidget(widget);
+    }
+
+    private boolean handleCycleButtonRightClick(MouseButtonEvent event) {
+        if (event.button() != GLFW.GLFW_MOUSE_BUTTON_RIGHT) {
+            return false;
+        }
+        List<? extends GuiEventListener> children = children();
+        for (int i = children.size() - 1; i >= 0; i--) {
+            GuiEventListener child = children.get(i);
+            if (child instanceof CycleButton<?> cycleButton && child.isMouseOver(event.x(), event.y())) {
+                cycleButton.mouseScrolled(event.x(), event.y(), 0.0, 1.0);
+                cycleButton.playDownSound(minecraft.getSoundManager());
+                return true;
+            }
+        }
+        return false;
     }
 
     @Override
@@ -490,7 +535,9 @@ public final class ConfigScreen extends Screen implements ProfileEditorPanel.Hos
                 || configRevision != ClientConfigStore.revision();
         setFocused(null);
         editBox.setFocused(false);
-        flushSaveIfPending();
+        if (!flushSaveIfPending()) {
+            return true;
+        }
         if (shouldReload) {
             loadConfigSnapshot();
             syncEditingProfileIndex();
@@ -510,11 +557,34 @@ public final class ConfigScreen extends Screen implements ProfileEditorPanel.Hos
     public AbstractSliderButton intSlider(Component label, int current, int min, int max, String suffix,
             IntConsumer onChange) {
         return new NumberSlider(0, 0, 1, CONTROL_HEIGHT, label, current, min, max, 1.0,
-                value -> (int) Math.round(value) + " " + suffix, value -> onChange.accept((int) Math.round(value)));
+                value -> formatIntValue(value, suffix), value -> onChange.accept((int) Math.round(value)));
+    }
+
+    private static String formatIntValue(double value, String suffix) {
+        int rounded = (int) Math.round(value);
+        return suffix == null || suffix.isBlank() ? Integer.toString(rounded) : rounded + " " + suffix;
+    }
+
+    @Override
+    public String currentDimensionKey() {
+        return minecraft != null && minecraft.level != null
+                ? minecraft.level.dimension().identifier().toString()
+                : null;
+    }
+
+    @Override
+    public String selectedVoidWarningDimensionKey() {
+        return selectedVoidWarningDimensionKey;
+    }
+
+    @Override
+    public void setSelectedVoidWarningDimensionKey(String dimensionKey) {
+        selectedVoidWarningDimensionKey = dimensionKey;
     }
 
     @Override
     public Button colorButton(Component label, int current, boolean prideEnabled, String prideFlagId,
+            int[] customPrideColors,
             IntSupplier previewLineLength, IntSupplier previewLineWidth, boolean previewCuePeak,
             IntConsumer onChange, ColorEditorScreen.PrideSettingsConsumer onPrideChange) {
         int color = current & 0x00FFFFFF;
@@ -523,11 +593,12 @@ public final class ConfigScreen extends Screen implements ProfileEditorPanel.Hos
                 ? Component.translatable("option.elytrapitchhelper.color.pride_value",
                         Component.translatable(prideFlag.translationKey()))
                 : ScreenText.colorComponent(color);
-        int[] stripeColors = prideEnabled ? prideFlag.colors() : null;
+        int[] stripeColors = prideEnabled ? PrideFlag.colorsFor(prideFlag.id(), customPrideColors) : null;
         return new ColorEditButton(CommonComponents.optionNameValue(label, value), color, stripeColors,
                 button -> minecraft.setScreen(new ColorEditorScreen(this, label, color, prideEnabled,
-                        prideFlag.id(), previewLineLength.getAsInt(), previewLineWidth.getAsInt(), previewCuePeak,
-                        onChange, onPrideChange, this::flushSaveIfPending)));
+                        prideFlag.id(), customPrideColors, previewLineLength.getAsInt(),
+                        previewLineWidth.getAsInt(), previewCuePeak, onChange, onPrideChange,
+                        this::flushSaveIfPending)));
     }
 
     @Override
@@ -548,11 +619,40 @@ public final class ConfigScreen extends Screen implements ProfileEditorPanel.Hos
 
     @Override
     public Button amplitudeTriggerModeButton(Component label, Profile profile) {
-        return Button.builder(amplitudeTriggerModeMessage(label), button -> {
-            profile.amplitude.triggerMode = Config.nextAmplitudeTriggerMode(profile.amplitude.triggerMode);
-            button.setMessage(amplitudeTriggerModeMessage(label, profile.amplitude.triggerMode));
-            saveProfileChange();
-        }).bounds(0, 0, 1, CONTROL_HEIGHT).build();
+        CyclingOptionButton[] buttonRef = new CyclingOptionButton[1];
+        CyclingOptionButton button = new CyclingOptionButton(0, 0, 1, CONTROL_HEIGHT,
+                amplitudeTriggerModeMessage(label), () -> {
+                    profile.amplitude.triggerMode = Config.nextAmplitudeTriggerMode(profile.amplitude.triggerMode);
+                    buttonRef[0].setMessage(amplitudeTriggerModeMessage(label, profile.amplitude.triggerMode));
+                    saveProfileChange();
+                }, () -> {
+                    profile.amplitude.triggerMode = Config.previousAmplitudeTriggerMode(profile.amplitude.triggerMode);
+                    buttonRef[0].setMessage(amplitudeTriggerModeMessage(label, profile.amplitude.triggerMode));
+                    saveProfileChange();
+                });
+        buttonRef[0] = button;
+        button.setMessage(amplitudeTriggerModeMessage(label, profile.amplitude.triggerMode));
+        return button;
+    }
+
+    @Override
+    public Button voidWarningModeButton(Component label, Profile profile) {
+        CyclingOptionButton[] buttonRef = new CyclingOptionButton[1];
+        CyclingOptionButton button = new CyclingOptionButton(0, 0, 1, CONTROL_HEIGHT,
+                voidWarningModeMessage(label), () -> {
+                    profile.voidWarning.mode = VoidWarningSettings.nextMode(profile.voidWarning.mode);
+                    buttonRef[0].setMessage(voidWarningModeMessage(label, profile.voidWarning.mode));
+                    saveProfileChange();
+                    rebuildWidgets();
+                }, () -> {
+                    profile.voidWarning.mode = VoidWarningSettings.previousMode(profile.voidWarning.mode);
+                    buttonRef[0].setMessage(voidWarningModeMessage(label, profile.voidWarning.mode));
+                    saveProfileChange();
+                    rebuildWidgets();
+                });
+        buttonRef[0] = button;
+        button.setMessage(voidWarningModeMessage(label, profile.voidWarning.mode));
+        return button;
     }
 
     private Component amplitudeTriggerModeMessage(Component label) {
@@ -573,6 +673,21 @@ public final class ConfigScreen extends Screen implements ProfileEditorPanel.Hos
         return Component.translatable("option.elytrapitchhelper.amplitude_trigger.height");
     }
 
+    private Component voidWarningModeMessage(Component label) {
+        return voidWarningModeMessage(label, config.profile(editingProfileIndex).voidWarning.mode);
+    }
+
+    private Component voidWarningModeMessage(Component label, int mode) {
+        return CommonComponents.optionNameValue(label, voidWarningModeComponent(mode));
+    }
+
+    private static Component voidWarningModeComponent(int mode) {
+        if (mode == VoidWarningSettings.MODE_SIMPLE_HEIGHT) {
+            return Component.translatable("option.elytrapitchhelper.void_mode.simple");
+        }
+        return Component.translatable("option.elytrapitchhelper.void_mode.predicted");
+    }
+
     @Override
     public Component profileSortMessage() {
         return CommonComponents.optionNameValue(Component.translatable("option.elytrapitchhelper.profile_sort"),
@@ -591,7 +706,9 @@ public final class ConfigScreen extends Screen implements ProfileEditorPanel.Hos
 
     @Override
     public void openProfileJson(int profileIndex) {
-        flushSaveIfPending();
+        if (!flushSaveIfPending()) {
+            return;
+        }
         Path path = config.getProfilePath(profileIndex);
         if (!PlatformFileOpener.open(path)) {
             sendOverlay(Component.translatable("message.elytrapitchhelper.profile.open_failed"));
@@ -629,13 +746,20 @@ public final class ConfigScreen extends Screen implements ProfileEditorPanel.Hos
         }
     }
 
-    private void flushSaveIfPending() {
+    private boolean flushSaveIfPending() {
         if (!savePending) {
-            return;
+            return true;
         }
-        ClientConfigStore.set(config);
-        configRevision = ClientConfigStore.revision();
-        savePending = false;
+        try {
+            ClientConfigStore.set(config);
+            configRevision = ClientConfigStore.revision();
+            savePending = false;
+            return true;
+        } catch (ConfigSaveException e) {
+            saveAfterMillis = System.currentTimeMillis() + SAVE_DEBOUNCE_MILLIS;
+            sendOverlay(Component.translatable("message.elytrapitchhelper.config.save_failed"));
+            return false;
+        }
     }
 
     private void loadConfigSnapshot() {
@@ -663,7 +787,9 @@ public final class ConfigScreen extends Screen implements ProfileEditorPanel.Hos
 
     @Override
     public void enterDeleteMode() {
-        flushSaveIfPending();
+        if (!flushSaveIfPending()) {
+            return;
+        }
         stagedProfileDeletes.clear();
         deleteMode = true;
         rebuildWidgets();
@@ -675,6 +801,7 @@ public final class ConfigScreen extends Screen implements ProfileEditorPanel.Hos
         editingProfileFile = config.profile(profileIndex).fileName;
         editingProfile = true;
         category = ConfigCategory.GENERAL;
+        selectedVoidWarningDimensionKey = null;
         rebuildWidgets();
     }
 
@@ -706,128 +833,6 @@ public final class ConfigScreen extends Screen implements ProfileEditorPanel.Hos
 
     private boolean isTextFieldFocused() {
         return getFocused() instanceof EditBox;
-    }
-
-    static final class ProfileScrollBar extends AbstractScrollArea {
-        private final int profileCount;
-
-        ProfileScrollBar(int x, int y, int width, int height, int profileCount, int visibleRows,
-                int scrollRow) {
-            super(x, y, width, height, Component.translatable("screen.elytrapitchhelper.profile.scrollbar"),
-                    AbstractScrollArea.defaultSettings(ROW_HEIGHT));
-            this.profileCount = profileCount;
-            setScrollRow(scrollRow);
-        }
-
-        @Override
-        protected void extractWidgetRenderState(GuiGraphicsExtractor context, int mouseX, int mouseY, float delta) {
-            extractScrollbar(context, mouseX, mouseY);
-        }
-
-        @Override
-        protected int contentHeight() {
-            return profileCount * ROW_HEIGHT;
-        }
-
-        @Override
-        protected void updateWidgetNarration(NarrationElementOutput output) {
-            defaultButtonNarrationText(output);
-        }
-
-        private void setScrollRow(int scrollRow) {
-            super.setScrollAmount(scrollRow * ROW_HEIGHT);
-        }
-    }
-
-    static final class MarqueeEditBox extends EditBox {
-        private final Font textRenderer;
-        private int textColor = EditBox.DEFAULT_TEXT_COLOR;
-        private String marqueeValue = "";
-        private int marqueeInnerWidth = -1;
-        private long marqueeStartedMillis = System.currentTimeMillis();
-        private boolean marqueeHovered;
-
-        MarqueeEditBox(Font font, int x, int y, int width, int height, Component message) {
-            super(font, x, y, width, height, message);
-            this.textRenderer = font;
-        }
-
-        @Override
-        public void setTextColor(int textColor) {
-            super.setTextColor(textColor);
-            this.textColor = textColor;
-        }
-
-        @Override
-        public void extractWidgetRenderState(GuiGraphicsExtractor context, int mouseX, int mouseY, float delta) {
-            String value = getValue();
-            int innerWidth = getInnerWidth();
-            int textWidth = textRenderer.width(value);
-            boolean hovered = isHovered();
-            if (!hovered || isFocused() || value.isEmpty() || textWidth <= innerWidth) {
-                marqueeHovered = false;
-                super.extractWidgetRenderState(context, mouseX, mouseY, delta);
-                return;
-            }
-
-            updateMarqueeStart(value, innerWidth, !marqueeHovered);
-            marqueeHovered = true;
-            super.setTextColor(TRANSPARENT_TEXT_COLOR);
-            try {
-                super.extractWidgetRenderState(context, mouseX, mouseY, delta);
-            } finally {
-                super.setTextColor(textColor);
-            }
-
-            int textX = isBordered() ? getX() + 4 : getX();
-            int textY = isBordered() ? getY() + (getHeight() - 8) / 2 : getY();
-            int overflow = textWidth - innerWidth;
-            int offset = marqueeOffset(overflow);
-            context.enableScissor(textX, getY(), textX + innerWidth, getY() + getHeight());
-            context.text(textRenderer, value, textX - offset, textY, textColor, true);
-            context.disableScissor();
-        }
-
-        private void updateMarqueeStart(String value, int innerWidth, boolean forceRestart) {
-            if (forceRestart || !value.equals(marqueeValue) || innerWidth != marqueeInnerWidth) {
-                marqueeValue = value;
-                marqueeInnerWidth = innerWidth;
-                marqueeStartedMillis = System.currentTimeMillis();
-            }
-        }
-
-        private int marqueeOffset(int overflow) {
-            long travelMillis = Math.max(1L, overflow * 1000L / PROFILE_NAME_MARQUEE_PIXELS_PER_SECOND);
-            long cycleMillis = travelMillis * 2L + PROFILE_NAME_MARQUEE_EDGE_HOLD_MILLIS * 2L;
-            long elapsed = (System.currentTimeMillis() - marqueeStartedMillis) % cycleMillis;
-            if (elapsed < PROFILE_NAME_MARQUEE_EDGE_HOLD_MILLIS) {
-                return 0;
-            }
-
-            elapsed -= PROFILE_NAME_MARQUEE_EDGE_HOLD_MILLIS;
-            if (elapsed < travelMillis) {
-                return Math.round(overflow * (elapsed / (float) travelMillis));
-            }
-
-            elapsed -= travelMillis;
-            if (elapsed < PROFILE_NAME_MARQUEE_EDGE_HOLD_MILLIS) {
-                return overflow;
-            }
-
-            elapsed -= PROFILE_NAME_MARQUEE_EDGE_HOLD_MILLIS;
-            return Math.round(overflow * (1.0F - elapsed / (float) travelMillis));
-        }
-    }
-
-    private record ProfileScrollGeometry(int x, int y, int width, int height, int scrollerY, int scrollerHeight,
-            int maxScrollAmount, int movableHeight) {
-        private boolean contains(double mouseX, double mouseY) {
-            return mouseX >= x && mouseX <= x + width && mouseY >= y && mouseY < y + height;
-        }
-
-        private boolean containsScroller(double mouseY) {
-            return mouseY >= scrollerY && mouseY < scrollerY + scrollerHeight;
-        }
     }
 
 }

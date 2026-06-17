@@ -1,9 +1,19 @@
 package com.asphyxiamywife.elytrapitchhelper.screen;
 
+import static com.asphyxiamywife.elytrapitchhelper.screen.ColorMath.clamp01;
+import static com.asphyxiamywife.elytrapitchhelper.screen.ColorMath.clampInt;
+import static com.asphyxiamywife.elytrapitchhelper.screen.ColorMath.diskToSquare;
+import static com.asphyxiamywife.elytrapitchhelper.screen.ColorMath.hsvToRgb;
+import static com.asphyxiamywife.elytrapitchhelper.screen.ColorMath.hueFromVector;
+import static com.asphyxiamywife.elytrapitchhelper.screen.ColorMath.parseHexColor;
+import static com.asphyxiamywife.elytrapitchhelper.screen.ColorMath.rgbToHsv;
+
 import com.asphyxiamywife.elytrapitchhelper.config.PrideFlag;
+import com.asphyxiamywife.elytrapitchhelper.screen.widget.CyclingOptionButton;
+import com.asphyxiamywife.elytrapitchhelper.screen.widget.DropdownButton;
 import com.asphyxiamywife.elytrapitchhelper.screen.widget.NumberSlider;
 import com.asphyxiamywife.elytrapitchhelper.util.MathUtil;
-import com.mojang.blaze3d.platform.NativeImage;
+import com.mojang.blaze3d.platform.cursor.CursorTypes;
 import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.client.gui.components.AbstractWidget;
 import net.minecraft.client.gui.components.Button;
@@ -11,11 +21,11 @@ import net.minecraft.client.gui.components.EditBox;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.client.input.KeyEvent;
 import net.minecraft.client.input.MouseButtonEvent;
-import net.minecraft.client.renderer.texture.DynamicTexture;
 import net.minecraft.network.chat.CommonComponents;
 import net.minecraft.network.chat.Component;
 import org.lwjgl.glfw.GLFW;
 
+import java.util.Arrays;
 import java.util.function.IntConsumer;
 
 final class ColorEditorScreen extends Screen {
@@ -23,7 +33,7 @@ final class ColorEditorScreen extends Screen {
     private static final int CONTROL_GAP = 16;
     private static final int RGB_SLIDER_GAP = 4;
     private static final int INVALID_HEX_TEXT_COLOR = 0xFFFF5555;
-    private static final double TWO_PI = Math.PI * 2.0;
+    private static final String CUSTOM_STRIPE_MARKER = "v";
 
     private final Screen lastScreen;
     private final IntConsumer onChange;
@@ -32,12 +42,17 @@ final class ColorEditorScreen extends Screen {
     private final int previewLineLength;
     private final int previewLineWidth;
     private final boolean previewCuePeak;
+    private final ColorPaletteRenderer paletteRenderer = new ColorPaletteRenderer();
     private int color;
+    private int flatColor;
     private int lastAppliedColor;
     private boolean prideEnabled;
     private boolean lastAppliedPrideEnabled;
     private String prideFlagId;
     private String lastAppliedPrideFlagId;
+    private int[] customPrideColors;
+    private int[] lastAppliedCustomPrideColors;
+    private int customStripeIndex;
     private double hue;
     private double saturation;
     private double value;
@@ -45,29 +60,32 @@ final class ColorEditorScreen extends Screen {
     private NumberSlider greenSlider;
     private NumberSlider blueSlider;
     private Button prideModeButton;
-    private Button prideFlagButton;
+    private Button customStripeButton;
+    private Button customAddButton;
+    private Button customRemoveButton;
+    private DropdownButton<PrideFlag> prideFlagDropdown;
     private EditBox hexBox;
     private boolean syncingHexBox;
     private PaletteDrag paletteDrag = PaletteDrag.NONE;
-    private DynamicTexture paletteTexture;
-    private int paletteTextureSize;
-    private double paletteTextureHue = -1.0;
-    private DynamicTexture hueMarkerTexture;
-    private int hueMarkerRadius;
-    private DynamicTexture shadeMarkerTexture;
-    private int shadeMarkerRadius;
 
     ColorEditorScreen(Screen lastScreen, Component colorName, int color, boolean prideEnabled, String prideFlagId,
-            int previewLineLength, int previewLineWidth, boolean previewCuePeak, IntConsumer onChange,
-            PrideSettingsConsumer onPrideChange, Runnable onCommit) {
+            int[] customPrideColors, int previewLineLength, int previewLineWidth, boolean previewCuePeak,
+            IntConsumer onChange, PrideSettingsConsumer onPrideChange, Runnable onCommit) {
         super(Component.translatable("screen.elytrapitchhelper.color.title", colorName));
         this.lastScreen = lastScreen;
         this.color = color & 0x00FFFFFF;
+        this.flatColor = this.color;
         this.lastAppliedColor = this.color;
         this.prideEnabled = prideEnabled;
         this.lastAppliedPrideEnabled = prideEnabled;
         this.prideFlagId = PrideFlag.sanitizeId(prideFlagId);
         this.lastAppliedPrideFlagId = this.prideFlagId;
+        this.customPrideColors = PrideFlag.sanitizeCustomColors(customPrideColors);
+        this.lastAppliedCustomPrideColors = Arrays.copyOf(this.customPrideColors, this.customPrideColors.length);
+        if (prideEnabled && PrideFlag.isCustomId(this.prideFlagId)) {
+            this.color = this.customPrideColors[customStripeIndex];
+            this.lastAppliedColor = this.color;
+        }
         this.previewLineLength = clampInt(previewLineLength, 2, 200);
         this.previewLineWidth = clampInt(previewLineWidth, 1, 20);
         this.previewCuePeak = previewCuePeak;
@@ -81,7 +99,7 @@ final class ColorEditorScreen extends Screen {
     protected void init() {
         ColorEditorLayout layout = colorEditorLayout();
 
-        hexBox = new EditBox(font, layout.controlX + layout.controlWidth - 82, layout.hexY, 82, CONTROL_HEIGHT,
+        hexBox = new EditBox(font, layout.controlX() + layout.controlWidth() - 82, layout.hexY(), 82, CONTROL_HEIGHT,
                 Component.translatable("option.elytrapitchhelper.color.hex"));
         hexBox.setMaxLength(6);
         hexBox.setValue(ScreenText.hexColor(color));
@@ -89,21 +107,47 @@ final class ColorEditorScreen extends Screen {
         addRenderableWidget(hexBox);
 
         int prideButtonGap = RGB_SLIDER_GAP;
-        int prideButtonWidth = Math.max(58, (layout.controlWidth - prideButtonGap) / 2);
-        prideModeButton = Button.builder(prideModeMessage(), button -> {
-            prideEnabled = !prideEnabled;
-            syncPrideControls();
-            applyPrideChange();
-        }).bounds(layout.controlX, layout.prideY, prideButtonWidth, CONTROL_HEIGHT).build();
+        int prideButtonWidth = Math.max(58, (layout.controlWidth() - prideButtonGap) / 2);
+        prideModeButton = new CyclingOptionButton(layout.controlX(), layout.prideY(), prideButtonWidth,
+                CONTROL_HEIGHT, prideModeMessage(), this::togglePrideMode, this::togglePrideMode);
         addRenderableWidget(prideModeButton);
 
-        prideFlagButton = Button.builder(prideFlagMessage(), button -> {
-            prideFlagId = PrideFlag.next(prideFlagId).id();
+        prideFlagDropdown = new DropdownButton<>(layout.controlX() + prideButtonWidth + prideButtonGap, layout.prideY(),
+                layout.controlWidth() - prideButtonWidth - prideButtonGap, CONTROL_HEIGHT, null,
+                Arrays.asList(PrideFlag.values()), PrideFlag.byId(prideFlagId),
+                flag -> Component.translatable(flag.translationKey()), this::stripeColorsForDropdown, flag -> {
+            boolean wasEditingCustom = editingCustomPride();
+            prideFlagId = flag.id();
+            if (flag == PrideFlag.CUSTOM) {
+                syncColorFromCustomStripe();
+            } else if (wasEditingCustom) {
+                syncColorFromFlatColor();
+            }
             syncPrideControls();
             applyPrideChange();
-        }).bounds(layout.controlX + prideButtonWidth + prideButtonGap, layout.prideY,
-                layout.controlWidth - prideButtonWidth - prideButtonGap, CONTROL_HEIGHT).build();
-        addRenderableWidget(prideFlagButton);
+        });
+        addRenderableWidget(prideFlagDropdown);
+
+        int customButtonWidth = Math.max(54, (layout.controlWidth() - RGB_SLIDER_GAP * 2) / 3);
+        int customSmallWidth = Math.max(36, (layout.controlWidth() - customButtonWidth - RGB_SLIDER_GAP * 2) / 2);
+        customStripeButton = new CyclingOptionButton(layout.controlX(), layout.customY(), customButtonWidth,
+                CONTROL_HEIGHT, customStripeMessage(), () -> cycleCustomStripe(1), () -> cycleCustomStripe(-1));
+        addRenderableWidget(customStripeButton);
+
+        customAddButton = Button.builder(Component.translatable("option.elytrapitchhelper.color.custom.add"),
+                button -> addCustomStripe())
+                .bounds(layout.controlX() + customButtonWidth + RGB_SLIDER_GAP, layout.customY(),
+                        customSmallWidth, CONTROL_HEIGHT)
+                .build();
+        addRenderableWidget(customAddButton);
+
+        customRemoveButton = Button.builder(Component.translatable("option.elytrapitchhelper.color.custom.remove"),
+                button -> removeCustomStripe())
+                .bounds(layout.controlX() + customButtonWidth + customSmallWidth + RGB_SLIDER_GAP * 2,
+                        layout.customY(), layout.controlWidth() - customButtonWidth - customSmallWidth
+                                - RGB_SLIDER_GAP * 2, CONTROL_HEIGHT)
+                .build();
+        addRenderableWidget(customRemoveButton);
 
         redSlider = rgbSlider(Component.translatable("option.elytrapitchhelper.color.red"), red(), value -> {
             setColorFromRgb((value << 16) | (green() << 8) | blue(), false);
@@ -115,11 +159,11 @@ final class ColorEditorScreen extends Screen {
             setColorFromRgb((red() << 16) | (green() << 8) | value, false);
         });
 
-        addSlider(redSlider, layout.controlX, layout.sliderY, layout.controlWidth);
-        addSlider(greenSlider, layout.controlX, layout.sliderY + CONTROL_HEIGHT + RGB_SLIDER_GAP,
-                layout.controlWidth);
-        addSlider(blueSlider, layout.controlX, layout.sliderY + (CONTROL_HEIGHT + RGB_SLIDER_GAP) * 2,
-                layout.controlWidth);
+        addSlider(redSlider, layout.controlX(), layout.sliderY(), layout.controlWidth());
+        addSlider(greenSlider, layout.controlX(), layout.sliderY() + CONTROL_HEIGHT + RGB_SLIDER_GAP,
+                layout.controlWidth());
+        addSlider(blueSlider, layout.controlX(), layout.sliderY() + (CONTROL_HEIGHT + RGB_SLIDER_GAP) * 2,
+                layout.controlWidth());
         syncPrideControls();
 
         int buttonWidth = Math.min(120, width - 40);
@@ -130,18 +174,24 @@ final class ColorEditorScreen extends Screen {
     @Override
     public void extractRenderState(GuiGraphicsExtractor context, int mouseX, int mouseY, float delta) {
         ColorEditorLayout layout = colorEditorLayout();
-        int previewWidth = layout.controlWidth;
-        int previewX = layout.controlX;
-        int previewY = layout.previewY;
+        int previewWidth = layout.controlWidth();
+        int previewX = layout.controlX();
+        int previewY = layout.previewY();
         int previewHeight = previewHeight();
 
         context.centeredText(font, title, width / 2, 15, 0xFFFFFF);
         renderPalette(context, layout);
+        handlePaletteCursor(context, layout, mouseX, mouseY);
         renderLinePreview(context, previewX, previewY, previewWidth, previewHeight);
+        handlePreviewCursor(context, previewX, previewY, previewWidth, previewHeight, mouseX, mouseY);
 
-        context.text(font, Component.translatable("option.elytrapitchhelper.color.hex"), previewX, layout.hexY + 6,
+        context.text(font, Component.translatable("option.elytrapitchhelper.color.hex"), previewX, layout.hexY() + 6,
                 0xFFFFFF);
         super.extractRenderState(context, mouseX, mouseY, delta);
+        if (prideFlagDropdown != null && prideFlagDropdown.isOpen()) {
+            context.nextStratum();
+            prideFlagDropdown.extractDropdownOverlay(context, font, mouseX, mouseY);
+        }
     }
 
     @Override
@@ -153,12 +203,15 @@ final class ColorEditorScreen extends Screen {
 
     @Override
     public void removed() {
-        closePaletteTexture();
+        paletteRenderer.close();
         super.removed();
     }
 
     @Override
     public boolean keyPressed(KeyEvent event) {
+        if (prideFlagDropdown != null && prideFlagDropdown.handleOpenKeyPressed(event)) {
+            return true;
+        }
         if ((event.key() == GLFW.GLFW_KEY_ENTER || event.key() == GLFW.GLFW_KEY_KP_ENTER)
                 && hexBox != null && hexBox.isFocused()) {
             commitHexBox();
@@ -173,10 +226,25 @@ final class ColorEditorScreen extends Screen {
 
     @Override
     public boolean mouseClicked(MouseButtonEvent event, boolean doubleClick) {
+        if (prideFlagDropdown != null && prideFlagDropdown.handleOpenMouseClicked(event, height)) {
+            return true;
+        }
+        if (selectPreviewStripe(event)) {
+            return true;
+        }
         if (startPaletteDrag(event)) {
             return true;
         }
         return super.mouseClicked(event, doubleClick);
+    }
+
+    @Override
+    public boolean mouseScrolled(double mouseX, double mouseY, double scrollX, double scrollY) {
+        if (prideFlagDropdown != null
+                && prideFlagDropdown.handleOpenMouseScrolled(mouseX, mouseY, scrollY, height)) {
+            return true;
+        }
+        return super.mouseScrolled(mouseX, mouseY, scrollX, scrollY);
     }
 
     @Override
@@ -198,6 +266,24 @@ final class ColorEditorScreen extends Screen {
         return super.mouseReleased(event);
     }
 
+    private void togglePrideMode() {
+        boolean wasEditingCustom = editingCustomPride();
+        prideEnabled = !prideEnabled;
+        if (editingCustomPride()) {
+            syncColorFromCustomStripe();
+        } else if (wasEditingCustom) {
+            syncColorFromFlatColor();
+        }
+        syncPrideControls();
+        applyPrideChange();
+    }
+
+    private void cycleCustomStripe(int direction) {
+        customStripeIndex = Math.floorMod(customStripeIndex + direction, customPrideColors.length);
+        syncColorFromCustomStripe();
+        syncPrideControls();
+    }
+
     private NumberSlider rgbSlider(Component label, int current, IntConsumer onValueChanged) {
         return new NumberSlider(0, 0, 1, CONTROL_HEIGHT, label, current, 0, 255, 1.0,
                 value -> Integer.toString((int) Math.round(value)),
@@ -215,7 +301,7 @@ final class ColorEditorScreen extends Screen {
         if (syncingHexBox) {
             return;
         }
-        if (prideEnabled) {
+        if (prideEnabled && !editingCustomPride()) {
             return;
         }
 
@@ -281,37 +367,71 @@ final class ColorEditorScreen extends Screen {
     }
 
     private void applyColorChange() {
+        if (editingCustomPride()) {
+            int sanitized = color & 0x00FFFFFF;
+            if (customPrideColors[customStripeIndex] != sanitized) {
+                customPrideColors[customStripeIndex] = sanitized;
+                syncPrideControls();
+                applyPrideChange();
+            }
+            lastAppliedColor = sanitized;
+            return;
+        }
         if (color != lastAppliedColor) {
             lastAppliedColor = color;
+            flatColor = color & 0x00FFFFFF;
             onChange.accept(color);
         }
     }
 
     private void applyPrideChange() {
         prideFlagId = PrideFlag.sanitizeId(prideFlagId);
-        if (prideEnabled != lastAppliedPrideEnabled || !prideFlagId.equals(lastAppliedPrideFlagId)) {
+        customPrideColors = PrideFlag.sanitizeCustomColors(customPrideColors);
+        if (prideEnabled != lastAppliedPrideEnabled || !prideFlagId.equals(lastAppliedPrideFlagId)
+                || !Arrays.equals(customPrideColors, lastAppliedCustomPrideColors)) {
             lastAppliedPrideEnabled = prideEnabled;
             lastAppliedPrideFlagId = prideFlagId;
-            onPrideChange.accept(prideEnabled, prideFlagId);
+            lastAppliedCustomPrideColors = Arrays.copyOf(customPrideColors, customPrideColors.length);
+            onPrideChange.accept(prideEnabled, prideFlagId,
+                    Arrays.copyOf(customPrideColors, customPrideColors.length));
         }
     }
 
     private void syncPrideControls() {
+        boolean editingCustom = editingCustomPride();
         if (prideModeButton != null) {
             prideModeButton.setMessage(prideModeMessage());
         }
-        if (prideFlagButton != null) {
-            prideFlagButton.setMessage(prideFlagMessage());
-            prideFlagButton.active = prideEnabled;
+        if (prideFlagDropdown != null) {
+            prideFlagDropdown.setValue(PrideFlag.byId(prideFlagId));
+            prideFlagDropdown.active = prideEnabled;
+            if (!prideEnabled) {
+                prideFlagDropdown.close();
+            }
+        }
+        if (customStripeButton != null) {
+            customStripeIndex = clampInt(customStripeIndex, 0, customPrideColors.length - 1);
+            customStripeButton.setMessage(customStripeMessage());
+            customStripeButton.active = editingCustom;
+            customStripeButton.visible = editingCustom;
+        }
+        if (customAddButton != null) {
+            customAddButton.active = editingCustom && customPrideColors.length < PrideFlag.MAX_CUSTOM_COLORS;
+            customAddButton.visible = editingCustom;
+        }
+        if (customRemoveButton != null) {
+            customRemoveButton.active = editingCustom && customPrideColors.length > PrideFlag.MIN_CUSTOM_COLORS;
+            customRemoveButton.visible = editingCustom;
         }
 
-        boolean colorControlsActive = !prideEnabled;
+        boolean colorControlsActive = !prideEnabled || editingCustom;
         if (hexBox != null) {
             if (!colorControlsActive && hexBox.isFocused()) {
                 setFocused(null);
                 hexBox.setFocused(false);
             }
             hexBox.active = colorControlsActive;
+            hexBox.setEditable(colorControlsActive);
         }
         if (redSlider != null) {
             redSlider.active = colorControlsActive;
@@ -331,8 +451,76 @@ final class ColorEditorScreen extends Screen {
         return CommonComponents.optionNameValue(Component.translatable("option.elytrapitchhelper.color.pride"), value);
     }
 
-    private Component prideFlagMessage() {
-        return Component.translatable(PrideFlag.byId(prideFlagId).translationKey());
+    private Component customStripeMessage() {
+        return CommonComponents.optionNameValue(
+                Component.translatable("option.elytrapitchhelper.color.custom.stripe"),
+                Component.literal((customStripeIndex + 1) + "/" + customPrideColors.length));
+    }
+
+    private int[] stripeColorsForDropdown(PrideFlag flag) {
+        return flag == PrideFlag.CUSTOM ? customPrideColors : flag.colors();
+    }
+
+    private boolean editingCustomPride() {
+        return prideEnabled && PrideFlag.isCustomId(prideFlagId);
+    }
+
+    private void syncColorFromCustomStripe() {
+        customStripeIndex = clampInt(customStripeIndex, 0, customPrideColors.length - 1);
+        color = customPrideColors[customStripeIndex] & 0x00FFFFFF;
+        lastAppliedColor = color;
+        syncHsvFromColor(false);
+        syncColorControls();
+    }
+
+    private void syncColorFromFlatColor() {
+        color = flatColor & 0x00FFFFFF;
+        lastAppliedColor = color;
+        syncHsvFromColor(false);
+        syncColorControls();
+    }
+
+    private void syncColorControls() {
+        if (redSlider != null) {
+            syncRgbSliders();
+        }
+        if (hexBox != null) {
+            hexBox.setTextColor(EditBox.DEFAULT_TEXT_COLOR);
+            syncingHexBox = true;
+            hexBox.setValue(ScreenText.hexColor(color));
+            syncingHexBox = false;
+        }
+    }
+
+    private void addCustomStripe() {
+        if (customPrideColors.length >= PrideFlag.MAX_CUSTOM_COLORS) {
+            return;
+        }
+        int insertAt = customStripeIndex + 1;
+        int[] next = new int[customPrideColors.length + 1];
+        System.arraycopy(customPrideColors, 0, next, 0, insertAt);
+        next[insertAt] = color & 0x00FFFFFF;
+        System.arraycopy(customPrideColors, insertAt, next, insertAt + 1, customPrideColors.length - insertAt);
+        customPrideColors = next;
+        customStripeIndex = insertAt;
+        syncColorFromCustomStripe();
+        syncPrideControls();
+        applyPrideChange();
+    }
+
+    private void removeCustomStripe() {
+        if (customPrideColors.length <= PrideFlag.MIN_CUSTOM_COLORS) {
+            return;
+        }
+        int[] next = new int[customPrideColors.length - 1];
+        System.arraycopy(customPrideColors, 0, next, 0, customStripeIndex);
+        System.arraycopy(customPrideColors, customStripeIndex + 1, next, customStripeIndex,
+                customPrideColors.length - customStripeIndex - 1);
+        customPrideColors = next;
+        customStripeIndex = clampInt(customStripeIndex, 0, customPrideColors.length - 1);
+        syncColorFromCustomStripe();
+        syncPrideControls();
+        applyPrideChange();
     }
 
     private int red() {
@@ -363,22 +551,25 @@ final class ColorEditorScreen extends Screen {
             int paletteX = (width - contentWidth) / 2;
             int controlX = paletteX + paletteSize + CONTROL_GAP;
             int prideY = top + previewHeight + 8;
-            int hexY = prideY + CONTROL_HEIGHT + 8;
-            return new ColorEditorLayout(paletteX, top, paletteSize, controlX, controlWidth, top, prideY, hexY,
-                    hexY + 26);
+            int customY = prideY + CONTROL_HEIGHT + 6;
+            int hexY = customY + CONTROL_HEIGHT + 8;
+            return new ColorEditorLayout(paletteX, top, paletteSize, controlX, controlWidth, top, prideY,
+                    customY, hexY, hexY + 26);
         }
 
         int controlWidth = Math.max(140, Math.min(preferredControlWidth(), availableWidth));
-        int stackedControlsHeight = previewHeight + CONTROL_HEIGHT + CONTROL_HEIGHT * 4 + RGB_SLIDER_GAP * 4 + 58;
+        int stackedControlsHeight = previewHeight + CONTROL_HEIGHT * 2 + CONTROL_HEIGHT * 4
+                + RGB_SLIDER_GAP * 4 + 64;
         int paletteSize = clampInt(Math.min(availableWidth, height - stackedControlsHeight), 64, 140);
         int paletteX = (width - paletteSize) / 2;
         int controlX = (width - controlWidth) / 2;
         int previewY = top;
         int prideY = previewY + previewHeight + 6;
-        int paletteY = prideY + CONTROL_HEIGHT + 6;
+        int customY = prideY + CONTROL_HEIGHT + 6;
+        int paletteY = customY + CONTROL_HEIGHT + 6;
         int hexY = paletteY + paletteSize + 6;
         return new ColorEditorLayout(paletteX, paletteY, paletteSize, controlX, controlWidth, previewY, prideY,
-                hexY, hexY + 24);
+                customY, hexY, hexY + 24);
     }
 
     private int preferredControlWidth() {
@@ -393,22 +584,85 @@ final class ColorEditorScreen extends Screen {
     private void renderLinePreview(GuiGraphicsExtractor context, int x, int y, int width, int height) {
         context.outline(x, y, width, height, 0x99FFFFFF);
 
-        int lineLength = Math.min(previewLineLength, Math.max(1, width - 8));
-        int centerX = x + width / 2;
-        int centerY = y + height / 2;
+        PreviewLineGeometry line = previewLineGeometry(x, y, width, height);
         int rgb = color & 0x00FFFFFF;
-        int[] prideColors = prideEnabled ? PrideFlag.byId(prideFlagId).colors() : null;
+        int[] prideColors = prideEnabled ? PrideFlag.colorsFor(prideFlagId, customPrideColors) : null;
         if (previewCuePeak) {
             float glowAlpha = 0.18f;
-            drawCenteredPreviewRect(context, centerX, centerY, Math.min(lineLength + 18, width - 2),
+            drawCenteredPreviewRect(context, line.centerX(), line.centerY(), Math.min(line.length() + 18, width - 2),
                     Math.min(previewLineWidth + 6, height - 2), glowAlpha * 0.45f, rgb, prideColors);
-            drawCenteredPreviewRect(context, centerX, centerY, Math.min(lineLength + 10, width - 2),
+            drawCenteredPreviewRect(context, line.centerX(), line.centerY(), Math.min(line.length() + 10, width - 2),
                     Math.min(previewLineWidth + 4, height - 2), glowAlpha, rgb, prideColors);
         }
 
-        int lineX = centerX - lineLength / 2;
-        int lineY = centerY - previewLineWidth / 2;
-        drawPreviewRect(context, lineX, lineY, lineLength, previewLineWidth, 1.0f, rgb, prideColors);
+        drawPreviewRect(context, line.x(), line.y(), line.length(), previewLineWidth, 1.0f, rgb, prideColors);
+        drawCustomStripeMarker(context, x, y, width, line);
+    }
+
+    private void drawCustomStripeMarker(GuiGraphicsExtractor context, int previewX, int previewY, int previewWidth,
+            PreviewLineGeometry line) {
+        if (!editingCustomPride()) {
+            return;
+        }
+
+        int stripes = Math.max(1, customPrideColors.length);
+        int markerX = line.x() + (int) Math.round((customStripeIndex + 0.5) * line.length() / stripes);
+        markerX = clampInt(markerX, previewX + 2, previewX + previewWidth - 2);
+        int markerY = Math.max(previewY + 2, line.y() - font.lineHeight - 1);
+        int markerWidth = font.width(CUSTOM_STRIPE_MARKER);
+        context.text(font, CUSTOM_STRIPE_MARKER, markerX - markerWidth / 2, markerY, 0xFFFFFFFF, true);
+    }
+
+    private void handlePreviewCursor(GuiGraphicsExtractor context, int previewX, int previewY, int previewWidth,
+            int previewHeight, int mouseX, int mouseY) {
+        if (previewStripeIndexAt(previewX, previewY, previewWidth, previewHeight, mouseX, mouseY) >= 0) {
+            context.requestCursor(CursorTypes.POINTING_HAND);
+        }
+    }
+
+    private boolean selectPreviewStripe(MouseButtonEvent event) {
+        if (event.button() != GLFW.GLFW_MOUSE_BUTTON_LEFT) {
+            return false;
+        }
+
+        ColorEditorLayout layout = colorEditorLayout();
+        int stripe = previewStripeIndexAt(layout.controlX(), layout.previewY(), layout.controlWidth(), previewHeight(),
+                event.x(), event.y());
+        if (stripe < 0) {
+            return false;
+        }
+
+        customStripeIndex = stripe;
+        syncColorFromCustomStripe();
+        syncPrideControls();
+        return true;
+    }
+
+    private int previewStripeIndexAt(int previewX, int previewY, int previewWidth, int previewHeight, double mouseX,
+            double mouseY) {
+        if (!editingCustomPride()) {
+            return -1;
+        }
+
+        PreviewLineGeometry line = previewLineGeometry(previewX, previewY, previewWidth, previewHeight);
+        int hitTop = line.y() - 2;
+        int hitBottom = line.y() + previewLineWidth + 2;
+        if (mouseX < line.x() || mouseX >= line.x() + line.length() || mouseY < hitTop || mouseY >= hitBottom) {
+            return -1;
+        }
+
+        int stripes = Math.max(1, customPrideColors.length);
+        double position = (mouseX - line.x()) / Math.max(1.0, line.length());
+        return clampInt((int) Math.floor(position * stripes), 0, stripes - 1);
+    }
+
+    private PreviewLineGeometry previewLineGeometry(int previewX, int previewY, int previewWidth,
+            int previewHeight) {
+        int lineLength = Math.min(previewLineLength, Math.max(1, previewWidth - 8));
+        int centerX = previewX + previewWidth / 2;
+        int centerY = previewY + previewHeight / 2;
+        return new PreviewLineGeometry(centerX - lineLength / 2, centerY - previewLineWidth / 2,
+                lineLength, centerX, centerY);
     }
 
     private static void drawCenteredPreviewRect(GuiGraphicsExtractor context, int centerX, int centerY, int width,
@@ -438,157 +692,21 @@ final class ColorEditorScreen extends Screen {
     }
 
     private void renderPalette(GuiGraphicsExtractor context, ColorEditorLayout layout) {
-        ensurePaletteTexture(layout);
-        if (paletteTexture != null) {
-            context.blit(paletteTexture.getTextureView(), paletteTexture.getSampler(), layout.paletteX,
-                    layout.paletteY, layout.paletteX + layout.paletteSize, layout.paletteY + layout.paletteSize,
-                    0.0f, 1.0f, 0.0f, 1.0f);
-        }
+        paletteRenderer.render(context, layout, hue, saturation, value, prideEnabled && !editingCustomPride());
+    }
 
-        if (prideEnabled) {
-            context.fill(layout.paletteX, layout.paletteY, layout.paletteX + layout.paletteSize,
-                    layout.paletteY + layout.paletteSize, 0x99000000);
+    private void handlePaletteCursor(GuiGraphicsExtractor context, ColorEditorLayout layout, int mouseX, int mouseY) {
+        if (mouseX < layout.paletteX() || mouseX >= layout.paletteX() + layout.paletteSize()
+                || mouseY < layout.paletteY() || mouseY >= layout.paletteY() + layout.paletteSize()) {
             return;
         }
 
-        PaletteGeometry geometry = paletteGeometry(layout);
-        int centerX = layout.paletteX + (int) Math.round(geometry.centerOffset);
-        int centerY = layout.paletteY + (int) Math.round(geometry.centerOffset);
-        double hueAngle = (1.0 - hue) * TWO_PI;
-        int hueMarkerX = (int) Math.round(centerX + Math.cos(hueAngle) * geometry.markerRadius);
-        int hueMarkerY = (int) Math.round(centerY + Math.sin(hueAngle) * geometry.markerRadius);
-        drawMarker(context, hueMarkerX, hueMarkerY, Math.max(5, layout.paletteSize / 22), true);
-
-        double[] shadePoint = squareToDisk(saturation * 2.0 - 1.0, 1.0 - value * 2.0);
-        int shadeMarkerX = (int) Math.round(centerX + shadePoint[0] * geometry.shadeRadius);
-        int shadeMarkerY = (int) Math.round(centerY + shadePoint[1] * geometry.shadeRadius);
-        drawMarker(context, shadeMarkerX, shadeMarkerY, Math.max(4, layout.paletteSize / 28), false);
-    }
-
-    private void ensurePaletteTexture(ColorEditorLayout layout) {
-        if (paletteTexture != null && paletteTextureSize == layout.paletteSize
-                && Math.abs(paletteTextureHue - hue) < 0.000001) {
-            return;
-        }
-
-        if (paletteTexture == null || paletteTextureSize != layout.paletteSize) {
-            closePaletteTexture();
-            NativeImage image = new NativeImage(layout.paletteSize, layout.paletteSize, true);
-            writePalettePixels(image, layout);
-            paletteTexture = new DynamicTexture(() -> "elytrapitchhelper color palette", image);
-            paletteTextureSize = layout.paletteSize;
-        } else {
-            writePalettePixels(paletteTexture.getPixels(), layout);
-            paletteTexture.upload();
-        }
-        paletteTextureHue = hue;
-    }
-
-    private void writePalettePixels(NativeImage image, ColorEditorLayout layout) {
-        PaletteGeometry geometry = paletteGeometry(layout);
-
-        for (int y = 0; y < layout.paletteSize; y++) {
-            for (int x = 0; x < layout.paletteSize; x++) {
-                double dx = x + 0.5 - geometry.centerOffset;
-                double dy = y + 0.5 - geometry.centerOffset;
-                double distance = Math.sqrt(dx * dx + dy * dy);
-                int argb = 0;
-
-                if (distance <= geometry.outerRadius && distance >= geometry.innerRadius) {
-                    argb = 0xFF000000 | hsvToRgb(hueFromVector(dx, dy), 1.0, 1.0);
-                } else if (distance <= geometry.shadeRadius) {
-                    double[] square = diskToSquare(dx / geometry.shadeRadius, dy / geometry.shadeRadius);
-                    double sampleSaturation = clamp01((square[0] + 1.0) * 0.5);
-                    double sampleValue = clamp01((1.0 - square[1]) * 0.5);
-                    argb = 0xFF000000 | hsvToRgb(hue, sampleSaturation, sampleValue);
-                }
-
-                image.setPixel(x, y, argb);
-            }
-        }
-    }
-
-    private void closePaletteTexture() {
-        if (paletteTexture != null) {
-            paletteTexture.close();
-            paletteTexture = null;
-            paletteTextureSize = 0;
-            paletteTextureHue = -1.0;
-        }
-        closeMarkerTextures();
-    }
-
-    private void drawMarker(GuiGraphicsExtractor context, int centerX, int centerY, int radius, boolean hueMarker) {
-        DynamicTexture markerTexture = markerTexture(radius, hueMarker);
-        int halfSize = markerTexture.getPixels().getWidth() / 2;
-        context.blit(markerTexture.getTextureView(), markerTexture.getSampler(), centerX - halfSize,
-                centerY - halfSize, centerX + halfSize + 1, centerY + halfSize + 1, 0.0f, 1.0f, 0.0f, 1.0f);
-    }
-
-    private DynamicTexture markerTexture(int radius, boolean hueMarker) {
-        DynamicTexture texture = hueMarker ? hueMarkerTexture : shadeMarkerTexture;
-        int cachedRadius = hueMarker ? hueMarkerRadius : shadeMarkerRadius;
-        if (texture != null && cachedRadius == radius) {
-            return texture;
-        }
-
-        if (texture != null) {
-            texture.close();
-        }
-
-        NativeImage image = markerImage(radius);
-        texture = new DynamicTexture(() -> "elytrapitchhelper color marker", image);
-        if (hueMarker) {
-            hueMarkerTexture = texture;
-            hueMarkerRadius = radius;
-        } else {
-            shadeMarkerTexture = texture;
-            shadeMarkerRadius = radius;
-        }
-        return texture;
-    }
-
-    private NativeImage markerImage(int radius) {
-        int halfSize = radius + 3;
-        int size = halfSize * 2 + 1;
-        NativeImage image = new NativeImage(size, size, true);
-        double whiteInner = Math.max(0, radius - 1.6);
-        double whiteOuter = radius + 0.6;
-        double blackInner = Math.max(0, radius - 0.6);
-        double blackOuter = radius + 1.9;
-
-        for (int y = 0; y < size; y++) {
-            for (int x = 0; x < size; x++) {
-                double dx = x - halfSize;
-                double dy = y - halfSize;
-                double distance = Math.sqrt(dx * dx + dy * dy);
-                int argb = 0;
-                if (distance >= whiteInner && distance <= whiteOuter) {
-                    argb = 0xFFFFFFFF;
-                } else if (distance >= blackInner && distance <= blackOuter) {
-                    argb = 0xFF000000;
-                }
-                image.setPixel(x, y, argb);
-            }
-        }
-        return image;
-    }
-
-    private void closeMarkerTextures() {
-        if (hueMarkerTexture != null) {
-            hueMarkerTexture.close();
-            hueMarkerTexture = null;
-            hueMarkerRadius = 0;
-        }
-        if (shadeMarkerTexture != null) {
-            shadeMarkerTexture.close();
-            shadeMarkerTexture = null;
-            shadeMarkerRadius = 0;
-        }
+        context.requestCursor(prideEnabled && !editingCustomPride() ? CursorTypes.NOT_ALLOWED
+                : CursorTypes.POINTING_HAND);
     }
 
     private boolean startPaletteDrag(MouseButtonEvent event) {
-        if (prideEnabled || event.button() != GLFW.GLFW_MOUSE_BUTTON_LEFT) {
+        if ((prideEnabled && !editingCustomPride()) || event.button() != GLFW.GLFW_MOUSE_BUTTON_LEFT) {
             return false;
         }
 
@@ -606,14 +724,14 @@ final class ColorEditorScreen extends Screen {
 
     private PaletteDrag paletteHit(double mouseX, double mouseY) {
         ColorEditorLayout layout = colorEditorLayout();
-        PaletteGeometry geometry = paletteGeometry(layout);
-        double dx = mouseX - layout.paletteX - geometry.centerOffset;
-        double dy = mouseY - layout.paletteY - geometry.centerOffset;
+        PaletteGeometry geometry = ColorPaletteRenderer.geometry(layout);
+        double dx = mouseX - layout.paletteX() - geometry.centerOffset();
+        double dy = mouseY - layout.paletteY() - geometry.centerOffset();
         double distance = Math.sqrt(dx * dx + dy * dy);
-        if (distance <= geometry.shadeRadius) {
+        if (distance <= geometry.shadeRadius()) {
             return PaletteDrag.SHADE;
         }
-        if (distance >= geometry.innerRadius && distance <= geometry.outerRadius) {
+        if (distance >= geometry.innerRadius() && distance <= geometry.outerRadius()) {
             return PaletteDrag.HUE;
         }
         return PaletteDrag.NONE;
@@ -621,15 +739,15 @@ final class ColorEditorScreen extends Screen {
 
     private void updatePaletteColor(double mouseX, double mouseY, PaletteDrag drag) {
         ColorEditorLayout layout = colorEditorLayout();
-        PaletteGeometry geometry = paletteGeometry(layout);
-        double dx = mouseX - layout.paletteX - geometry.centerOffset;
-        double dy = mouseY - layout.paletteY - geometry.centerOffset;
+        PaletteGeometry geometry = ColorPaletteRenderer.geometry(layout);
+        double dx = mouseX - layout.paletteX() - geometry.centerOffset();
+        double dy = mouseY - layout.paletteY() - geometry.centerOffset();
 
         if (drag == PaletteDrag.HUE) {
             hue = hueFromVector(dx, dy);
         } else if (drag == PaletteDrag.SHADE) {
-            double shadeX = dx / geometry.shadeRadius;
-            double shadeY = dy / geometry.shadeRadius;
+            double shadeX = dx / geometry.shadeRadius();
+            double shadeY = dy / geometry.shadeRadius();
             double distance = Math.sqrt(shadeX * shadeX + shadeY * shadeY);
             if (distance > 1.0) {
                 shadeX /= distance;
@@ -644,16 +762,6 @@ final class ColorEditorScreen extends Screen {
         setColorFromPalette();
     }
 
-    private PaletteGeometry paletteGeometry(ColorEditorLayout layout) {
-        double centerOffset = (layout.paletteSize - 1.0) * 0.5;
-        double outerRadius = layout.paletteSize * 0.5;
-        double ringThickness = Math.max(11.0, layout.paletteSize * 0.145);
-        double innerRadius = outerRadius - ringThickness;
-        double shadeRadius = Math.max(12.0, innerRadius - Math.max(5.0, layout.paletteSize * 0.035));
-        double markerRadius = (outerRadius + innerRadius) * 0.5;
-        return new PaletteGeometry(centerOffset, outerRadius, innerRadius, shadeRadius, markerRadius);
-    }
-
     private void syncHsvFromColor(boolean resetHueWhenGray) {
         double[] hsv = rgbToHsv(red(), green(), blue());
         if (resetHueWhenGray || hsv[1] > 0.0001) {
@@ -661,142 +769,6 @@ final class ColorEditorScreen extends Screen {
         }
         saturation = hsv[1];
         value = hsv[2];
-    }
-
-    private static double hueFromVector(double dx, double dy) {
-        if (dx == 0.0 && dy == 0.0) {
-            return 0.0;
-        }
-        double hue = 1.0 - Math.atan2(dy, dx) / TWO_PI;
-        return hue - Math.floor(hue);
-    }
-
-    private static double[] squareToDisk(double x, double y) {
-        double length = Math.sqrt(x * x + y * y);
-        if (length <= 0.0) {
-            return new double[] { 0.0, 0.0 };
-        }
-
-        double radius = Math.max(Math.abs(x), Math.abs(y));
-        return new double[] { x / length * radius, y / length * radius };
-    }
-
-    private static double[] diskToSquare(double x, double y) {
-        double distance = Math.sqrt(x * x + y * y);
-        if (distance <= 0.0) {
-            return new double[] { 0.0, 0.0 };
-        }
-
-        double unitX = x / distance;
-        double unitY = y / distance;
-        double maxComponent = Math.max(Math.abs(unitX), Math.abs(unitY));
-        return new double[] { clamp(unitX * distance / maxComponent, -1.0, 1.0),
-                clamp(unitY * distance / maxComponent, -1.0, 1.0) };
-    }
-
-    private static double[] rgbToHsv(int red, int green, int blue) {
-        double r = red / 255.0;
-        double g = green / 255.0;
-        double b = blue / 255.0;
-        double max = Math.max(r, Math.max(g, b));
-        double min = Math.min(r, Math.min(g, b));
-        double delta = max - min;
-        double hue = 0.0;
-
-        if (delta > 0.0) {
-            if (max == r) {
-                hue = ((g - b) / delta) % 6.0;
-            } else if (max == g) {
-                hue = (b - r) / delta + 2.0;
-            } else {
-                hue = (r - g) / delta + 4.0;
-            }
-            hue /= 6.0;
-            if (hue < 0.0) {
-                hue += 1.0;
-            }
-        }
-
-        double saturation = max <= 0.0 ? 0.0 : delta / max;
-        return new double[] { hue, saturation, max };
-    }
-
-    private static int hsvToRgb(double hue, double saturation, double value) {
-        hue = hue - Math.floor(hue);
-        saturation = clamp01(saturation);
-        value = clamp01(value);
-
-        double sector = hue * 6.0;
-        int index = (int) Math.floor(sector);
-        double fraction = sector - index;
-        double p = value * (1.0 - saturation);
-        double q = value * (1.0 - fraction * saturation);
-        double t = value * (1.0 - (1.0 - fraction) * saturation);
-        double r;
-        double g;
-        double b;
-
-        switch (index % 6) {
-            case 0 -> {
-                r = value;
-                g = t;
-                b = p;
-            }
-            case 1 -> {
-                r = q;
-                g = value;
-                b = p;
-            }
-            case 2 -> {
-                r = p;
-                g = value;
-                b = t;
-            }
-            case 3 -> {
-                r = p;
-                g = q;
-                b = value;
-            }
-            case 4 -> {
-                r = t;
-                g = p;
-                b = value;
-            }
-            default -> {
-                r = value;
-                g = p;
-                b = q;
-            }
-        }
-
-        return (toRgbChannel(r) << 16) | (toRgbChannel(g) << 8) | toRgbChannel(b);
-    }
-
-    private static int toRgbChannel(double value) {
-        return clampInt((int) Math.round(value * 255.0), 0, 255);
-    }
-
-    private static double clamp01(double value) {
-        return clamp(value, 0.0, 1.0);
-    }
-
-    private static double clamp(double value, double min, double max) {
-        return Math.max(min, Math.min(max, value));
-    }
-
-    private static int clampInt(int value, int min, int max) {
-        return Math.max(min, Math.min(max, value));
-    }
-
-    private static int parseHexColor(String value) {
-        if (value.length() != 6) {
-            return -1;
-        }
-        try {
-            return Integer.parseInt(value, 16) & 0x00FFFFFF;
-        } catch (NumberFormatException ignored) {
-            return -1;
-        }
     }
 
     private enum PaletteDrag {
@@ -807,14 +779,7 @@ final class ColorEditorScreen extends Screen {
 
     @FunctionalInterface
     interface PrideSettingsConsumer {
-        void accept(boolean enabled, String flagId);
+        void accept(boolean enabled, String flagId, int[] customColors);
     }
 
-    private record ColorEditorLayout(int paletteX, int paletteY, int paletteSize, int controlX, int controlWidth,
-            int previewY, int prideY, int hexY, int sliderY) {
-    }
-
-    private record PaletteGeometry(double centerOffset, double outerRadius, double innerRadius, double shadeRadius,
-            double markerRadius) {
-    }
 }

@@ -63,6 +63,57 @@ final class AmplitudeTrackerTest {
     }
 
     @Test
+    void velocityModeTracksFirstAscendingWaveAfterGroundTakeoff() {
+        Config config = amplitudeConfig(Config.AMPLITUDE_TRIGGER_VELOCITY);
+        AmplitudeTracker tracker = new AmplitudeTracker();
+
+        assertSame(AmplitudeCue.NONE, tracker.update(config, 64.0, 0.1));
+
+        AmplitudeCue launchDip = tracker.update(config, 63.95, 0.4);
+        assertEquals(AmplitudeLeg.DESCENDING, launchDip.leg);
+
+        AmplitudeCue firstClimb = tracker.update(config, 64.5, 1.2);
+        assertEquals(AmplitudeLeg.ASCENDING, firstClimb.leg);
+        assertEquals(AmplitudeLeg.NONE, firstClimb.flashLeg);
+
+        AmplitudeCue firstClimbTriggered = tracker.update(config, 65.0, 0.19);
+        assertEquals(AmplitudeLeg.DESCENDING, firstClimbTriggered.leg);
+        assertEquals(0.0f, firstClimbTriggered.amount, EPSILON);
+        assertEquals(AmplitudeLeg.ASCENDING, firstClimbTriggered.flashLeg);
+        assertTrue(firstClimbTriggered.flash > 0.0f);
+    }
+
+    @Test
+    void velocityModeDoesNotCueTakeoffBeforeFirstClimbGainsSpeed() {
+        Config config = amplitudeConfig(Config.AMPLITUDE_TRIGGER_VELOCITY);
+        AmplitudeTracker tracker = new AmplitudeTracker();
+
+        assertSame(AmplitudeCue.NONE, tracker.update(config, 64.0, 0.05));
+
+        AmplitudeCue launchDip = tracker.update(config, 63.95, 0.05);
+        assertEquals(AmplitudeLeg.DESCENDING, launchDip.leg);
+
+        AmplitudeCue slowTakeoff = tracker.update(config, 64.5, 0.1);
+        assertEquals(AmplitudeLeg.ASCENDING, slowTakeoff.leg);
+        assertEquals(0.0f, slowTakeoff.amount, EPSILON);
+        assertEquals(AmplitudeLeg.NONE, slowTakeoff.flashLeg);
+
+        AmplitudeCue stillSlow = tracker.update(config, 65.0, 0.15);
+        assertEquals(AmplitudeLeg.ASCENDING, stillSlow.leg);
+        assertEquals(0.0f, stillSlow.amount, EPSILON);
+        assertEquals(AmplitudeLeg.NONE, stillSlow.flashLeg);
+
+        AmplitudeCue rocketAccelerated = tracker.update(config, 66.0, 0.8);
+        assertEquals(AmplitudeLeg.ASCENDING, rocketAccelerated.leg);
+        assertEquals(0.0f, rocketAccelerated.amount, EPSILON);
+
+        AmplitudeCue firstClimbTriggered = tracker.update(config, 67.0, 0.19);
+        assertEquals(AmplitudeLeg.DESCENDING, firstClimbTriggered.leg);
+        assertEquals(AmplitudeLeg.ASCENDING, firstClimbTriggered.flashLeg);
+        assertTrue(firstClimbTriggered.flash > 0.0f);
+    }
+
+    @Test
     void disabledHelperResetsTrackerState() {
         Config config = amplitudeConfig(Config.AMPLITUDE_TRIGGER_HEIGHT);
         AmplitudeTracker tracker = new AmplitudeTracker();

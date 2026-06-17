@@ -28,7 +28,7 @@ final class ProfileMetadataStore {
             return new ProfileMetadataStore();
         }
         try (BufferedReader reader = Files.newBufferedReader(path, StandardCharsets.UTF_8)) {
-            ProfileMetadataStore store = Config.GSON.fromJson(reader, ProfileMetadataStore.class);
+            ProfileMetadataStore store = ConfigFiles.GSON.fromJson(reader, ProfileMetadataStore.class);
             if (store == null) {
                 return new ProfileMetadataStore();
             }

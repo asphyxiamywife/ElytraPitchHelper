@@ -6,34 +6,52 @@ import com.asphyxiamywife.elytrapitchhelper.util.MathUtil;
 import net.minecraft.client.gui.GuiGraphicsExtractor;
 
 final class GuideLineRenderer {
-    void draw(GuiGraphicsExtractor ctx, int cx, int guideY, float alpha, AmplitudeCue amplitudeCue, Config config) {
+    void draw(GuiGraphicsExtractor ctx, int cx, int guideY, float alpha, AmplitudeCue amplitudeCue, VoidProximity voidProximity, Config config) {
         int length = config.line.lengthPixels;
         int thickness = config.line.widthPixels;
         int x = cx - length / 2;
         int y = guideY - thickness / 2;
         int baseRgb = config.line.colorRgb & 0x00FFFFFF;
         int cueRgb = config.amplitude.cueColorRgb & 0x00FFFFFF;
-        int[] basePrideColors = config.line.prideEnabled ? PrideFlag.byId(config.line.prideFlag).colors() : null;
+        int[] basePrideColors = config.line.prideEnabled
+                ? PrideFlag.colorsFor(config.line.prideFlag, config.line.customPrideColors)
+                : null;
         int[] cuePrideColors = config.amplitude.cuePrideEnabled
-                ? PrideFlag.byId(config.amplitude.cuePrideFlag).colors()
+                ? PrideFlag.colorsFor(config.amplitude.cuePrideFlag, config.amplitude.customPrideColors)
                 : null;
         float cueAmount = amplitudeCue.amount;
         float flash = amplitudeCue.flash;
-        float colorMix = MathUtil.clamp(Math.max(cueAmount, flash * 0.65f), 0.0f, 1.0f);
+        float warnAmount = voidProximity.warning;
+        float warnPulse = voidProximity.pulse;
+        int warnRgb = config.voidWarning.warningColorRgb & 0x00FFFFFF;
+        int[] warnPrideColors = config.voidWarning.warningPrideEnabled
+                ? PrideFlag.colorsFor(config.voidWarning.warningPrideFlag, config.voidWarning.customPrideColors)
+                : null;
+        boolean warningActive = warnAmount > 0.001f || warnPulse > 0.001f;
 
-        if (cueAmount > 0.01f || flash > 0.01f) {
-            float glowAlpha = alpha * MathUtil.clamp(0.18f * cueAmount + 0.45f * flash, 0.0f, 0.85f);
-            drawCenteredCueRect(ctx, cx, guideY, length + 18, thickness + 6, glowAlpha * 0.45f, cueRgb,
-                    cuePrideColors);
-            drawCenteredCueRect(ctx, cx, guideY, length + 10, thickness + 4, glowAlpha, cueRgb, cuePrideColors);
+        float effectiveCue = Math.max(cueAmount, warnAmount);
+        float effectiveFlash = Math.max(flash, warnPulse);
+        float colorMix = MathUtil.clamp(Math.max(effectiveCue, effectiveFlash * 0.65f), 0.0f, 1.0f);
+
+        if (effectiveCue > 0.01f || effectiveFlash > 0.01f) {
+            int glowRgb = warningActive ? warnRgb : cueRgb;
+            int[] glowPride = warningActive ? warnPrideColors : cuePrideColors;
+            int glowExtra = (int) (warnAmount * 8);
+            float glowAlpha = alpha * MathUtil.clamp(0.18f * effectiveCue + 0.45f * effectiveFlash, 0.0f, 0.85f);
+            drawCenteredCueRect(ctx, cx, guideY, length + 18 + glowExtra, thickness + 6 + glowExtra,
+                    glowAlpha * 0.45f, glowRgb, glowPride);
+            drawCenteredCueRect(ctx, cx, guideY, length + 10 + glowExtra, thickness + 4 + glowExtra,
+                    glowAlpha, glowRgb, glowPride);
         }
 
-        if (flash > 0.01f) {
-            drawCenteredRect(ctx, cx, guideY, length + 26, thickness + 8, MathUtil.argb(alpha * flash * 0.28f,
-                    0xFFFFFF));
+        if (effectiveFlash > 0.01f) {
+            drawCenteredRect(ctx, cx, guideY, length + 26, thickness + 8,
+                    MathUtil.argb(alpha * effectiveFlash * 0.28f, 0xFFFFFF));
         }
 
-        drawBlendedRect(ctx, x, y, length, thickness, alpha, baseRgb, basePrideColors, cueRgb, cuePrideColors,
+        int finalCueRgb = warningActive ? warnRgb : cueRgb;
+        int[] finalCuePride = warningActive ? warnPrideColors : cuePrideColors;
+        drawBlendedRect(ctx, x, y, length, thickness, alpha, baseRgb, basePrideColors, finalCueRgb, finalCuePride,
                 colorMix);
     }
 

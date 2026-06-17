@@ -14,6 +14,9 @@ public final class TrinketsIntegration {
 
     public static ItemStack getElytraItem(Player player) {
         TrinketAttachment attachment = TrinketsApi.getAttachment(player);
+        if (attachment == null) {
+            return ItemStack.EMPTY;
+        }
         for (Tuple<TrinketSlotAccess, ItemStack> pair : attachment.getEquipped(Items.ELYTRA)) {
             return pair.getB();
         }

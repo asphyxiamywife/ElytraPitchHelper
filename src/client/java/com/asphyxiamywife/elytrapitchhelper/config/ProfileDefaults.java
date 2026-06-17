@@ -116,7 +116,7 @@ final class ProfileDefaults {
             try {
                 JsonObject root = ConfigFiles.GSON.fromJson(new String(resource.contents(), StandardCharsets.UTF_8),
                         JsonObject.class);
-                Config.RepairLog repairs = new Config.RepairLog("bundled profile " + resource.fileName());
+                RepairLog repairs = new RepairLog("bundled profile " + resource.fileName());
                 Profile defaults = bundledDefaults == null ? new Profile() : bundledDefaults;
                 Profile profile = ProfileJson.parse(root, resource.fileName(), defaults, repairs);
                 profile.sanitize(repairs, defaults);

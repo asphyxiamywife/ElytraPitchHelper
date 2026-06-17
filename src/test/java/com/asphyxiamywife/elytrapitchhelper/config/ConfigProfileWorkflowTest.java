@@ -6,6 +6,8 @@ import java.util.ArrayList;
 import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotSame;
+import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 final class ConfigProfileWorkflowTest {
@@ -17,11 +19,16 @@ final class ConfigProfileWorkflowTest {
         config.pitch.targetUpMinecraft = -33.0f;
         config.line.colorRgb = 0x123456;
 
+        assertSame(config.pitch, config.profile(0).pitch);
+        assertSame(config.line, config.profile(0).line);
+
         config.selectProfile(1);
 
         assertEquals(-33.0f, config.profile(0).pitch.targetUpMinecraft);
         assertEquals(0x123456, config.profile(0).line.colorRgb);
         assertEquals(-20.0f, config.pitch.targetUpMinecraft);
+        assertSame(config.pitch, config.profile(1).pitch);
+        assertSame(config.line, config.profile(1).line);
         assertTrue(config.isActiveProfile(1));
         assertEquals("dive.json", config.activeProfileFile);
     }
@@ -46,12 +53,40 @@ final class ConfigProfileWorkflowTest {
         assertTrue(config.isActiveProfile(config.profileIndexByFileName("dive.json")));
     }
 
+    @Test
+    void copyBindsSettingsToCopiedActiveProfile() {
+        Config config = configWithProfiles(profile("Cruise", "cruise.json", -40.0f),
+                profile("Dive", "dive.json", -20.0f));
+        config.pitch.targetUpMinecraft = -33.0f;
+
+        Config copy = config.copy();
+
+        assertEquals(-33.0f, copy.profile(0).pitch.targetUpMinecraft);
+        assertSame(copy.pitch, copy.profile(0).pitch);
+        assertNotSame(config.pitch, copy.pitch);
+    }
+
+    @Test
+    void copyPreservesUnboundActiveSettings() {
+        Config config = new Config();
+        Profile profile = profile("Cruise", "cruise.json", -40.0f);
+        config.profiles = new ArrayList<>(List.of(profile));
+        config.activeProfileIndex = 0;
+        config.activeProfileFile = profile.fileName;
+        config.pitch.targetUpMinecraft = -33.0f;
+
+        Config copy = config.copy();
+
+        assertEquals(-33.0f, copy.profile(0).pitch.targetUpMinecraft);
+        assertSame(copy.pitch, copy.profile(0).pitch);
+    }
+
     private static Config configWithProfiles(Profile... profiles) {
         Config config = new Config();
         config.profiles = new ArrayList<>(List.of(profiles));
         config.activeProfileIndex = 0;
         config.activeProfileFile = profiles[0].fileName;
-        profiles[0].applyTo(config);
+        profiles[0].bindTo(config);
         return config;
     }
 

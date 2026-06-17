@@ -3,6 +3,7 @@ package com.asphyxiamywife.elytrapitchhelper.config;
 import com.google.gson.JsonObject;
 import org.junit.jupiter.api.Test;
 
+import static org.junit.jupiter.api.Assertions.assertArrayEquals;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -75,6 +76,7 @@ final class ProfileJsonTest {
         assertEquals(0x00AAFF, profile.line.colorRgb);
         assertTrue(profile.line.prideEnabled);
         assertEquals("trans", profile.line.prideFlag);
+        assertArrayEquals(new int[] { 0x111111, 0x222222, 0x333333 }, profile.line.customPrideColors);
         assertFalse(profile.amplitude.enabled);
         assertEquals(Config.AMPLITUDE_TRIGGER_EITHER, profile.amplitude.triggerMode);
         assertEquals(70, profile.amplitude.downBlocks);
@@ -85,6 +87,17 @@ final class ProfileJsonTest {
         assertEquals(0xFF3300, profile.amplitude.cueColorRgb);
         assertTrue(profile.amplitude.cuePrideEnabled);
         assertEquals("rainbow", profile.amplitude.cuePrideFlag);
+        assertArrayEquals(new int[] { 0xAA0000, 0x00AA00 }, profile.amplitude.customPrideColors);
+        assertEquals(VoidWarningSettings.MODE_SIMPLE_HEIGHT, profile.voidWarning.mode);
+        assertEquals(96, profile.voidWarning.simpleWarningBlocks);
+        assertEquals(0xF05500, profile.voidWarning.warningColorRgb);
+        assertTrue(profile.voidWarning.warningPrideEnabled);
+        assertEquals("progress", profile.voidWarning.warningPrideFlag);
+        assertArrayEquals(new int[] { 0x101010, 0x202020 }, profile.voidWarning.customPrideColors);
+        assertFalse(profile.voidWarning.toleranceOverride);
+        assertEquals(12.5f, profile.voidWarning.customToleranceDegrees);
+        assertFalse(profile.voidWarning.maxOffsetOverride);
+        assertEquals(72, profile.voidWarning.customMaxOffsetPixels);
     }
 
     private static Profile defaults() {
@@ -134,6 +147,11 @@ final class ProfileJsonTest {
         line.addProperty("colorRgb", 0x00AAFF);
         line.addProperty("prideEnabled", true);
         line.addProperty("prideFlag", "trans");
+        com.google.gson.JsonArray lineCustomColors = new com.google.gson.JsonArray();
+        lineCustomColors.add(0x111111);
+        lineCustomColors.add(0x222222);
+        lineCustomColors.add(0x333333);
+        line.add("customPrideColors", lineCustomColors);
         JsonObject amplitude = new JsonObject();
         amplitude.addProperty("enabled", false);
         amplitude.addProperty("triggerMode", Config.AMPLITUDE_TRIGGER_EITHER);
@@ -145,10 +163,29 @@ final class ProfileJsonTest {
         amplitude.addProperty("cueColorRgb", 0xFF3300);
         amplitude.addProperty("cuePrideEnabled", true);
         amplitude.addProperty("cuePrideFlag", "rainbow");
+        com.google.gson.JsonArray amplitudeCustomColors = new com.google.gson.JsonArray();
+        amplitudeCustomColors.add(0xAA0000);
+        amplitudeCustomColors.add(0x00AA00);
+        amplitude.add("customPrideColors", amplitudeCustomColors);
+        JsonObject voidWarning = new JsonObject();
+        voidWarning.addProperty("mode", VoidWarningSettings.MODE_SIMPLE_HEIGHT);
+        voidWarning.addProperty("simpleWarningBlocks", 96);
+        voidWarning.addProperty("warningColorRgb", 0xF05500);
+        voidWarning.addProperty("warningPrideEnabled", true);
+        voidWarning.addProperty("warningPrideFlag", "progress");
+        com.google.gson.JsonArray voidWarningCustomColors = new com.google.gson.JsonArray();
+        voidWarningCustomColors.add(0x101010);
+        voidWarningCustomColors.add(0x202020);
+        voidWarning.add("customPrideColors", voidWarningCustomColors);
+        voidWarning.addProperty("toleranceOverride", false);
+        voidWarning.addProperty("customToleranceDegrees", 12.5f);
+        voidWarning.addProperty("maxOffsetOverride", false);
+        voidWarning.addProperty("customMaxOffsetPixels", 72);
         json.add("visibility", visibility);
         json.add("pitch", pitch);
         json.add("line", line);
         json.add("amplitude", amplitude);
+        json.add("voidWarning", voidWarning);
         return json;
     }
 
@@ -168,6 +205,11 @@ final class ProfileJsonTest {
         json.addProperty("lineColorRgb", 0x00AAFF);
         json.addProperty("linePrideEnabled", true);
         json.addProperty("linePrideFlag", "trans");
+        com.google.gson.JsonArray lineCustomColors = new com.google.gson.JsonArray();
+        lineCustomColors.add(0x111111);
+        lineCustomColors.add(0x222222);
+        lineCustomColors.add(0x333333);
+        json.add("lineCustomPrideColors", lineCustomColors);
         json.addProperty("amplitudeHelperEnabled", false);
         json.addProperty("amplitudeTriggerMode", Config.AMPLITUDE_TRIGGER_EITHER);
         json.addProperty("amplitudeDownBlocks", 70);
@@ -178,6 +220,23 @@ final class ProfileJsonTest {
         json.addProperty("amplitudeCueColorRgb", 0xFF3300);
         json.addProperty("amplitudeCuePrideEnabled", true);
         json.addProperty("amplitudeCuePrideFlag", "rainbow");
+        com.google.gson.JsonArray amplitudeCustomColors = new com.google.gson.JsonArray();
+        amplitudeCustomColors.add(0xAA0000);
+        amplitudeCustomColors.add(0x00AA00);
+        json.add("amplitudeCustomPrideColors", amplitudeCustomColors);
+        json.addProperty("voidWarningMode", VoidWarningSettings.MODE_SIMPLE_HEIGHT);
+        json.addProperty("voidWarningSimpleWarningBlocks", 96);
+        json.addProperty("voidWarningColorRgb", 0xF05500);
+        json.addProperty("voidWarningPrideEnabled", true);
+        json.addProperty("voidWarningPrideFlag", "progress");
+        com.google.gson.JsonArray voidWarningCustomColors = new com.google.gson.JsonArray();
+        voidWarningCustomColors.add(0x101010);
+        voidWarningCustomColors.add(0x202020);
+        json.add("voidWarningCustomPrideColors", voidWarningCustomColors);
+        json.addProperty("voidWarningToleranceOverride", false);
+        json.addProperty("voidWarningCustomToleranceDegrees", 12.5f);
+        json.addProperty("voidWarningMaxOffsetOverride", false);
+        json.addProperty("voidWarningCustomMaxOffsetPixels", 72);
         return json;
     }
 }

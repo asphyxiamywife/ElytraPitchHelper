@@ -6,9 +6,12 @@ import static com.asphyxiamywife.elytrapitchhelper.config.Config.AMPLITUDE_TRIGG
 import static com.asphyxiamywife.elytrapitchhelper.config.ConfigRepair.clamp;
 import static com.asphyxiamywife.elytrapitchhelper.config.ConfigRepair.repair;
 import static com.asphyxiamywife.elytrapitchhelper.config.ConfigRepair.repairColor;
+import static com.asphyxiamywife.elytrapitchhelper.config.ConfigRepair.repairCustomPrideColors;
 import static com.asphyxiamywife.elytrapitchhelper.config.ConfigRepair.repairFloat;
 import static com.asphyxiamywife.elytrapitchhelper.config.ConfigRepair.repairInt;
 import static com.asphyxiamywife.elytrapitchhelper.config.ConfigRepair.repairPrideFlag;
+
+import java.util.Arrays;
 
 public final class AmplitudeSettings {
     public boolean enabled = true;
@@ -21,6 +24,7 @@ public final class AmplitudeSettings {
     public int cueColorRgb = 0xFF0000;
     public boolean cuePrideEnabled = false;
     public String cuePrideFlag = PrideFlag.defaultId();
+    public int[] customPrideColors = PrideFlag.defaultCustomColors();
 
     public AmplitudeSettings copy() {
         AmplitudeSettings settings = new AmplitudeSettings();
@@ -42,9 +46,12 @@ public final class AmplitudeSettings {
         cueColorRgb = other.cueColorRgb;
         cuePrideEnabled = other.cuePrideEnabled;
         cuePrideFlag = other.cuePrideFlag;
+        customPrideColors = other.customPrideColors == null
+                ? PrideFlag.defaultCustomColors()
+                : Arrays.copyOf(other.customPrideColors, other.customPrideColors.length);
     }
 
-    void sanitize(Config.RepairLog repairs, AmplitudeSettings defaults) {
+    void sanitize(RepairLog repairs, AmplitudeSettings defaults) {
         if (defaults == null) {
             defaults = new AmplitudeSettings();
         }
@@ -66,5 +73,7 @@ public final class AmplitudeSettings {
         cueColorRgb = repairColor(repairs, "amplitude.cueColorRgb", cueColorRgb, defaults.cueColorRgb);
         cuePrideFlag = repairPrideFlag(repairs, "amplitude.cuePrideFlag", cuePrideFlag,
                 defaults.cuePrideFlag);
+        customPrideColors = repairCustomPrideColors(repairs, "amplitude.customPrideColors",
+                customPrideColors, defaults.customPrideColors);
     }
 }

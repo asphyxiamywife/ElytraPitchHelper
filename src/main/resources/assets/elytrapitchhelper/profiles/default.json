@@ -30,5 +30,19 @@
     "cueColorRgb": 16711680,
     "cuePrideEnabled": false,
     "cuePrideFlag": "rainbow"
+  },
+  "voidWarning": {
+    "enabled": true,
+    "mode": 0,
+    "lookaheadSeconds": 5.0,
+    "simpleWarningBlocks": 48,
+    "warningColorRgb": 16728064,
+    "warningPrideEnabled": false,
+    "warningPrideFlag": "rainbow",
+    "toleranceOverride": true,
+    "customToleranceDegrees": 6.0,
+    "maxOffsetOverride": true,
+    "customMaxOffsetPixels": 42,
+    "dimensionYOverrides": {}
   }
 }

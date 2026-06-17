@@ -1,6 +1,7 @@
 package com.asphyxiamywife.elytrapitchhelper.client;
 
 import com.asphyxiamywife.elytrapitchhelper.config.Config;
+import com.asphyxiamywife.elytrapitchhelper.config.ConfigSaveException;
 import com.asphyxiamywife.elytrapitchhelper.screen.ConfigScreen;
 import com.asphyxiamywife.elytrapitchhelper.ModConstants;
 import com.mojang.blaze3d.platform.InputConstants;
@@ -51,11 +52,19 @@ public final class KeyBindings {
     private static void toggleGuides(Minecraft client) {
         Config config = ClientConfigStore.get().copy();
         config.enabled = !config.enabled;
-        ClientConfigStore.set(config);
         if (client.player != null) {
+            try {
+                ClientConfigStore.set(config);
+            } catch (ConfigSaveException e) {
+                client.player.sendOverlayMessage(Component
+                        .translatable("message.elytrapitchhelper.config.save_failed"));
+                return;
+            }
             Component message = Component
                     .translatable("message.elytrapitchhelper.toggle." + (config.enabled ? "on" : "off"));
             client.player.sendOverlayMessage(message);
+        } else {
+            ClientConfigStore.set(config);
         }
     }
 

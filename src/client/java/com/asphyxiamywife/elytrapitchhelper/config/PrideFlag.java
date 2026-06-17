@@ -1,5 +1,6 @@
 package com.asphyxiamywife.elytrapitchhelper.config;
 
+import java.util.Arrays;
 import java.util.Locale;
 
 public enum PrideFlag {
@@ -25,7 +26,11 @@ public enum PrideFlag {
     GENDERFLUID("genderfluid", "option.elytrapitchhelper.pride_flag.genderfluid",
             0xFF76A4, 0xFFFFFF, 0xC011D7, 0x000000, 0x2F3CBE),
     AGENDER("agender", "option.elytrapitchhelper.pride_flag.agender",
-            0x000000, 0xBCC4C7, 0xFFFFFF, 0xB7F684, 0xFFFFFF, 0xBCC4C7, 0x000000);
+            0x000000, 0xBCC4C7, 0xFFFFFF, 0xB7F684, 0xFFFFFF, 0xBCC4C7, 0x000000),
+    CUSTOM("custom", "option.elytrapitchhelper.pride_flag.custom");
+
+    public static final int MIN_CUSTOM_COLORS = 2;
+    public static final int MAX_CUSTOM_COLORS = 16;
 
     private final String id;
     private final String translationKey;
@@ -75,6 +80,35 @@ public enum PrideFlag {
 
     public static String sanitizeId(String id) {
         return byId(id).id;
+    }
+
+    public static boolean isCustomId(String id) {
+        return CUSTOM.id.equals(sanitizeId(id));
+    }
+
+    public static int[] defaultCustomColors() {
+        return Arrays.copyOf(RAINBOW.colors, RAINBOW.colors.length);
+    }
+
+    public static int[] sanitizeCustomColors(int[] colors) {
+        if (colors == null || colors.length < MIN_CUSTOM_COLORS) {
+            return defaultCustomColors();
+        }
+
+        int length = Math.min(MAX_CUSTOM_COLORS, colors.length);
+        int[] sanitized = new int[length];
+        for (int i = 0; i < length; i++) {
+            sanitized[i] = colors[i] & 0x00FFFFFF;
+        }
+        return sanitized;
+    }
+
+    public static int[] colorsFor(String id, int[] customColors) {
+        PrideFlag flag = byId(id);
+        if (flag == CUSTOM) {
+            return sanitizeCustomColors(customColors);
+        }
+        return flag.colors();
     }
 
     public static PrideFlag next(String id) {

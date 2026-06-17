@@ -27,7 +27,7 @@ public final class PitchSettings {
         offsetPerDegree = other.offsetPerDegree;
     }
 
-    void sanitize(Config.RepairLog repairs, PitchSettings defaults) {
+    void sanitize(RepairLog repairs, PitchSettings defaults) {
         if (defaults == null) {
             defaults = new PitchSettings();
         }

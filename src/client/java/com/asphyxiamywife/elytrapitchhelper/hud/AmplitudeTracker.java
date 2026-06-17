@@ -6,6 +6,7 @@ import com.asphyxiamywife.elytrapitchhelper.util.MathUtil;
 public final class AmplitudeTracker {
     private static final float VERTICAL_EPSILON = 0.01f;
     private static final float CUE_START_RATIO = 0.72f;
+    private static final float MIN_VELOCITY_CUE_SPAN = 0.1f;
     private static final long FLASH_MILLIS = 520L;
 
     private AmplitudeLeg leg = AmplitudeLeg.NONE;
@@ -17,6 +18,7 @@ public final class AmplitudeTracker {
     private float previousHorizontalSpeed;
     private boolean hasPreviousHorizontalSpeed;
     private float velocityAnchorSpeed;
+    private boolean hasTriggeredCue;
     private AmplitudeLeg flashLeg = AmplitudeLeg.NONE;
     private long flashStartedMillis = -FLASH_MILLIS;
 
@@ -27,33 +29,18 @@ public final class AmplitudeTracker {
         }
 
         float horizontalSpeed = (float) currentHorizontalSpeed;
-        if (!hasSample) {
-            captureFirstSample(currentY, horizontalSpeed);
+        if (captureFirstSampleIfNeeded(currentY, horizontalSpeed)) {
             return AmplitudeCue.NONE;
         }
 
-        AmplitudeLeg detectedLeg = detectLeg(currentY);
-        boolean stateMachineMode = config.amplitude.triggerMode != Config.AMPLITUDE_TRIGGER_HEIGHT;
-        updateLeg(config, detectedLeg, stateMachineMode, horizontalSpeed);
+        boolean stateMachineMode = usesStateMachine(config);
+        advanceLeg(currentY, stateMachineMode, horizontalSpeed);
         lastPlayerY = currentY;
         if (leg == AmplitudeLeg.NONE) {
             return AmplitudeCue.NONE;
         }
 
-        TriggerCue cue = calculateCue(config, currentY, horizontalSpeed);
-        AmplitudeLeg cueLeg = leg;
-        float cueAmount = cue.amount();
-        if (cue.triggered()) {
-            flashLeg = leg;
-            flashStartedMillis = System.currentTimeMillis();
-            if (stateMachineMode) {
-                beginLeg(oppositeLeg(leg), currentY, horizontalSpeed);
-                cueLeg = leg;
-                cueAmount = 0.0f;
-            }
-        }
-
-        return new AmplitudeCue(cueLeg, cueAmount, flashLeg, computeFlash());
+        return applyCue(calculateCue(config, currentY, horizontalSpeed), currentY, horizontalSpeed, stateMachineMode);
     }
 
     public void reset() {
@@ -66,15 +53,21 @@ public final class AmplitudeTracker {
         previousHorizontalSpeed = 0.0f;
         hasPreviousHorizontalSpeed = false;
         velocityAnchorSpeed = 0.0f;
+        hasTriggeredCue = false;
         flashLeg = AmplitudeLeg.NONE;
         flashStartedMillis = -FLASH_MILLIS;
     }
 
-    private void captureFirstSample(double currentY, float horizontalSpeed) {
+    private boolean captureFirstSampleIfNeeded(double currentY, float horizontalSpeed) {
+        if (hasSample) {
+            return false;
+        }
+
         hasSample = true;
         anchorY = currentY;
         lastPlayerY = currentY;
         velocityAnchorSpeed = horizontalSpeed;
+        return true;
     }
 
     private AmplitudeLeg detectLeg(double currentY) {
@@ -88,11 +81,12 @@ public final class AmplitudeTracker {
         return AmplitudeLeg.NONE;
     }
 
-    private void updateLeg(Config config, AmplitudeLeg detectedLeg, boolean stateMachineMode, float horizontalSpeed) {
+    private void advanceLeg(double currentY, boolean stateMachineMode, float horizontalSpeed) {
+        AmplitudeLeg detectedLeg = detectLeg(currentY);
         if (leg == AmplitudeLeg.NONE) {
             beginLeg(detectedLeg == AmplitudeLeg.NONE ? AmplitudeLeg.DESCENDING : detectedLeg, lastPlayerY,
                     horizontalSpeed);
-        } else if (!stateMachineMode && detectedLeg != AmplitudeLeg.NONE && detectedLeg != leg) {
+        } else if (shouldFollowDetectedLeg(stateMachineMode, detectedLeg)) {
             beginLeg(detectedLeg, lastPlayerY, horizontalSpeed);
         }
     }
@@ -102,6 +96,27 @@ public final class AmplitudeTracker {
         TriggerCue velocityCue = velocityCue(config, horizontalSpeed);
         return new TriggerCue(selectedCueAmount(config, heightCue.amount(), velocityCue.amount()),
                 selectedTriggerReached(config, heightCue.triggered(), velocityCue.triggered()));
+    }
+
+    private AmplitudeCue applyCue(TriggerCue cue, double currentY, float horizontalSpeed, boolean stateMachineMode) {
+        AmplitudeLeg cueLeg = leg;
+        float cueAmount = cue.amount();
+        if (cue.triggered()) {
+            flashCurrentLeg();
+            hasTriggeredCue = true;
+            if (stateMachineMode) {
+                beginLeg(oppositeLeg(leg), currentY, horizontalSpeed);
+                cueLeg = leg;
+                cueAmount = 0.0f;
+            }
+        }
+
+        return new AmplitudeCue(cueLeg, cueAmount, flashLeg, computeFlash());
+    }
+
+    private void flashCurrentLeg() {
+        flashLeg = leg;
+        flashStartedMillis = System.currentTimeMillis();
     }
 
     private TriggerCue heightCue(Config config, double currentY) {
@@ -138,10 +153,16 @@ public final class AmplitudeTracker {
                 velocityAnchorSpeed = horizontalSpeed;
             }
             float target = config.amplitude.upVelocity;
-            float startSpeed = Math.max(target + 0.1f, velocityAnchorSpeed);
-            float progress = MathUtil.clamp((startSpeed - horizontalSpeed) / (startSpeed - target), 0.0f, 1.0f);
-            cueAmount = cueFromProgress(progress);
-            triggered = horizontalSpeed <= target && (!hasPreviousHorizontalSpeed || previousHorizontalSpeed > target);
+            if (velocityAnchorSpeed < target + MIN_VELOCITY_CUE_SPAN) {
+                cueAmount = 0.0f;
+                triggered = false;
+            } else {
+                float progress = MathUtil.clamp((velocityAnchorSpeed - horizontalSpeed)
+                        / (velocityAnchorSpeed - target), 0.0f, 1.0f);
+                cueAmount = cueFromProgress(progress);
+                triggered = horizontalSpeed <= target
+                        && (!hasPreviousHorizontalSpeed || previousHorizontalSpeed > target);
+            }
         }
 
         previousHorizontalSpeed = horizontalSpeed;
@@ -167,6 +188,17 @@ public final class AmplitudeTracker {
     private static boolean usesVelocityTrigger(Config config) {
         return config.amplitude.triggerMode == Config.AMPLITUDE_TRIGGER_VELOCITY
                 || config.amplitude.triggerMode == Config.AMPLITUDE_TRIGGER_EITHER;
+    }
+
+    private static boolean usesStateMachine(Config config) {
+        return config.amplitude.triggerMode != Config.AMPLITUDE_TRIGGER_HEIGHT;
+    }
+
+    private boolean shouldFollowDetectedLeg(boolean stateMachineMode, AmplitudeLeg detectedLeg) {
+        if (detectedLeg == AmplitudeLeg.NONE || detectedLeg == leg) {
+            return false;
+        }
+        return !stateMachineMode || !hasTriggeredCue;
     }
 
     private static boolean selectedTriggerReached(Config config, boolean heightTriggered, boolean velocityTriggered) {

@@ -10,6 +10,7 @@ public final class Profile {
     public PitchSettings pitch = new PitchSettings();
     public LineSettings line = new LineSettings();
     public AmplitudeSettings amplitude = new AmplitudeSettings();
+    public VoidWarningSettings voidWarning = new VoidWarningSettings();
     public transient String fileName;
 
     Profile copy() {
@@ -18,13 +19,13 @@ public final class Profile {
         return profile;
     }
 
-    void applyTo(Config config) {
+    void bindTo(Config config) {
         ensureValueObjects();
-        config.ensureValueObjects();
-        config.visibility.copyFrom(visibility);
-        config.pitch.copyFrom(pitch);
-        config.line.copyFrom(line);
-        config.amplitude.copyFrom(amplitude);
+        config.visibility = visibility;
+        config.pitch = pitch;
+        config.line = line;
+        config.amplitude = amplitude;
+        config.voidWarning = voidWarning;
     }
 
     void copyFrom(Config config) {
@@ -34,6 +35,7 @@ public final class Profile {
         pitch.copyFrom(config.pitch);
         line.copyFrom(config.line);
         amplitude.copyFrom(config.amplitude);
+        voidWarning.copyFrom(config.voidWarning);
     }
 
     void copyFrom(Profile other) {
@@ -44,9 +46,10 @@ public final class Profile {
         pitch = other.pitch == null ? new PitchSettings() : other.pitch.copy();
         line = other.line == null ? new LineSettings() : other.line.copy();
         amplitude = other.amplitude == null ? new AmplitudeSettings() : other.amplitude.copy();
+        voidWarning = other.voidWarning == null ? new VoidWarningSettings() : other.voidWarning.copy();
     }
 
-    void sanitize(Config.RepairLog repairs, Profile defaults) {
+    void sanitize(RepairLog repairs, Profile defaults) {
         if (defaults == null) {
             defaults = new Profile();
         }
@@ -57,6 +60,7 @@ public final class Profile {
         pitch.sanitize(repairs, defaults.pitch);
         line.sanitize(repairs, defaults.line);
         amplitude.sanitize(repairs, defaults.amplitude);
+        voidWarning.sanitize(repairs, defaults.voidWarning);
     }
 
     void ensureValueObjects() {
@@ -71,6 +75,9 @@ public final class Profile {
         }
         if (amplitude == null) {
             amplitude = new AmplitudeSettings();
+        }
+        if (voidWarning == null) {
+            voidWarning = new VoidWarningSettings();
         }
     }
 }

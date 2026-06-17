@@ -62,7 +62,7 @@ final class ProfilePersistence {
             Files.createDirectories(profileDirectory);
             boolean savedProfile = false;
             for (Profile profile : profiles) {
-                Config.RepairLog repairs = new Config.RepairLog("profile " + profilePath(profile));
+                RepairLog repairs = new RepairLog("profile " + profilePath(profile));
                 profile.sanitize(repairs, ProfileDefaults.template());
                 repairs.log();
                 Path path = profilePath(profile);
@@ -88,7 +88,7 @@ final class ProfilePersistence {
             return savedProfile;
         } catch (IOException e) {
             LOGGER.error("Failed to save profiles into {}", profileDirectory, e);
-            return false;
+            throw new ConfigSaveException("Failed to save profiles into " + profileDirectory, e);
         }
     }
 
@@ -117,6 +117,7 @@ final class ProfilePersistence {
             ConfigFiles.writeJsonAtomic(path, metadata);
         } catch (IOException e) {
             LOGGER.warn("Failed to save internal profile metadata {}", path, e);
+            throw new ConfigSaveException("Failed to save internal profile metadata " + path, e);
         }
     }
 
@@ -155,7 +156,7 @@ final class ProfilePersistence {
         }
         try (BufferedReader reader = Files.newBufferedReader(path, StandardCharsets.UTF_8)) {
             JsonObject root = ConfigFiles.GSON.fromJson(reader, JsonObject.class);
-            Config.RepairLog repairs = new Config.RepairLog(source);
+            RepairLog repairs = new RepairLog(source);
             Profile profile = ProfileJson.parse(root, fileName, defaults, repairs);
             profile.sanitize(repairs, defaults);
             repairs.log();

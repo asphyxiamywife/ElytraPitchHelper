@@ -2,6 +2,7 @@ package com.asphyxiamywife.elytrapitchhelper.screen;
 
 import com.asphyxiamywife.elytrapitchhelper.config.Config;
 import com.asphyxiamywife.elytrapitchhelper.screen.widget.ActiveProfileButton;
+import com.asphyxiamywife.elytrapitchhelper.screen.widget.CyclingOptionButton;
 import net.minecraft.client.gui.Font;
 import net.minecraft.client.gui.components.AbstractScrollArea;
 import net.minecraft.client.gui.components.AbstractWidget;
@@ -34,9 +35,9 @@ final class ProfileListPanel {
         addHeader(startX, listWidth);
         addRows(startX, startY, visibleRows, listWidth);
         if (needsScrollbar) {
-            host.addWidget(new ConfigScreen.ProfileScrollBar(startX + listWidth + ConfigScreen.CONTROL_GAP, startY,
+            host.addWidget(new ProfileScrollBar(startX + listWidth + ConfigScreen.CONTROL_GAP, startY,
                     AbstractScrollArea.SCROLLBAR_WIDTH, visibleRows * ConfigScreen.ROW_HEIGHT,
-                    host.config().profileCount(), visibleRows, host.profileScroll()));
+                    host.config().profileCount(), host.profileScroll()));
         }
         if (host.deleteMode()) {
             addDeleteModeFooter(contentWidth);
@@ -48,13 +49,20 @@ final class ProfileListPanel {
     private void addHeader(int startX, int listWidth) {
         int headerY = 38;
         int sortWidth = Math.min(98, Math.max(78, listWidth / 3));
-        Button sortButton = Button.builder(host.profileSortMessage(), button -> {
+        Button sortButton = new CyclingOptionButton(startX, headerY, sortWidth, ConfigScreen.CONTROL_HEIGHT,
+                host.profileSortMessage(), () -> {
             host.refreshConfigSnapshot();
             host.config().cycleProfileSortMode();
             host.setProfileScroll(0);
             host.save();
             host.rebuildWidgets();
-        }).bounds(startX, headerY, sortWidth, ConfigScreen.CONTROL_HEIGHT).build();
+        }, () -> {
+            host.refreshConfigSnapshot();
+            host.config().cycleProfileSortModeBackward();
+            host.setProfileScroll(0);
+            host.save();
+            host.rebuildWidgets();
+        });
         sortButton.active = !host.deleteMode();
         host.addWidget(host.tooltip(sortButton, "tooltip.elytrapitchhelper.profile.sort"));
 
@@ -113,7 +121,7 @@ final class ProfileListPanel {
     private void addProfileName(int startX, int y, int activeWidth, int nameWidth, int profileIndex,
             String profileFile) {
         String profileName = host.config().profileName(profileIndex);
-        EditBox nameBox = new ConfigScreen.MarqueeEditBox(host.font(),
+        EditBox nameBox = new MarqueeEditBox(host.font(),
                 startX + activeWidth + ConfigScreen.CONTROL_GAP, y, nameWidth,
                 ConfigScreen.CONTROL_HEIGHT, Component.translatable("screen.elytrapitchhelper.profile.name"));
         nameBox.setMaxLength(Math.max(ConfigScreen.PROFILE_NAME_MAX_LENGTH, profileName.length()));

@@ -1,8 +1,11 @@
 package com.asphyxiamywife.elytrapitchhelper.config;
 
 import static com.asphyxiamywife.elytrapitchhelper.config.ConfigRepair.repairColor;
+import static com.asphyxiamywife.elytrapitchhelper.config.ConfigRepair.repairCustomPrideColors;
 import static com.asphyxiamywife.elytrapitchhelper.config.ConfigRepair.repairInt;
 import static com.asphyxiamywife.elytrapitchhelper.config.ConfigRepair.repairPrideFlag;
+
+import java.util.Arrays;
 
 public final class LineSettings {
     public int lengthPixels = 26;
@@ -10,6 +13,7 @@ public final class LineSettings {
     public int colorRgb = 0xFFFFFF;
     public boolean prideEnabled = false;
     public String prideFlag = PrideFlag.defaultId();
+    public int[] customPrideColors = PrideFlag.defaultCustomColors();
 
     public LineSettings copy() {
         LineSettings settings = new LineSettings();
@@ -26,9 +30,12 @@ public final class LineSettings {
         colorRgb = other.colorRgb;
         prideEnabled = other.prideEnabled;
         prideFlag = other.prideFlag;
+        customPrideColors = other.customPrideColors == null
+                ? PrideFlag.defaultCustomColors()
+                : Arrays.copyOf(other.customPrideColors, other.customPrideColors.length);
     }
 
-    void sanitize(Config.RepairLog repairs, LineSettings defaults) {
+    void sanitize(RepairLog repairs, LineSettings defaults) {
         if (defaults == null) {
             defaults = new LineSettings();
         }
@@ -36,5 +43,7 @@ public final class LineSettings {
         widthPixels = repairInt(repairs, "line.widthPixels", widthPixels, defaults.widthPixels, 1, 20);
         colorRgb = repairColor(repairs, "line.colorRgb", colorRgb, defaults.colorRgb);
         prideFlag = repairPrideFlag(repairs, "line.prideFlag", prideFlag, defaults.prideFlag);
+        customPrideColors = repairCustomPrideColors(repairs, "line.customPrideColors",
+                customPrideColors, defaults.customPrideColors);
     }
 }

@@ -1,4 +1,4 @@
-> [this modrinth page](https://modrinth.com/mod/elytrapitchhelper) (modrinth[dot]com/mod/elytrapitchhelper) and [github releases](https://github.com/asphyxiamywife/ElytraPitchHelper/releases) are the only officially maintained download sources
+> [this modrinth page](https://modrinth.com/mod/elytrapitchhelper) (modrinth[dot]com/mod/elytrapitchhelper) and [github releases](https://github.com/asphyxiamywife/ElytraPitchHelper/releases) are the only officially maintained download sources. since v2.1.0, releases uploaded to modrinth are the same jars u will find on github with immutability enabled and attestation provided so u can verify them easily
 
 while gliding, the mod shows subtle pitch indicators at +40° and –40°, so u dont have to rely on the cluttered f3 debug screen. this makes it easier to stay focused on smooth and efficient flight. the indicators appear only when ure wearing elytra and close to these pitch angles, keeping ur screen clean the rest of the time.
 
@@ -23,3 +23,6 @@ the mod will try to migrate ur old config automatically. if anything looks off, 
 - all tuning options moved into grouped profile sections (e.g. `targetUpMinecraft` → `pitch.targetUpMinecraft`, `lineColorRgb` → `line.colorRgb`, etc.)
 - `centerTickColorRgb` was removed.
 - config moved from a single `elytra-pitch-helper.json` to the `config/elytra-pitch-helper/` folder with separate profile files.
+
+## compilation
+run `./gradlew build` and find the jar in `build/libs/`

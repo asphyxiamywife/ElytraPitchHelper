@@ -2,6 +2,7 @@ package com.asphyxiamywife.elytrapitchhelper.config;
 
 import org.junit.jupiter.api.Test;
 
+import static org.junit.jupiter.api.Assertions.assertArrayEquals;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
 final class ConfigRepairTest {
@@ -29,7 +30,18 @@ final class ConfigRepairTest {
     @Test
     void repairPrideFlagNormalizesKnownIdsAndFallsBackForUnknownIds() {
         assertEquals("gay-men", ConfigRepair.repairPrideFlag(null, "flag", "gay_men", "rainbow"));
+        assertEquals("custom", ConfigRepair.repairPrideFlag(null, "flag", "custom", "rainbow"));
         assertEquals("trans", ConfigRepair.repairPrideFlag(null, "flag", "missing", "trans"));
         assertEquals("rainbow", ConfigRepair.repairPrideFlag(null, "flag", null, "missing"));
+    }
+
+    @Test
+    void repairCustomPrideColorsKeepsAtLeastTwoSanitizedRgbColors() {
+        assertArrayEquals(new int[] { 0x123456, 0xABCDEF },
+                ConfigRepair.repairCustomPrideColors(null, "colors",
+                        new int[] { 0x123456, 0xFFABCDEF }, PrideFlag.defaultCustomColors()));
+        assertArrayEquals(new int[] { 0x111111, 0x222222 },
+                ConfigRepair.repairCustomPrideColors(null, "colors",
+                        new int[] { 0x333333 }, new int[] { 0x111111, 0x222222 }));
     }
 }

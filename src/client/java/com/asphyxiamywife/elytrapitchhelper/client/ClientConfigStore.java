@@ -42,10 +42,10 @@ public final class ClientConfigStore {
         Config snapshot = nextConfig.copy();
         ACTIVE_SAVES.incrementAndGet();
         try {
-            long savedRevision = publish(snapshot);
             synchronized (SAVE_LOCK) {
                 snapshot.save();
             }
+            long savedRevision = publish(snapshot);
             nextConfig.syncSavedProfileMetadataFrom(snapshot);
             UNSAVED_REVISION.updateAndGet(revision -> revision <= savedRevision ? 0L : revision);
         } finally {
