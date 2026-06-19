@@ -41,6 +41,7 @@ final class ConfigProfileManager {
         active.name = name;
         active.fileName = fileName;
         cfg.profileMetadata.profile(active.fileName).markModified(System.currentTimeMillis(), "Default");
+        cfg.profilesNormalized = false;
         bindActiveProfile(cfg);
     }
 
@@ -242,6 +243,7 @@ final class ConfigProfileManager {
         profile.name = name;
         profile.fileName = fileName;
         cfg.profileMetadata.profile(profile.fileName).markModified(System.currentTimeMillis(), "Default");
+        cfg.profilesNormalized = false;
         if (clampedIndex == cfg.activeProfileIndex) {
             bindActiveProfile(cfg);
         }

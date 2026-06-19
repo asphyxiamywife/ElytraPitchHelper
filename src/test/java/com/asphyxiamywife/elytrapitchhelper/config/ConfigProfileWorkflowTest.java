@@ -86,6 +86,22 @@ final class ConfigProfileWorkflowTest {
     }
 
     @Test
+    void resettingProfileInvalidatesModifiedOrderingBeforeCopy() {
+        Config config = configWithProfiles(profile("Older", "older.json", -40.0f),
+                profile("Newer", "newer.json", -20.0f));
+        config.profileMetadata.profile("older.json").markModified(100L, "Test");
+        config.profileMetadata.profile("newer.json").markModified(200L, "Test");
+        config.profileSortMode = Config.PROFILE_SORT_MODIFIED;
+        ConfigProfileManager.ensureProfiles(config);
+
+        config.resetProfileToDefaults(1);
+        Config copy = config.copy();
+
+        assertEquals("older.json", config.profile(0).fileName);
+        assertTrue(config.hasSameState(copy));
+    }
+
+    @Test
     void profileStateComparisonIgnoresConfigMetadataButDetectsSettingChanges() {
         Config config = configWithProfiles(profile("Cruise", "cruise.json", -40.0f));
         Config reloaded = config.copy();
