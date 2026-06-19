@@ -65,6 +65,18 @@ public final class Config {
         return ConfigCopy.copyOf(this);
     }
 
+    public void restoreFrom(Config snapshot) {
+        ConfigCopy.copyFromPreservingProfiles(this, snapshot);
+    }
+
+    public void prepareSnapshotRestoreFrom(Config current) {
+        ConfigProfileManager.prepareSnapshotRestoreFrom(this, current);
+    }
+
+    public boolean hasSameState(Config other) {
+        return ConfigProfileManager.hasSameState(this, other);
+    }
+
     public void syncSavedProfileMetadataFrom(Config savedConfig) {
         ConfigProfileManager.syncSavedProfileMetadataFrom(this, savedConfig);
     }
@@ -109,16 +121,20 @@ public final class Config {
         return ConfigProfileManager.activeProfileName(this);
     }
 
-    public Path getActiveProfilePath() {
-        return ConfigProfileManager.activeProfilePath(this);
-    }
-
     public Path getProfilePath(int index) {
         return ConfigProfileManager.profilePath(this, index);
     }
 
     public int profileIndexByFileName(String fileName) {
         return ConfigProfileManager.profileIndexByFileName(this, fileName);
+    }
+
+    public boolean hasSameProfileState(Config other, String fileName) {
+        return ConfigProfileManager.hasSameProfileState(this, other, fileName);
+    }
+
+    public void restoreProfileStateFrom(Config snapshot, String fileName) {
+        ConfigProfileManager.restoreProfileStateFrom(this, snapshot, fileName);
     }
 
     public int profileSortMode() {

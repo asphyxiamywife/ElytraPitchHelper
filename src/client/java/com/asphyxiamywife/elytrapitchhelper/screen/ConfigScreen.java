@@ -47,7 +47,22 @@ public final class ConfigScreen extends Screen implements ProfileEditorPanel.Hos
     static final int PROFILE_NAME_MAX_LENGTH = 512;
 
     private final Screen lastScreen;
+    private final ConfigHistory history = new ConfigHistory();
+    private final NumberSlider.InteractionListener sliderHistory = new NumberSlider.InteractionListener() {
+        @Override
+        public void begin(String actionKey) {
+            beginHistoryAction(actionKey);
+        }
+
+        @Override
+        public void end(String actionKey, boolean changed, boolean coalesce) {
+            commitHistoryAction(changed, coalesce);
+        }
+    };
     private Config config;
+    private Config historyBaseline;
+    private ConfigHistory.Context historyBaselineContext;
+    private boolean restoringHistory;
     private boolean editingProfile;
     private boolean deleteMode;
     private int editingProfileIndex;
@@ -63,12 +78,17 @@ public final class ConfigScreen extends Screen implements ProfileEditorPanel.Hos
     private final DropdownOverlayController dropdowns = new DropdownOverlayController();
     private ConfigCategory category = ConfigCategory.GENERAL;
     private String selectedVoidWarningDimensionKey;
+    private Config resetUndoSnapshot;
+    private Config resetAppliedSnapshot;
+    private String resetUndoProfileFile;
+    private Button resetProfileButton;
 
     public ConfigScreen(Screen lastScreen) {
         super(Component.translatable("screen.elytrapitchhelper.config.title"));
         this.lastScreen = lastScreen;
         this.config = ClientConfigStore.get().copy();
         this.configRevision = ClientConfigStore.revision();
+        resetHistoryBaseline();
     }
 
     @Override
@@ -76,6 +96,7 @@ public final class ConfigScreen extends Screen implements ProfileEditorPanel.Hos
         dropdowns.clear();
         if (configRevision != ClientConfigStore.revision()) {
             loadConfigSnapshot();
+            clearHistory();
         }
         syncEditingProfileIndex();
         if (editingProfile) {
@@ -110,10 +131,12 @@ public final class ConfigScreen extends Screen implements ProfileEditorPanel.Hos
             if (!flushSaveIfPending()) {
                 return;
             }
+            clearResetUndo();
             editingProfile = false;
             editingProfileFile = null;
             selectedVoidWarningDimensionKey = null;
             refreshConfigSnapshot();
+            historyBaselineContext = historyContext();
             rebuildWidgets();
         } else if (deleteMode) {
             requestCancelProfileDeletes();
@@ -121,12 +144,15 @@ public final class ConfigScreen extends Screen implements ProfileEditorPanel.Hos
             if (!flushSaveIfPending()) {
                 return;
             }
+            clearResetUndo();
+            clearHistory();
             minecraft.setScreen(lastScreen);
         }
     }
 
     @Override
     public void removed() {
+        clearResetUndo();
         if (deleteMode && !deleteModeConfirmationOpen) {
             restoreStagedProfileDeletes();
             deleteMode = false;
@@ -192,6 +218,9 @@ public final class ConfigScreen extends Screen implements ProfileEditorPanel.Hos
         if (dropdowns.handleKeyPressed(event)) {
             return true;
         }
+        if (handleHistoryShortcut(event)) {
+            return true;
+        }
         if ((event.key() == GLFW.GLFW_KEY_ENTER || event.key() == GLFW.GLFW_KEY_KP_ENTER)
                 && commitFocusedTextField()) {
             return true;
@@ -237,6 +266,7 @@ public final class ConfigScreen extends Screen implements ProfileEditorPanel.Hos
 
     @Override
     public void stageProfileDelete(String profileFile) {
+        beginHistoryAction("profile-delete");
         int resolvedIndex = config.profileIndexByFileName(profileFile);
         StagedProfileDelete deleted = resolvedIndex < 0 ? null : config.stageDeleteProfile(resolvedIndex);
         if (deleted != null) {
@@ -244,6 +274,7 @@ public final class ConfigScreen extends Screen implements ProfileEditorPanel.Hos
             syncEditingProfileIndex();
             profileScroll = Math.max(0, Math.min(profileScroll, maxProfileScroll()));
         }
+        commitHistoryAction(deleted != null, false);
         rebuildWidgets();
     }
 
@@ -253,6 +284,7 @@ public final class ConfigScreen extends Screen implements ProfileEditorPanel.Hos
             return;
         }
 
+        beginHistoryAction("profile-delete");
         StagedProfileDelete deleted = stagedProfileDeletes.remove(stagedProfileDeletes.size() - 1);
         config.restoreStagedProfileDelete(deleted);
         syncEditingProfileIndex();
@@ -260,6 +292,7 @@ public final class ConfigScreen extends Screen implements ProfileEditorPanel.Hos
         if (restoredIndex >= 0) {
             scrollProfileIntoView(restoredIndex);
         }
+        commitHistoryAction(true, false);
         rebuildWidgets();
     }
 
@@ -313,12 +346,19 @@ public final class ConfigScreen extends Screen implements ProfileEditorPanel.Hos
         deleteMode = false;
         save();
         flushSaveIfPending();
+        clearHistory();
         rebuildWidgets();
     }
 
     private void cancelProfileDeletes() {
+        boolean hadStagedDeletes = !stagedProfileDeletes.isEmpty();
         restoreStagedProfileDeletes();
         deleteMode = false;
+        if (hadStagedDeletes) {
+            clearHistory();
+        } else {
+            historyBaselineContext = historyContext();
+        }
     }
 
     private void restoreStagedProfileDeletes() {
@@ -428,6 +468,7 @@ public final class ConfigScreen extends Screen implements ProfileEditorPanel.Hos
         flushSaveIfDue();
         if (!savePending && configRevision != ClientConfigStore.revision() && !isTextFieldFocused()) {
             loadConfigSnapshot();
+            clearHistory();
             syncEditingProfileIndex();
             rebuildWidgets();
         }
@@ -466,6 +507,7 @@ public final class ConfigScreen extends Screen implements ProfileEditorPanel.Hos
     @Override
     public void setCategory(ConfigCategory category) {
         this.category = category;
+        historyBaselineContext = historyContext();
     }
 
     @Override
@@ -518,9 +560,11 @@ public final class ConfigScreen extends Screen implements ProfileEditorPanel.Hos
             if (editBox.getValue().isBlank()
                     || configRevision != ClientConfigStore.revision()) {
                 loadConfigSnapshot();
+                clearHistory();
                 syncEditingProfileIndex();
                 rebuildWidgets();
             }
+            history.breakCoalescing();
             return true;
         }
         return false;
@@ -540,9 +584,11 @@ public final class ConfigScreen extends Screen implements ProfileEditorPanel.Hos
         }
         if (shouldReload) {
             loadConfigSnapshot();
+            clearHistory();
             syncEditingProfileIndex();
             rebuildWidgets();
         }
+        history.breakCoalescing();
         return true;
     }
 
@@ -550,14 +596,16 @@ public final class ConfigScreen extends Screen implements ProfileEditorPanel.Hos
     public AbstractSliderButton floatSlider(Component label, double current, double min, double max, double step,
             String suffix, DoubleConsumer onChange) {
         return new NumberSlider(0, 0, 1, CONTROL_HEIGHT, label, current, min, max, step,
-                value -> ScreenText.formatDecimal(value) + " " + suffix, onChange);
+                value -> ScreenText.formatDecimal(value) + " " + suffix, onChange,
+                historyKey(label), sliderHistory);
     }
 
     @Override
     public AbstractSliderButton intSlider(Component label, int current, int min, int max, String suffix,
             IntConsumer onChange) {
         return new NumberSlider(0, 0, 1, CONTROL_HEIGHT, label, current, min, max, 1.0,
-                value -> formatIntValue(value, suffix), value -> onChange.accept((int) Math.round(value)));
+                value -> formatIntValue(value, suffix), value -> onChange.accept((int) Math.round(value)),
+                historyKey(label), sliderHistory);
     }
 
     private static String formatIntValue(double value, String suffix) {
@@ -586,7 +634,8 @@ public final class ConfigScreen extends Screen implements ProfileEditorPanel.Hos
     public Button colorButton(Component label, int current, boolean prideEnabled, String prideFlagId,
             int[] customPrideColors,
             IntSupplier previewLineLength, IntSupplier previewLineWidth, boolean previewCuePeak,
-            IntConsumer onChange, ColorEditorScreen.PrideSettingsConsumer onPrideChange) {
+            IntConsumer onChange, ColorEditorScreen.PrideSettingsConsumer onPrideChange,
+            java.util.function.Supplier<ColorEditorScreen.ColorState> stateSupplier) {
         int color = current & 0x00FFFFFF;
         PrideFlag prideFlag = PrideFlag.byId(prideFlagId);
         Component value = prideEnabled
@@ -598,17 +647,67 @@ public final class ConfigScreen extends Screen implements ProfileEditorPanel.Hos
                 button -> minecraft.setScreen(new ColorEditorScreen(this, label, color, prideEnabled,
                         prideFlag.id(), customPrideColors, previewLineLength.getAsInt(),
                         previewLineWidth.getAsInt(), previewCuePeak, onChange, onPrideChange,
-                        this::flushSaveIfPending)));
+                        this::flushSaveIfPending, historyKey(label), stateSupplier,
+                        new ColorEditorScreen.HistoryController() {
+                            @Override
+                            public void begin(String actionKey) {
+                                beginHistoryAction(actionKey);
+                            }
+
+                            @Override
+                            public void end(boolean changed, boolean coalesce) {
+                                commitHistoryAction(changed, coalesce);
+                            }
+
+                            @Override
+                            public boolean undo() {
+                                return restoreHistory(false);
+                            }
+
+                            @Override
+                            public boolean redo() {
+                                return restoreHistory(true);
+                            }
+
+                            @Override
+                            public void breakCoalescing() {
+                                breakHistoryCoalescing();
+                            }
+
+                            @Override
+                            public boolean acceptExternalRevision() {
+                                return acceptExternalRevisionFromNestedScreen();
+                            }
+                        })));
     }
 
     @Override
-    public void openResetProfileConfirmation() {
+    public Button resetProfileButton() {
+        resetProfileButton = Button.builder(resetProfileButtonLabel(), button -> {
+            if (hasResetUndo()) {
+                undoProfileReset();
+            } else {
+                openResetProfileConfirmation();
+            }
+        }).bounds(0, 0, 1, CONTROL_HEIGHT).build();
+        updateResetProfileButton();
+        return resetProfileButton;
+    }
+
+    private void openResetProfileConfirmation() {
         String profileName = config.profileName(editingProfileIndex);
+        Config preResetSnapshot = config.copy();
+        String profileFile = config.profile(editingProfileIndex).fileName;
         minecraft.setScreen(new ConfirmScreen(confirmed -> {
             minecraft.setScreen(this);
             if (confirmed) {
+                resetUndoSnapshot = preResetSnapshot;
+                resetUndoProfileFile = profileFile;
+                beginHistoryAction("reset-profile");
                 config.resetProfileToDefaults(editingProfileIndex);
+                resetAppliedSnapshot = config.copy();
                 save();
+                commitHistoryAction(true, false);
                 rebuildWidgets();
             }
         }, Component.translatable("screen.elytrapitchhelper.reset_profile.title"),
@@ -617,18 +716,81 @@ public final class ConfigScreen extends Screen implements ProfileEditorPanel.Hos
                 CommonComponents.GUI_CANCEL));
     }
 
+    private void undoProfileReset() {
+        if (!hasResetUndo()) {
+            return;
+        }
+        Config snapshot = resetUndoSnapshot;
+        String profileFile = resetUndoProfileFile;
+        beginHistoryAction("reset-profile");
+        clearResetUndo();
+        config.restoreProfileStateFrom(snapshot, profileFile);
+        save();
+        commitHistoryAction(true, false);
+        rebuildWidgets();
+    }
+
+    private boolean hasResetUndo() {
+        return resetUndoSnapshot != null
+                && resetUndoProfileFile != null
+                && resetUndoProfileFile.equals(editingProfileFile);
+    }
+
+    private Component resetProfileButtonLabel() {
+        return Component.translatable(hasResetUndo()
+                ? "screen.elytrapitchhelper.config.undo_reset"
+                : "screen.elytrapitchhelper.config.reset");
+    }
+
+    private void clearResetUndo() {
+        resetUndoSnapshot = null;
+        resetAppliedSnapshot = null;
+        resetUndoProfileFile = null;
+        updateResetProfileButton();
+    }
+
+    private void reconcileResetUndo() {
+        boolean resetStillApplied = hasResetUndo()
+                && resetStateMatches(config, resetAppliedSnapshot, resetUndoProfileFile);
+        if (!resetStillApplied) {
+            clearResetUndo();
+        } else {
+            updateResetProfileButton();
+        }
+    }
+
+    static boolean resetStateMatches(Config current, Config resetApplied, String profileFile) {
+        return current != null && resetApplied != null && profileFile != null
+                && current.hasSameProfileState(resetApplied, profileFile);
+    }
+
+    private void updateResetProfileButton() {
+        if (resetProfileButton == null) {
+            return;
+        }
+        resetProfileButton.setMessage(resetProfileButtonLabel());
+        resetProfileButton.setTooltip(hasResetUndo()
+                ? Tooltip.create(Component.translatable("tooltip.elytrapitchhelper.profile.undo_reset"))
+                : null);
+        resetProfileButton.setTooltipDelay(TOOLTIP_DELAY);
+    }
+
     @Override
     public Button amplitudeTriggerModeButton(Component label, Profile profile) {
         CyclingOptionButton[] buttonRef = new CyclingOptionButton[1];
         CyclingOptionButton button = new CyclingOptionButton(0, 0, 1, CONTROL_HEIGHT,
                 amplitudeTriggerModeMessage(label), () -> {
+                    beginHistoryAction("amplitude-trigger");
                     profile.amplitude.triggerMode = Config.nextAmplitudeTriggerMode(profile.amplitude.triggerMode);
                     buttonRef[0].setMessage(amplitudeTriggerModeMessage(label, profile.amplitude.triggerMode));
                     saveProfileChange();
+                    commitHistoryAction(true, false);
                 }, () -> {
+                    beginHistoryAction("amplitude-trigger");
                     profile.amplitude.triggerMode = Config.previousAmplitudeTriggerMode(profile.amplitude.triggerMode);
                     buttonRef[0].setMessage(amplitudeTriggerModeMessage(label, profile.amplitude.triggerMode));
                     saveProfileChange();
+                    commitHistoryAction(true, false);
                 });
         buttonRef[0] = button;
         button.setMessage(amplitudeTriggerModeMessage(label, profile.amplitude.triggerMode));
@@ -640,14 +802,18 @@ public final class ConfigScreen extends Screen implements ProfileEditorPanel.Hos
         CyclingOptionButton[] buttonRef = new CyclingOptionButton[1];
         CyclingOptionButton button = new CyclingOptionButton(0, 0, 1, CONTROL_HEIGHT,
                 voidWarningModeMessage(label), () -> {
+                    beginHistoryAction("void-warning-mode");
                     profile.voidWarning.mode = VoidWarningSettings.nextMode(profile.voidWarning.mode);
                     buttonRef[0].setMessage(voidWarningModeMessage(label, profile.voidWarning.mode));
                     saveProfileChange();
+                    commitHistoryAction(true, false);
                     rebuildWidgets();
                 }, () -> {
+                    beginHistoryAction("void-warning-mode");
                     profile.voidWarning.mode = VoidWarningSettings.previousMode(profile.voidWarning.mode);
                     buttonRef[0].setMessage(voidWarningModeMessage(label, profile.voidWarning.mode));
                     saveProfileChange();
+                    commitHistoryAction(true, false);
                     rebuildWidgets();
                 });
         buttonRef[0] = button;
@@ -723,6 +889,15 @@ public final class ConfigScreen extends Screen implements ProfileEditorPanel.Hos
 
     @Override
     public void save() {
+        saveInternal("config-edit");
+    }
+
+    private void saveInternal(String actionKey) {
+        if (!restoringHistory && !history.isActionActive()) {
+            history.record(actionKey, historyBaseline, historyBaselineContext, config, historyContext(), false,
+                    System.currentTimeMillis());
+            resetHistoryBaseline();
+        }
         ClientConfigStore.update(config);
         configRevision = ClientConfigStore.revision();
         savePending = true;
@@ -731,8 +906,17 @@ public final class ConfigScreen extends Screen implements ProfileEditorPanel.Hos
 
     @Override
     public void saveProfileChange() {
+        clearResetUndo();
         config.applyProfileIfActive(editingProfileIndex);
-        save();
+        saveInternal("profile-edit");
+    }
+
+    @Override
+    public void performProfileChange(String actionKey, Runnable change) {
+        beginHistoryAction(actionKey);
+        change.run();
+        saveProfileChange();
+        commitHistoryAction(true, false);
     }
 
     @Override
@@ -754,6 +938,7 @@ public final class ConfigScreen extends Screen implements ProfileEditorPanel.Hos
             ClientConfigStore.set(config);
             configRevision = ClientConfigStore.revision();
             savePending = false;
+            resetHistoryBaseline();
             return true;
         } catch (ConfigSaveException e) {
             saveAfterMillis = System.currentTimeMillis() + SAVE_DEBOUNCE_MILLIS;
@@ -763,9 +948,12 @@ public final class ConfigScreen extends Screen implements ProfileEditorPanel.Hos
     }
 
     private void loadConfigSnapshot() {
-        config = ClientConfigStore.get().copy();
+        Config loaded = ClientConfigStore.get().copy();
+        config = loaded;
         configRevision = ClientConfigStore.revision();
         savePending = false;
+        reconcileResetUndo();
+        resetHistoryBaseline();
     }
 
     @Override
@@ -775,6 +963,7 @@ public final class ConfigScreen extends Screen implements ProfileEditorPanel.Hos
         }
         if (configRevision != ClientConfigStore.revision()) {
             loadConfigSnapshot();
+            clearHistory();
             syncEditingProfileIndex();
         }
     }
@@ -792,16 +981,19 @@ public final class ConfigScreen extends Screen implements ProfileEditorPanel.Hos
         }
         stagedProfileDeletes.clear();
         deleteMode = true;
+        historyBaselineContext = historyContext();
         rebuildWidgets();
     }
 
     @Override
     public void editProfile(int profileIndex) {
+        clearResetUndo();
         editingProfileIndex = profileIndex;
         editingProfileFile = config.profile(profileIndex).fileName;
         editingProfile = true;
         category = ConfigCategory.GENERAL;
         selectedVoidWarningDimensionKey = null;
+        historyBaselineContext = historyContext();
         rebuildWidgets();
     }
 
@@ -833,6 +1025,121 @@ public final class ConfigScreen extends Screen implements ProfileEditorPanel.Hos
 
     private boolean isTextFieldFocused() {
         return getFocused() instanceof EditBox;
+    }
+
+    private static String historyKey(Component label) {
+        return label.getString().toLowerCase(java.util.Locale.ROOT).replaceAll("[^a-z0-9]+", "-")
+                .replaceAll("(^-|-$)", "");
+    }
+
+    private boolean handleHistoryShortcut(KeyEvent event) {
+        int modifiers = event.modifiers();
+        boolean primary = (modifiers & (GLFW.GLFW_MOD_CONTROL | GLFW.GLFW_MOD_SUPER)) != 0;
+        if (!primary) {
+            return false;
+        }
+        if (event.key() == GLFW.GLFW_KEY_Z) {
+            if ((modifiers & GLFW.GLFW_MOD_SHIFT) != 0) {
+                restoreHistory(true);
+            } else {
+                restoreHistory(false);
+            }
+            return true;
+        }
+        if (event.key() == GLFW.GLFW_KEY_Y) {
+            restoreHistory(true);
+            return true;
+        }
+        return false;
+    }
+
+    @Override
+    public void beginHistoryAction(String actionKey) {
+        history.begin(actionKey, config, historyContext());
+    }
+
+    @Override
+    public void commitHistoryAction(boolean changed, boolean coalesce) {
+        history.commit(config, historyContext(), changed, coalesce, System.currentTimeMillis());
+        resetHistoryBaseline();
+    }
+
+    @Override
+    public void breakHistoryCoalescing() {
+        history.breakCoalescing();
+    }
+
+    @Override
+    public void checkpointHistory() {
+        clearHistory();
+    }
+
+    private boolean restoreHistory(boolean redo) {
+        ConfigHistory.Restore restore = redo ? history.redo() : history.undo();
+        if (restore == null) {
+            return false;
+        }
+
+        restoringHistory = true;
+        try {
+            Config snapshot = restore.config();
+            snapshot.prepareSnapshotRestoreFrom(config);
+            config.restoreFrom(snapshot);
+            restoreHistoryContext(restore.context());
+            syncEditingProfileIndex();
+            config.applyProfileIfActive(config.activeProfileIndex);
+            reconcileResetUndo();
+            resetHistoryBaseline();
+            if (!restore.context().deleteMode()) {
+                saveInternal(redo ? "redo" : "undo");
+                flushSaveIfPending();
+            }
+        } finally {
+            restoringHistory = false;
+        }
+        if (minecraft == null || minecraft.screen == this) {
+            rebuildWidgets();
+        }
+        return true;
+    }
+
+    private boolean acceptExternalRevisionFromNestedScreen() {
+        if (savePending || configRevision == ClientConfigStore.revision()) {
+            return false;
+        }
+        loadConfigSnapshot();
+        clearHistory();
+        syncEditingProfileIndex();
+        if (minecraft != null) {
+            minecraft.setScreen(this);
+        }
+        return true;
+    }
+
+    private ConfigHistory.Context historyContext() {
+        return new ConfigHistory.Context(editingProfile, editingProfileFile, category,
+                selectedVoidWarningDimensionKey, profileScroll, deleteMode, stagedProfileDeletes);
+    }
+
+    private void restoreHistoryContext(ConfigHistory.Context context) {
+        editingProfile = context.editingProfile();
+        editingProfileFile = context.profileFile();
+        category = context.category() == null ? ConfigCategory.GENERAL : context.category();
+        selectedVoidWarningDimensionKey = context.dimensionKey();
+        profileScroll = context.profileScroll();
+        deleteMode = context.deleteMode();
+        stagedProfileDeletes.clear();
+        stagedProfileDeletes.addAll(context.stagedDeletes());
+    }
+
+    private void resetHistoryBaseline() {
+        historyBaseline = config.copy();
+        historyBaselineContext = historyContext();
+    }
+
+    private void clearHistory() {
+        history.clear();
+        resetHistoryBaseline();
     }
 
 }

@@ -29,16 +29,8 @@ public final class ElytraPitchHelperClient implements ClientModInitializer {
         ClientConfigStore.reloadFromDisk();
     }
 
-    public static void setConfig(Config config) {
-        ClientConfigStore.set(config);
-    }
-
     public static Config getConfig() {
         return ClientConfigStore.get();
-    }
-
-    public static long getConfigRevision() {
-        return ClientConfigStore.revision();
     }
 
     public static Identifier id(String path) {

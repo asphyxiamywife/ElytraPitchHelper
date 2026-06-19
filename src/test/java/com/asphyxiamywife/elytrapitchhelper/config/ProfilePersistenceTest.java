@@ -12,11 +12,13 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.attribute.FileTime;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Stream;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 final class ProfilePersistenceTest {
@@ -67,6 +69,56 @@ final class ProfilePersistenceTest {
         Profile saved = ProfilePersistence.readProfileFile(profilePath, "alpha.json", "saved profile",
                 profile("Defaults", "default.json"));
         assertEquals("External", saved.name);
+    }
+
+    @Test
+    void restoredSnapshotCanOverwriteTheResetFileItReplaces() throws IOException {
+        Profile original = profile("Original", "alpha.json");
+        Path profilePath = writeProfile(original);
+        long loadedAt = Files.getLastModifiedTime(profilePath).toMillis();
+        Config config = new Config();
+        config.profiles = new ArrayList<>(List.of(original));
+        config.activeProfileIndex = 0;
+        config.activeProfileFile = original.fileName;
+        original.bindTo(config);
+        config.profileMetadata = loadedMetadata("alpha.json", loadedAt);
+        Config snapshot = config.copy();
+
+        config.profile(0).pitch.targetUpMinecraft = -25.0f;
+        assertTrue(ProfilePersistence.saveProfiles(config.profiles, config.profileMetadata));
+
+        config.restoreProfileStateFrom(snapshot, "alpha.json");
+        assertTrue(ProfilePersistence.saveProfiles(config.profiles, config.profileMetadata));
+
+        Profile saved = ProfilePersistence.readProfileFile(profilePath, "alpha.json", "saved profile",
+                profile("Defaults", "default.json"));
+        assertEquals(-40.0f, saved.pitch.targetUpMinecraft);
+    }
+
+    @Test
+    void fullSnapshotRestoreKeepsCurrentLoadedTimestampAndProfileIdentity() throws IOException {
+        Profile original = profile("Original", "alpha.json");
+        Path profilePath = writeProfile(original);
+        long loadedAt = Files.getLastModifiedTime(profilePath).toMillis();
+        Config config = new Config();
+        config.profiles = new ArrayList<>(List.of(original));
+        config.activeProfileIndex = 0;
+        config.activeProfileFile = original.fileName;
+        original.bindTo(config);
+        config.profileMetadata = loadedMetadata("alpha.json", loadedAt);
+        Config snapshot = config.copy();
+
+        config.profile(0).pitch.targetUpMinecraft = -25.0f;
+        assertTrue(ProfilePersistence.saveProfiles(config.profiles, config.profileMetadata));
+
+        snapshot.prepareSnapshotRestoreFrom(config);
+        config.restoreFrom(snapshot);
+        assertSame(original, config.profile(0));
+        assertTrue(ProfilePersistence.saveProfiles(config.profiles, config.profileMetadata));
+
+        Profile saved = ProfilePersistence.readProfileFile(profilePath, "alpha.json", "saved profile",
+                profile("Defaults", "default.json"));
+        assertEquals(-40.0f, saved.pitch.targetUpMinecraft);
     }
 
     @Test

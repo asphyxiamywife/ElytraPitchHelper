@@ -6,6 +6,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotSame;
 import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -58,12 +59,15 @@ final class ConfigProfileWorkflowTest {
         Config config = configWithProfiles(profile("Cruise", "cruise.json", -40.0f),
                 profile("Dive", "dive.json", -20.0f));
         config.pitch.targetUpMinecraft = -33.0f;
+        config.visibility.anyElytraGlide = true;
 
         Config copy = config.copy();
 
         assertEquals(-33.0f, copy.profile(0).pitch.targetUpMinecraft);
+        assertTrue(copy.visibility.anyElytraGlide);
         assertSame(copy.pitch, copy.profile(0).pitch);
         assertNotSame(config.pitch, copy.pitch);
+        assertNotSame(config.visibility, copy.visibility);
     }
 
     @Test
@@ -79,6 +83,41 @@ final class ConfigProfileWorkflowTest {
 
         assertEquals(-33.0f, copy.profile(0).pitch.targetUpMinecraft);
         assertSame(copy.pitch, copy.profile(0).pitch);
+    }
+
+    @Test
+    void profileStateComparisonIgnoresConfigMetadataButDetectsSettingChanges() {
+        Config config = configWithProfiles(profile("Cruise", "cruise.json", -40.0f));
+        Config reloaded = config.copy();
+        reloaded.enabled = !config.enabled;
+        reloaded.profileMetadata.profile("cruise.json").markModified(System.currentTimeMillis(), "Default");
+
+        assertTrue(config.hasSameProfileState(reloaded, "cruise.json"));
+
+        reloaded.profile(0).pitch.targetUpMinecraft = -25.0f;
+
+        assertFalse(config.hasSameProfileState(reloaded, "cruise.json"));
+    }
+
+    @Test
+    void restoringProfileSnapshotKeepsCurrentDiskGeneration() {
+        Config config = configWithProfiles(profile("Cruise", "cruise.json", -40.0f));
+        ProfileMetadata metadata = config.profileMetadata.profile("cruise.json");
+        metadata.markCreated(100L, "Hand Tuned");
+        metadata.loadedFileModifiedAtMillis = 200L;
+        Config snapshot = config.copy();
+
+        config.profile(0).pitch.targetUpMinecraft = -25.0f;
+        metadata.markModified(300L, "Default");
+        metadata.loadedFileModifiedAtMillis = 400L;
+
+        config.restoreProfileStateFrom(snapshot, "cruise.json");
+
+        assertEquals(-40.0f, config.profile(0).pitch.targetUpMinecraft);
+        assertSame(config.pitch, config.profile(0).pitch);
+        assertEquals("Hand Tuned", metadata.basedOn);
+        assertEquals(100L, metadata.lastModifiedAtMillis);
+        assertEquals(400L, metadata.loadedFileModifiedAtMillis);
     }
 
     private static Config configWithProfiles(Profile... profiles) {

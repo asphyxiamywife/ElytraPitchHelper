@@ -98,6 +98,7 @@ final class ProfileJsonTest {
         assertEquals(12.5f, profile.voidWarning.customToleranceDegrees);
         assertFalse(profile.voidWarning.maxOffsetOverride);
         assertEquals(72, profile.voidWarning.customMaxOffsetPixels);
+        assertTrue(profile.visibility.anyElytraGlide);
     }
 
     private static Profile defaults() {
@@ -135,6 +136,7 @@ final class ProfileJsonTest {
         JsonObject visibility = new JsonObject();
         visibility.addProperty("showOnlyWithFirework", true);
         visibility.addProperty("showInThirdPerson", false);
+        visibility.addProperty("anyElytraGlide", true);
         JsonObject pitch = new JsonObject();
         pitch.addProperty("targetUpMinecraft", -35.0f);
         pitch.addProperty("targetDownMinecraft", 45.0f);
@@ -195,6 +197,7 @@ final class ProfileJsonTest {
         json.addProperty("name", "Tuned");
         json.addProperty("showOnlyWithFirework", true);
         json.addProperty("showInThirdPerson", false);
+        json.addProperty("anyElytraGlide", true);
         json.addProperty("targetUpMinecraft", -35.0f);
         json.addProperty("targetDownMinecraft", 45.0f);
         json.addProperty("toleranceDegrees", 8.0f);

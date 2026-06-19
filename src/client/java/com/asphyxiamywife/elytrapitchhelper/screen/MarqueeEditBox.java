@@ -11,15 +11,26 @@ final class MarqueeEditBox extends EditBox {
     private static final int TRANSPARENT_TEXT_COLOR = 0x00000000;
 
     private final Font textRenderer;
+    private final Runnable onFocusLost;
     private int textColor = EditBox.DEFAULT_TEXT_COLOR;
     private String marqueeValue = "";
     private int marqueeInnerWidth = -1;
     private long marqueeStartedMillis = System.currentTimeMillis();
     private boolean marqueeHovered;
 
-    MarqueeEditBox(Font font, int x, int y, int width, int height, Component message) {
+    MarqueeEditBox(Font font, int x, int y, int width, int height, Component message, Runnable onFocusLost) {
         super(font, x, y, width, height, message);
         this.textRenderer = font;
+        this.onFocusLost = onFocusLost;
+    }
+
+    @Override
+    public void setFocused(boolean focused) {
+        boolean wasFocused = isFocused();
+        super.setFocused(focused);
+        if (wasFocused && !focused && onFocusLost != null) {
+            onFocusLost.run();
+        }
     }
 
     @Override

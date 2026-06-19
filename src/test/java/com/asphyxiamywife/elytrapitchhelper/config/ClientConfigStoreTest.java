@@ -14,6 +14,7 @@ import java.nio.file.Path;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 final class ClientConfigStoreTest {
     @TempDir
@@ -49,5 +50,16 @@ final class ClientConfigStoreTest {
         assertThrows(ConfigSaveException.class, () -> ClientConfigStore.set(next));
         assertFalse(ClientConfigStore.get().enabled);
         assertEquals(revision, ClientConfigStore.revision());
+    }
+
+    @Test
+    void watcherReloadOfJustSavedStateDoesNotCreateExternalRevision() {
+        Config current = ClientConfigStore.get().copy();
+        current.enabled = !current.enabled;
+        ClientConfigStore.set(current);
+        long savedRevision = ClientConfigStore.revision();
+
+        assertTrue(ClientConfigStore.reloadFromDiskIfIdle());
+        assertEquals(savedRevision, ClientConfigStore.revision());
     }
 }

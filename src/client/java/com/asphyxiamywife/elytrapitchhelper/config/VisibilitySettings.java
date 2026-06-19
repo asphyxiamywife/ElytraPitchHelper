@@ -3,6 +3,7 @@ package com.asphyxiamywife.elytrapitchhelper.config;
 public final class VisibilitySettings {
     public boolean showOnlyWithFirework = false;
     public boolean showInThirdPerson = false;
+    public boolean anyElytraGlide = false;
 
     public VisibilitySettings copy() {
         VisibilitySettings settings = new VisibilitySettings();
@@ -16,5 +17,6 @@ public final class VisibilitySettings {
         }
         showOnlyWithFirework = other.showOnlyWithFirework;
         showInThirdPerson = other.showInThirdPerson;
+        anyElytraGlide = other.anyElytraGlide;
     }
 }

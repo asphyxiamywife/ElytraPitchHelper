@@ -7,8 +7,9 @@ import net.minecraft.network.chat.Component;
 public final class ActiveProfileButton extends Button {
     private final boolean selected;
 
-    public ActiveProfileButton(int x, int y, int width, int height, boolean selected, OnPress onPress) {
-        super(x, y, width, height, Component.empty(), onPress, DEFAULT_NARRATION);
+    public ActiveProfileButton(int x, int y, int width, int height, boolean selected, Component narration,
+            OnPress onPress) {
+        super(x, y, width, height, narration, onPress, DEFAULT_NARRATION);
         this.selected = selected;
     }
 

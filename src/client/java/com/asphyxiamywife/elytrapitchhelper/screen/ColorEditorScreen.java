@@ -18,6 +18,7 @@ import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.client.gui.components.AbstractWidget;
 import net.minecraft.client.gui.components.Button;
 import net.minecraft.client.gui.components.EditBox;
+import net.minecraft.client.gui.components.Tooltip;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.client.input.KeyEvent;
 import net.minecraft.client.input.MouseButtonEvent;
@@ -27,6 +28,7 @@ import org.lwjgl.glfw.GLFW;
 
 import java.util.Arrays;
 import java.util.function.IntConsumer;
+import java.util.function.Supplier;
 
 final class ColorEditorScreen extends Screen {
     private static final int CONTROL_HEIGHT = 20;
@@ -39,6 +41,9 @@ final class ColorEditorScreen extends Screen {
     private final IntConsumer onChange;
     private final PrideSettingsConsumer onPrideChange;
     private final Runnable onCommit;
+    private final String historyKey;
+    private final Supplier<ColorState> stateSupplier;
+    private final HistoryController history;
     private final int previewLineLength;
     private final int previewLineWidth;
     private final boolean previewCuePeak;
@@ -70,7 +75,8 @@ final class ColorEditorScreen extends Screen {
 
     ColorEditorScreen(Screen lastScreen, Component colorName, int color, boolean prideEnabled, String prideFlagId,
             int[] customPrideColors, int previewLineLength, int previewLineWidth, boolean previewCuePeak,
-            IntConsumer onChange, PrideSettingsConsumer onPrideChange, Runnable onCommit) {
+            IntConsumer onChange, PrideSettingsConsumer onPrideChange, Runnable onCommit, String historyKey,
+            Supplier<ColorState> stateSupplier, HistoryController history) {
         super(Component.translatable("screen.elytrapitchhelper.color.title", colorName));
         this.lastScreen = lastScreen;
         this.color = color & 0x00FFFFFF;
@@ -92,6 +98,9 @@ final class ColorEditorScreen extends Screen {
         this.onChange = onChange;
         this.onPrideChange = onPrideChange;
         this.onCommit = onCommit;
+        this.historyKey = historyKey;
+        this.stateSupplier = stateSupplier;
+        this.history = history;
         syncHsvFromColor(true);
     }
 
@@ -116,6 +125,7 @@ final class ColorEditorScreen extends Screen {
                 layout.controlWidth() - prideButtonWidth - prideButtonGap, CONTROL_HEIGHT, null,
                 Arrays.asList(PrideFlag.values()), PrideFlag.byId(prideFlagId),
                 flag -> Component.translatable(flag.translationKey()), this::stripeColorsForDropdown, flag -> {
+            history.begin(historyKey);
             boolean wasEditingCustom = editingCustomPride();
             prideFlagId = flag.id();
             if (flag == PrideFlag.CUSTOM) {
@@ -125,28 +135,33 @@ final class ColorEditorScreen extends Screen {
             }
             syncPrideControls();
             applyPrideChange();
+            history.end(true, false);
         });
         addRenderableWidget(prideFlagDropdown);
 
-        int customButtonWidth = Math.max(54, (layout.controlWidth() - RGB_SLIDER_GAP * 2) / 3);
-        int customSmallWidth = Math.max(36, (layout.controlWidth() - customButtonWidth - RGB_SLIDER_GAP * 2) / 2);
+        int customButtonWidth = Math.max(54, layout.controlWidth() - RGB_SLIDER_GAP * 2 - 36 * 2);
+        int customActionsWidth = layout.controlWidth() - customButtonWidth - RGB_SLIDER_GAP * 2;
+        int customSmallWidth = customActionsWidth / 2;
         customStripeButton = new CyclingOptionButton(layout.controlX(), layout.customY(), customButtonWidth,
                 CONTROL_HEIGHT, customStripeMessage(), () -> cycleCustomStripe(1), () -> cycleCustomStripe(-1));
         addRenderableWidget(customStripeButton);
 
-        customAddButton = Button.builder(Component.translatable("option.elytrapitchhelper.color.custom.add"),
+        customAddButton = Button.builder(Component.literal("+"),
                 button -> addCustomStripe())
                 .bounds(layout.controlX() + customButtonWidth + RGB_SLIDER_GAP, layout.customY(),
                         customSmallWidth, CONTROL_HEIGHT)
                 .build();
+        customAddButton.setTooltip(Tooltip.create(
+                Component.translatable("tooltip.elytrapitchhelper.color.custom.add")));
         addRenderableWidget(customAddButton);
 
-        customRemoveButton = Button.builder(Component.translatable("option.elytrapitchhelper.color.custom.remove"),
+        customRemoveButton = Button.builder(Component.literal("-"),
                 button -> removeCustomStripe())
                 .bounds(layout.controlX() + customButtonWidth + customSmallWidth + RGB_SLIDER_GAP * 2,
-                        layout.customY(), layout.controlWidth() - customButtonWidth - customSmallWidth
-                                - RGB_SLIDER_GAP * 2, CONTROL_HEIGHT)
+                        layout.customY(), customActionsWidth - customSmallWidth, CONTROL_HEIGHT)
                 .build();
+        customRemoveButton.setTooltip(Tooltip.create(
+                Component.translatable("tooltip.elytrapitchhelper.color.custom.remove")));
         addRenderableWidget(customRemoveButton);
 
         redSlider = rgbSlider(Component.translatable("option.elytrapitchhelper.color.red"), red(), value -> {
@@ -196,6 +211,10 @@ final class ColorEditorScreen extends Screen {
 
     @Override
     public void onClose() {
+        if (paletteDrag != PaletteDrag.NONE) {
+            history.end(true, false);
+            paletteDrag = PaletteDrag.NONE;
+        }
         applyColorChange();
         applyPrideChange();
         minecraft.setScreen(lastScreen);
@@ -205,6 +224,12 @@ final class ColorEditorScreen extends Screen {
     public void removed() {
         paletteRenderer.close();
         super.removed();
+    }
+
+    @Override
+    public void tick() {
+        super.tick();
+        history.acceptExternalRevision();
     }
 
     @Override
@@ -221,11 +246,34 @@ final class ColorEditorScreen extends Screen {
             blurHexBox();
             return true;
         }
+        int modifiers = event.modifiers();
+        boolean primary = (modifiers & (GLFW.GLFW_MOD_CONTROL | GLFW.GLFW_MOD_SUPER)) != 0;
+        if (primary && event.key() == GLFW.GLFW_KEY_Z) {
+            if ((modifiers & GLFW.GLFW_MOD_SHIFT) != 0) {
+                if (history.redo()) {
+                    syncFromConfig();
+                }
+            } else {
+                if (history.undo()) {
+                    syncFromConfig();
+                }
+            }
+            return true;
+        }
+        if (primary && event.key() == GLFW.GLFW_KEY_Y) {
+            if (history.redo()) {
+                syncFromConfig();
+            }
+            return true;
+        }
         return super.keyPressed(event);
     }
 
     @Override
     public boolean mouseClicked(MouseButtonEvent event, boolean doubleClick) {
+        if (hexBox != null && hexBox.isFocused() && !hexBox.isMouseOver(event.x(), event.y())) {
+            history.breakCoalescing();
+        }
         if (prideFlagDropdown != null && prideFlagDropdown.handleOpenMouseClicked(event, height)) {
             return true;
         }
@@ -261,12 +309,14 @@ final class ColorEditorScreen extends Screen {
         if (paletteDrag != PaletteDrag.NONE && event.button() == GLFW.GLFW_MOUSE_BUTTON_LEFT) {
             paletteDrag = PaletteDrag.NONE;
             setDragging(false);
+            history.end(true, false);
             return true;
         }
         return super.mouseReleased(event);
     }
 
     private void togglePrideMode() {
+        history.begin(historyKey);
         boolean wasEditingCustom = editingCustomPride();
         prideEnabled = !prideEnabled;
         if (editingCustomPride()) {
@@ -276,6 +326,7 @@ final class ColorEditorScreen extends Screen {
         }
         syncPrideControls();
         applyPrideChange();
+        history.end(true, false);
     }
 
     private void cycleCustomStripe(int direction) {
@@ -287,7 +338,18 @@ final class ColorEditorScreen extends Screen {
     private NumberSlider rgbSlider(Component label, int current, IntConsumer onValueChanged) {
         return new NumberSlider(0, 0, 1, CONTROL_HEIGHT, label, current, 0, 255, 1.0,
                 value -> Integer.toString((int) Math.round(value)),
-                value -> onValueChanged.accept((int) Math.round(value)));
+                value -> onValueChanged.accept((int) Math.round(value)), historyKey,
+                new NumberSlider.InteractionListener() {
+                    @Override
+                    public void begin(String actionKey) {
+                        history.begin(actionKey);
+                    }
+
+                    @Override
+                    public void end(String actionKey, boolean changed, boolean coalesce) {
+                        history.end(changed, coalesce);
+                    }
+                });
     }
 
     private void addSlider(AbstractWidget widget, int x, int y, int width) {
@@ -312,8 +374,10 @@ final class ColorEditorScreen extends Screen {
         }
 
         hexBox.setTextColor(EditBox.DEFAULT_TEXT_COLOR);
+        history.begin(historyKey);
         setColorFromRgb(parsed, true);
         applyColorChange();
+        history.end(true, true);
     }
 
     private void setColorFromRgb(int color, boolean syncSliders) {
@@ -359,6 +423,7 @@ final class ColorEditorScreen extends Screen {
         }
         setFocused(null);
         hexBox.setFocused(false);
+        history.breakCoalescing();
     }
 
     private void commitHexBox() {
@@ -423,7 +488,6 @@ final class ColorEditorScreen extends Screen {
             customRemoveButton.active = editingCustom && customPrideColors.length > PrideFlag.MIN_CUSTOM_COLORS;
             customRemoveButton.visible = editingCustom;
         }
-
         boolean colorControlsActive = !prideEnabled || editingCustom;
         if (hexBox != null) {
             if (!colorControlsActive && hexBox.isFocused()) {
@@ -492,10 +556,28 @@ final class ColorEditorScreen extends Screen {
         }
     }
 
+    private void syncFromConfig() {
+        ColorState state = stateSupplier.get();
+        flatColor = state.color() & 0x00FFFFFF;
+        prideEnabled = state.prideEnabled();
+        prideFlagId = PrideFlag.sanitizeId(state.prideFlagId());
+        customPrideColors = PrideFlag.sanitizeCustomColors(state.customPrideColors());
+        customStripeIndex = clampInt(customStripeIndex, 0, customPrideColors.length - 1);
+        color = editingCustomPride() ? customPrideColors[customStripeIndex] : flatColor;
+        lastAppliedColor = color;
+        lastAppliedPrideEnabled = prideEnabled;
+        lastAppliedPrideFlagId = prideFlagId;
+        lastAppliedCustomPrideColors = Arrays.copyOf(customPrideColors, customPrideColors.length);
+        syncHsvFromColor(true);
+        syncColorControls();
+        syncPrideControls();
+    }
+
     private void addCustomStripe() {
         if (customPrideColors.length >= PrideFlag.MAX_CUSTOM_COLORS) {
             return;
         }
+        history.begin(historyKey);
         int insertAt = customStripeIndex + 1;
         int[] next = new int[customPrideColors.length + 1];
         System.arraycopy(customPrideColors, 0, next, 0, insertAt);
@@ -506,21 +588,24 @@ final class ColorEditorScreen extends Screen {
         syncColorFromCustomStripe();
         syncPrideControls();
         applyPrideChange();
+        history.end(true, false);
     }
 
     private void removeCustomStripe() {
         if (customPrideColors.length <= PrideFlag.MIN_CUSTOM_COLORS) {
             return;
         }
+        history.begin(historyKey);
         int[] next = new int[customPrideColors.length - 1];
         System.arraycopy(customPrideColors, 0, next, 0, customStripeIndex);
         System.arraycopy(customPrideColors, customStripeIndex + 1, next, customStripeIndex,
                 customPrideColors.length - customStripeIndex - 1);
         customPrideColors = next;
-        customStripeIndex = clampInt(customStripeIndex, 0, customPrideColors.length - 1);
+        customStripeIndex = Math.max(0, customStripeIndex - 1);
         syncColorFromCustomStripe();
         syncPrideControls();
         applyPrideChange();
+        history.end(true, false);
     }
 
     private int red() {
@@ -716,6 +801,7 @@ final class ColorEditorScreen extends Screen {
         }
 
         blurHexBox();
+        history.begin(historyKey);
         paletteDrag = hit;
         setDragging(true);
         updatePaletteColor(event.x(), event.y(), hit);
@@ -777,9 +863,31 @@ final class ColorEditorScreen extends Screen {
         SHADE
     }
 
+    record ColorState(int color, boolean prideEnabled, String prideFlagId, int[] customPrideColors) {
+        ColorState {
+            color &= 0x00FFFFFF;
+            prideFlagId = PrideFlag.sanitizeId(prideFlagId);
+            customPrideColors = PrideFlag.sanitizeCustomColors(customPrideColors);
+        }
+    }
+
     @FunctionalInterface
     interface PrideSettingsConsumer {
         void accept(boolean enabled, String flagId, int[] customColors);
+    }
+
+    interface HistoryController {
+        void begin(String actionKey);
+
+        void end(boolean changed, boolean coalesce);
+
+        boolean undo();
+
+        boolean redo();
+
+        void breakCoalescing();
+
+        boolean acceptExternalRevision();
     }
 
 }

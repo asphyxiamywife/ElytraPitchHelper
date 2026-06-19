@@ -97,6 +97,9 @@ public final class ClientConfigStore {
     private static boolean publishIfUnchanged(Config nextConfig, long observedRevision) {
         synchronized (PUBLISH_LOCK) {
             if (ACTIVE_SAVES.get() == 0 && UNSAVED_REVISION.get() == 0L && REVISION.get() == observedRevision) {
+                if (config != null && config.hasSameState(nextConfig)) {
+                    return true;
+                }
                 config = nextConfig;
                 REVISION.incrementAndGet();
                 return true;

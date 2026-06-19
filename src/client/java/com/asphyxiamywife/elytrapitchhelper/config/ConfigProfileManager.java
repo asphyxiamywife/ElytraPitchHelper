@@ -88,11 +88,6 @@ final class ConfigProfileManager {
         return cfg.profiles.get(cfg.activeProfileIndex).name;
     }
 
-    static Path activeProfilePath(Config cfg) {
-        ensureProfiles(cfg);
-        return ProfilePersistence.profilePath(cfg.profiles.get(cfg.activeProfileIndex));
-    }
-
     static Path profilePath(Config cfg, int index) {
         ensureProfiles(cfg);
         return ProfilePersistence.profilePath(cfg.profiles.get(clampIndex(cfg, index)));
@@ -101,6 +96,76 @@ final class ConfigProfileManager {
     static int profileIndexByFileName(Config cfg, String fileName) {
         ensureProfiles(cfg);
         return indexOfProfileFileWithoutEnsure(cfg, fileName);
+    }
+
+    static boolean hasSameProfileState(Config cfg, Config other, String fileName) {
+        if (other == null || fileName == null) {
+            return false;
+        }
+        ensureProfiles(cfg);
+        ensureProfiles(other);
+        int index = indexOfProfileFileWithoutEnsure(cfg, fileName);
+        int otherIndex = indexOfProfileFileWithoutEnsure(other, fileName);
+        return index >= 0 && otherIndex >= 0
+                && ConfigFiles.GSON.toJsonTree(cfg.profiles.get(index))
+                        .equals(ConfigFiles.GSON.toJsonTree(other.profiles.get(otherIndex)));
+    }
+
+    static boolean hasSameState(Config cfg, Config other) {
+        if (other == null) {
+            return false;
+        }
+        ensureProfiles(cfg);
+        ensureProfiles(other);
+        if (!ConfigFiles.GSON.toJsonTree(cfg).equals(ConfigFiles.GSON.toJsonTree(other))
+                || cfg.profiles.size() != other.profiles.size()) {
+            return false;
+        }
+        for (int i = 0; i < cfg.profiles.size(); i++) {
+            Profile profile = cfg.profiles.get(i);
+            Profile otherProfile = other.profiles.get(i);
+            if (!java.util.Objects.equals(profile.fileName, otherProfile.fileName)
+                    || !ConfigFiles.GSON.toJsonTree(profile)
+                            .equals(ConfigFiles.GSON.toJsonTree(otherProfile))) {
+                return false;
+            }
+        }
+        return true;
+    }
+
+    static void prepareSnapshotRestoreFrom(Config snapshot, Config current) {
+        if (current == null) {
+            return;
+        }
+        ensureProfiles(snapshot);
+        ensureProfiles(current);
+        for (Profile profile : snapshot.profiles) {
+            ProfileMetadata restoredMetadata = snapshot.profileMetadata.profile(profile.fileName);
+            int currentIndex = indexOfProfileFileWithoutEnsure(current, profile.fileName);
+            if (currentIndex >= 0) {
+                restoredMetadata.syncLoadedFileFrom(current.profileMetadata.profile(profile.fileName));
+            }
+        }
+    }
+
+    static void restoreProfileStateFrom(Config cfg, Config snapshot, String fileName) {
+        if (snapshot == null || fileName == null) {
+            return;
+        }
+        ensureProfiles(cfg);
+        ensureProfiles(snapshot);
+        int index = indexOfProfileFileWithoutEnsure(cfg, fileName);
+        int snapshotIndex = indexOfProfileFileWithoutEnsure(snapshot, fileName);
+        if (index < 0 || snapshotIndex < 0) {
+            return;
+        }
+
+        cfg.profiles.get(index).copyFrom(snapshot.profiles.get(snapshotIndex));
+        ProfileMetadata currentMetadata = cfg.profileMetadata.profile(fileName);
+        currentMetadata.restoreFromKeepingLoadedFile(snapshot.profileMetadata.profile(fileName));
+        if (index == cfg.activeProfileIndex) {
+            bindActiveProfile(cfg);
+        }
     }
 
     static void cycleProfileSortMode(Config cfg) {

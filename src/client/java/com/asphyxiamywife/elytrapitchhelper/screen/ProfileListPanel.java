@@ -52,15 +52,19 @@ final class ProfileListPanel {
         Button sortButton = new CyclingOptionButton(startX, headerY, sortWidth, ConfigScreen.CONTROL_HEIGHT,
                 host.profileSortMessage(), () -> {
             host.refreshConfigSnapshot();
+            host.beginHistoryAction("profile-sort");
             host.config().cycleProfileSortMode();
             host.setProfileScroll(0);
             host.save();
+            host.commitHistoryAction(true, false);
             host.rebuildWidgets();
         }, () -> {
             host.refreshConfigSnapshot();
+            host.beginHistoryAction("profile-sort");
             host.config().cycleProfileSortModeBackward();
             host.setProfileScroll(0);
             host.save();
+            host.commitHistoryAction(true, false);
             host.rebuildWidgets();
         });
         sortButton.active = !host.deleteMode();
@@ -70,8 +74,10 @@ final class ProfileListPanel {
                 .create(startX + listWidth - sortWidth, headerY, sortWidth, ConfigScreen.CONTROL_HEIGHT,
                         Component.translatable("option.elytrapitchhelper.enabled"), (button, value) -> {
                             host.refreshConfigSnapshot();
+                            host.beginHistoryAction("enabled");
                             host.config().enabled = value;
                             host.save();
+                            host.commitHistoryAction(true, false);
                         });
         enabledButton.active = !host.deleteMode();
         host.addWidget(host.tooltip(enabledButton, "tooltip.elytrapitchhelper.enabled"));
@@ -104,14 +110,19 @@ final class ProfileListPanel {
 
     private void addActiveButton(int startX, int y, int activeWidth, int profileIndex, String profileFile) {
         ActiveProfileButton activeButton = new ActiveProfileButton(startX, y, activeWidth, ConfigScreen.CONTROL_HEIGHT,
-                host.config().isActiveProfile(profileIndex), button -> {
+                host.config().isActiveProfile(profileIndex),
+                Component.translatable("screen.elytrapitchhelper.profile.active",
+                        host.config().profileName(profileIndex)),
+                button -> {
                     int resolvedIndex = host.refreshConfigSnapshot(profileFile);
                     if (resolvedIndex < 0) {
                         host.rebuildWidgets();
                         return;
                     }
+                    host.beginHistoryAction("active-profile");
                     host.config().selectProfile(resolvedIndex);
                     host.save();
+                    host.commitHistoryAction(true, false);
                     host.rebuildWidgets();
                 });
         activeButton.active = !host.deleteMode() && !host.config().isActiveProfile(profileIndex);
@@ -123,7 +134,8 @@ final class ProfileListPanel {
         String profileName = host.config().profileName(profileIndex);
         EditBox nameBox = new MarqueeEditBox(host.font(),
                 startX + activeWidth + ConfigScreen.CONTROL_GAP, y, nameWidth,
-                ConfigScreen.CONTROL_HEIGHT, Component.translatable("screen.elytrapitchhelper.profile.name"));
+                ConfigScreen.CONTROL_HEIGHT, Component.translatable("screen.elytrapitchhelper.profile.name"),
+                host::breakHistoryCoalescing);
         nameBox.setMaxLength(Math.max(ConfigScreen.PROFILE_NAME_MAX_LENGTH, profileName.length()));
         nameBox.setValue(profileName);
         nameBox.setResponder(value -> {
@@ -136,8 +148,10 @@ final class ProfileListPanel {
                 if (value.equals(host.config().profileName(resolvedIndex))) {
                     return;
                 }
+                host.beginHistoryAction("profile-name:" + profileFile);
                 host.config().setProfileName(resolvedIndex, value);
                 host.save();
+                host.commitHistoryAction(true, true);
             }
         });
         nameBox.active = !host.deleteMode();
@@ -168,6 +182,7 @@ final class ProfileListPanel {
             host.config().duplicateProfile(resolvedIndex);
             host.setProfileScroll(Math.max(0, host.config().profileCount() - host.visibleProfileRows()));
             host.save();
+            host.checkpointHistory();
             host.rebuildWidgets();
         }).bounds(actionX, y, duplicateWidth, ConfigScreen.CONTROL_HEIGHT).build(),
                 "tooltip.elytrapitchhelper.profile.duplicate"));
@@ -232,6 +247,7 @@ final class ProfileListPanel {
                     host.config().createProfile();
                     host.setProfileScroll(Math.max(0, host.config().profileCount() - visibleRows));
                     host.save();
+                    host.checkpointHistory();
                     host.rebuildWidgets();
                 }).bounds(actionX, actionY, actionWidth, ConfigScreen.CONTROL_HEIGHT).build(),
                 "tooltip.elytrapitchhelper.profile.new"));
@@ -283,6 +299,14 @@ final class ProfileListPanel {
         int refreshConfigSnapshot(String profileFile);
 
         void save();
+
+        void beginHistoryAction(String actionKey);
+
+        void commitHistoryAction(boolean changed, boolean coalesce);
+
+        void breakHistoryCoalescing();
+
+        void checkpointHistory();
 
         void rebuildWidgets();
 

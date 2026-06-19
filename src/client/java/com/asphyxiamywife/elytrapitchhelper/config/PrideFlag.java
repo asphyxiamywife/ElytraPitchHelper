@@ -1,7 +1,9 @@
 package com.asphyxiamywife.elytrapitchhelper.config;
 
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.Locale;
+import java.util.Map;
 
 public enum PrideFlag {
     RAINBOW("rainbow", "option.elytrapitchhelper.pride_flag.rainbow",
@@ -47,6 +49,7 @@ public enum PrideFlag {
 
     public static final int MIN_CUSTOM_COLORS = 2;
     public static final int MAX_CUSTOM_COLORS = 16;
+    private static final Map<String, PrideFlag> BY_ID = createIdLookup();
 
     private final String id;
     private final String translationKey;
@@ -75,23 +78,11 @@ public enum PrideFlag {
     }
 
     public static PrideFlag byId(String id) {
-        String normalized = normalizeId(id);
-        for (PrideFlag flag : values()) {
-            if (flag.id.equals(normalized)) {
-                return flag;
-            }
-        }
-        return RAINBOW;
+        return BY_ID.getOrDefault(normalizeId(id), RAINBOW);
     }
 
     public static boolean isValidId(String id) {
-        String normalized = normalizeId(id);
-        for (PrideFlag flag : values()) {
-            if (flag.id.equals(normalized)) {
-                return true;
-            }
-        }
-        return false;
+        return BY_ID.containsKey(normalizeId(id));
     }
 
     public static String sanitizeId(String id) {
@@ -127,12 +118,6 @@ public enum PrideFlag {
         return flag.colors();
     }
 
-    public static PrideFlag next(String id) {
-        PrideFlag current = byId(id);
-        PrideFlag[] flags = values();
-        return flags[(current.ordinal() + 1) % flags.length];
-    }
-
     public static int colorAt(int[] colors, double position) {
         if (colors == null || colors.length == 0) {
             return 0xFFFFFF;
@@ -143,5 +128,13 @@ public enum PrideFlag {
 
     private static String normalizeId(String id) {
         return id == null ? "" : id.trim().toLowerCase(Locale.ROOT).replace('_', '-');
+    }
+
+    private static Map<String, PrideFlag> createIdLookup() {
+        Map<String, PrideFlag> flags = new HashMap<>();
+        for (PrideFlag flag : values()) {
+            flags.put(flag.id, flag);
+        }
+        return Map.copyOf(flags);
     }
 }

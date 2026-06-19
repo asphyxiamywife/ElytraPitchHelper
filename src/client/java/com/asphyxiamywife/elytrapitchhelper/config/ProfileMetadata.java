@@ -17,6 +17,18 @@ final class ProfileMetadata {
         return copy;
     }
 
+    void restoreFromKeepingLoadedFile(ProfileMetadata snapshot) {
+        if (snapshot == null) {
+            return;
+        }
+        long currentLoadedFileModifiedAtMillis = loadedFileModifiedAtMillis;
+        fileName = snapshot.fileName;
+        basedOn = snapshot.basedOn;
+        createdAtMillis = snapshot.createdAtMillis;
+        lastModifiedAtMillis = snapshot.lastModifiedAtMillis;
+        loadedFileModifiedAtMillis = currentLoadedFileModifiedAtMillis;
+    }
+
     void ensure(String fallbackBasedOn) {
         long now = System.currentTimeMillis();
         if (createdAtMillis <= 0L) {
@@ -73,6 +85,12 @@ final class ProfileMetadata {
         loadedFileModifiedAtMillis = fileModifiedAtMillis;
         if (lastModifiedAtMillis <= 0L) {
             lastModifiedAtMillis = fileModifiedAtMillis;
+        }
+    }
+
+    void syncLoadedFileFrom(ProfileMetadata current) {
+        if (current != null) {
+            loadedFileModifiedAtMillis = current.loadedFileModifiedAtMillis;
         }
     }
 

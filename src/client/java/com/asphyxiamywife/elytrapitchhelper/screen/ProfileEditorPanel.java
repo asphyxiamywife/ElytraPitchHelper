@@ -50,9 +50,10 @@ final class ProfileEditorPanel {
         int footerY = host.screenHeight() - 28;
         int buttonWidth = Math.min(132, (host.screenWidth() - 46) / 2);
         int footerX = (host.screenWidth() - buttonWidth * 2 - ConfigScreen.CONTROL_GAP) / 2;
-        host.addWidget(Button.builder(Component.translatable("screen.elytrapitchhelper.config.reset"),
-                button -> host.openResetProfileConfirmation())
-                .bounds(footerX, footerY, buttonWidth, ConfigScreen.CONTROL_HEIGHT).build());
+        Button resetButton = host.resetProfileButton();
+        resetButton.setPosition(footerX, footerY);
+        resetButton.setSize(buttonWidth, ConfigScreen.CONTROL_HEIGHT);
+        host.addWidget(resetButton);
         host.addWidget(Button.builder(Component.translatable("screen.elytrapitchhelper.profile.back_to_profiles"),
                 button -> host.closeEditor())
                 .bounds(footerX + buttonWidth + ConfigScreen.CONTROL_GAP, footerY, buttonWidth,
@@ -65,19 +66,28 @@ final class ProfileEditorPanel {
                 host.tooltip(CycleButton.onOffBuilder(profile.visibility.showOnlyWithFirework)
                         .create(0, 0, controlWidth, ConfigScreen.CONTROL_HEIGHT,
                                 Component.translatable("option.elytrapitchhelper.show_only_with_firework"),
-                                (button, value) -> {
-                                    profile.visibility.showOnlyWithFirework = value;
-                                    host.saveProfileChange();
-                                }), "tooltip.elytrapitchhelper.show_only_with_firework"));
+                                (button, value) -> host.performProfileChange("show-only-with-firework",
+                                        () -> profile.visibility.showOnlyWithFirework = value)),
+                        "tooltip.elytrapitchhelper.show_only_with_firework"));
 
         addControl(index++, startX, startY, columns, controlWidth,
                 host.tooltip(CycleButton.onOffBuilder(profile.visibility.showInThirdPerson)
                         .create(0, 0, controlWidth, ConfigScreen.CONTROL_HEIGHT,
                                 Component.translatable("option.elytrapitchhelper.show_in_third_person"),
-                                (button, value) -> {
-                                    profile.visibility.showInThirdPerson = value;
-                                    host.saveProfileChange();
-                                }), "tooltip.elytrapitchhelper.show_in_third_person"));
+                                (button, value) -> host.performProfileChange("show-in-third-person",
+                                        () -> profile.visibility.showInThirdPerson = value)),
+                        "tooltip.elytrapitchhelper.show_in_third_person"));
+
+        addControl(index++, startX, startY, columns, controlWidth,
+                host.tooltip(CycleButton.booleanBuilder(
+                                Component.translatable("option.elytrapitchhelper.flight_detection.any_elytra_glide"),
+                                Component.translatable("option.elytrapitchhelper.flight_detection.equipment_check"),
+                                profile.visibility.anyElytraGlide)
+                        .create(0, 0, controlWidth, ConfigScreen.CONTROL_HEIGHT,
+                                Component.translatable("option.elytrapitchhelper.flight_detection"),
+                                (button, value) -> host.performProfileChange("flight-detection",
+                                        () -> profile.visibility.anyElytraGlide = value)),
+                        "tooltip.elytrapitchhelper.flight_detection"));
         return index;
     }
 
@@ -125,10 +135,9 @@ final class ProfileEditorPanel {
                 host.tooltip(CycleButton.onOffBuilder(profile.amplitude.enabled)
                         .create(0, 0, controlWidth, ConfigScreen.CONTROL_HEIGHT,
                                 Component.translatable("option.elytrapitchhelper.amplitude_helper"),
-                                (button, value) -> {
-                                    profile.amplitude.enabled = value;
-                                    host.saveProfileChange();
-                                }), "tooltip.elytrapitchhelper.amplitude_helper"));
+                                (button, value) -> host.performProfileChange("amplitude-enabled",
+                                        () -> profile.amplitude.enabled = value)),
+                        "tooltip.elytrapitchhelper.amplitude_helper"));
 
         addControl(index++, startX, startY, columns, controlWidth,
                 host.tooltip(host.amplitudeTriggerModeButton(
@@ -199,7 +208,9 @@ final class ProfileEditorPanel {
                             profile.line.prideFlag = flagId;
                             profile.line.customPrideColors = customColors;
                             host.saveProfileChange();
-                        }), "tooltip.elytrapitchhelper.line_color"));
+                        }, () -> new ColorEditorScreen.ColorState(profile.line.colorRgb,
+                                profile.line.prideEnabled, profile.line.prideFlag,
+                                profile.line.customPrideColors)), "tooltip.elytrapitchhelper.line_color"));
 
         addControl(index, startX, startY, columns, controlWidth,
                 host.tooltip(host.colorButton(Component.translatable("option.elytrapitchhelper.amplitude_color"),
@@ -214,7 +225,9 @@ final class ProfileEditorPanel {
                             profile.amplitude.cuePrideFlag = flagId;
                             profile.amplitude.customPrideColors = customColors;
                             host.saveProfileChange();
-                        }), "tooltip.elytrapitchhelper.amplitude_color"));
+                        }, () -> new ColorEditorScreen.ColorState(profile.amplitude.cueColorRgb,
+                                profile.amplitude.cuePrideEnabled, profile.amplitude.cuePrideFlag,
+                                profile.amplitude.customPrideColors)), "tooltip.elytrapitchhelper.amplitude_color"));
     }
 
     private void addCategoryTabs(int contentWidth) {
@@ -258,10 +271,9 @@ final class ProfileEditorPanel {
                 host.tooltip(CycleButton.onOffBuilder(profile.voidWarning.enabled)
                         .create(0, 0, controlWidth, ConfigScreen.CONTROL_HEIGHT,
                                 Component.translatable("option.elytrapitchhelper.void_warning"),
-                                (button, value) -> {
-                                    profile.voidWarning.enabled = value;
-                                    host.saveProfileChange();
-                                }), "tooltip.elytrapitchhelper.void_warning"));
+                                (button, value) -> host.performProfileChange("void-warning-enabled",
+                                        () -> profile.voidWarning.enabled = value)),
+                        "tooltip.elytrapitchhelper.void_warning"));
 
         addControl(index++, startX, startY, columns, controlWidth,
                 host.tooltip(host.voidWarningModeButton(
@@ -300,17 +312,18 @@ final class ProfileEditorPanel {
                             profile.voidWarning.warningPrideFlag = flagId;
                             profile.voidWarning.customPrideColors = customColors;
                             host.saveProfileChange();
-                        }),
+                        }, () -> new ColorEditorScreen.ColorState(profile.voidWarning.warningColorRgb,
+                                profile.voidWarning.warningPrideEnabled, profile.voidWarning.warningPrideFlag,
+                                profile.voidWarning.customPrideColors)),
                         "tooltip.elytrapitchhelper.void_color"));
 
         addControl(index++, startX, startY, columns, controlWidth,
                 host.tooltip(CycleButton.onOffBuilder(profile.voidWarning.toleranceOverride)
                         .create(0, 0, controlWidth, ConfigScreen.CONTROL_HEIGHT,
                                 Component.translatable("option.elytrapitchhelper.void_tolerance_override"),
-                                (button, value) -> {
-                                    profile.voidWarning.toleranceOverride = value;
-                                    host.saveProfileChange();
-                                }), "tooltip.elytrapitchhelper.void_tolerance_override"));
+                                (button, value) -> host.performProfileChange("void-tolerance-override",
+                                        () -> profile.voidWarning.toleranceOverride = value)),
+                        "tooltip.elytrapitchhelper.void_tolerance_override"));
 
         addControl(index++, startX, startY, columns, controlWidth,
                 host.tooltip(host.floatSlider(
@@ -324,10 +337,9 @@ final class ProfileEditorPanel {
                 host.tooltip(CycleButton.onOffBuilder(profile.voidWarning.maxOffsetOverride)
                         .create(0, 0, controlWidth, ConfigScreen.CONTROL_HEIGHT,
                                 Component.translatable("option.elytrapitchhelper.void_max_offset_override"),
-                                (button, value) -> {
-                                    profile.voidWarning.maxOffsetOverride = value;
-                                    host.saveProfileChange();
-                                }), "tooltip.elytrapitchhelper.void_max_offset_override"));
+                                (button, value) -> host.performProfileChange("void-max-offset-override",
+                                        () -> profile.voidWarning.maxOffsetOverride = value)),
+                        "tooltip.elytrapitchhelper.void_max_offset_override"));
 
         addControl(index++, startX, startY, columns, controlWidth,
                 host.tooltip(host.intSlider(
@@ -381,7 +393,8 @@ final class ProfileEditorPanel {
                     host.saveProfileChange();
                 });
         ySliderRef[0] = ySlider;
-        addControl(index, startX, startY, columns, controlWidth, ySlider);
+        addControl(index, startX, startY, columns, controlWidth,
+                host.tooltip(ySlider, "tooltip.elytrapitchhelper.void_y_override"));
     }
 
     private static String shortDimName(String id) {
@@ -434,7 +447,8 @@ final class ProfileEditorPanel {
                 int[] customPrideColors,
                 java.util.function.IntSupplier previewLineLength, java.util.function.IntSupplier previewLineWidth,
                 boolean previewCuePeak, java.util.function.IntConsumer onChange,
-                ColorEditorScreen.PrideSettingsConsumer onPrideChange);
+                ColorEditorScreen.PrideSettingsConsumer onPrideChange,
+                java.util.function.Supplier<ColorEditorScreen.ColorState> stateSupplier);
 
         Button amplitudeTriggerModeButton(Component label, Profile profile);
 
@@ -442,7 +456,9 @@ final class ProfileEditorPanel {
 
         void saveProfileChange();
 
-        void openResetProfileConfirmation();
+        void performProfileChange(String actionKey, Runnable change);
+
+        Button resetProfileButton();
 
         void closeEditor();
     }

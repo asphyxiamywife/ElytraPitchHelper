@@ -26,3 +26,19 @@ the mod will try to migrate ur old config automatically. if anything looks off, 
 
 ## compilation
 run `./gradlew build` and find the jar in `build/libs/`
+
+## fuzzing
+
+the regular `./gradlew test` run replays the fuzz regression corpus. to run coverage-guided fuzzing locally, use:
+
+```sh
+./gradlew fuzzProfileJson
+./gradlew fuzzProfileFileNames
+./gradlew fuzzConfigModel
+./gradlew fuzzHudLogic
+./gradlew fuzzScreenLogic
+```
+
+each target runs for 30 seconds by default. `./gradlew fuzz` runs all targets.
+override the duration when needed with, for example,
+`./gradlew fuzzProfileJson -PfuzzDuration=5m`.

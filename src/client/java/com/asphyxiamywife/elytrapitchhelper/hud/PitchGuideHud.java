@@ -26,6 +26,7 @@ public final class PitchGuideHud {
     private final AmplitudeTracker amplitudeTracker = new AmplitudeTracker();
     private final VoidProximityTracker voidProximityTracker = new VoidProximityTracker();
     private final GuideLineRenderer guideLineRenderer = new GuideLineRenderer();
+    private final TerrainScanCache terrainScanCache = new TerrainScanCache();
     private ResourceKey<Level> cachedDimension;
     private String cachedDimensionKey;
 
@@ -76,7 +77,9 @@ public final class PitchGuideHud {
             voidProximity = voidProximityTracker.update(config,
                     player.getY(), player.getDeltaMovement().y(), voidY);
             if (shouldClearVoidWarningForTerrain(voidProximityTracker, voidProximity)
-                    && hasCollisionBlockBelow(player, minecraft.level, voidY)) {
+                    && terrainScanCache.collisionBelow(dimKey,
+                            (int) Math.floor(player.getX()), (int) Math.floor(player.getZ()), voidY,
+                            System.currentTimeMillis(), () -> hasCollisionBlockBelow(player, minecraft.level, voidY))) {
                 voidProximityTracker.reset();
                 voidProximity = VoidProximity.NONE;
             }
@@ -138,7 +141,8 @@ public final class PitchGuideHud {
 
     private boolean canRenderGuides(Minecraft minecraft, Config config) {
         return HudVisibility.canRender(config, minecraft.options.getCameraType() == CameraType.FIRST_PERSON,
-                elytraDetector.hasUsableElytra(minecraft.player), hasFireworkRocket(minecraft.player),
+                elytraDetector.hasUsableElytra(minecraft.player, config.visibility.anyElytraGlide),
+                hasFireworkRocket(minecraft.player),
                 minecraft.player.getFallFlyingTicks());
     }
 

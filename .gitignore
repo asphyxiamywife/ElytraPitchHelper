@@ -39,3 +39,6 @@ hs_err_*.log
 replay_*.log
 *.hprof
 *.jfr
+
+# Jazzer generated coverage corpus (crashing inputs belong in src/test/resources)
+.cifuzz-corpus/

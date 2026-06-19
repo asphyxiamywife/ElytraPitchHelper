@@ -3,7 +3,8 @@
   "name": "Default",
   "visibility": {
     "showOnlyWithFirework": false,
-    "showInThirdPerson": false
+    "showInThirdPerson": false,
+    "anyElytraGlide": false
   },
   "pitch": {
     "targetUpMinecraft": -40.0,

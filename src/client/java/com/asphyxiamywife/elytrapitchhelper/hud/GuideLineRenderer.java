@@ -14,10 +14,10 @@ final class GuideLineRenderer {
         int baseRgb = config.line.colorRgb & 0x00FFFFFF;
         int cueRgb = config.amplitude.cueColorRgb & 0x00FFFFFF;
         int[] basePrideColors = config.line.prideEnabled
-                ? PrideFlag.colorsFor(config.line.prideFlag, config.line.customPrideColors)
+                ? renderColorsFor(config.line.prideFlag, config.line.customPrideColors)
                 : null;
         int[] cuePrideColors = config.amplitude.cuePrideEnabled
-                ? PrideFlag.colorsFor(config.amplitude.cuePrideFlag, config.amplitude.customPrideColors)
+                ? renderColorsFor(config.amplitude.cuePrideFlag, config.amplitude.customPrideColors)
                 : null;
         float cueAmount = amplitudeCue.amount;
         float flash = amplitudeCue.flash;
@@ -25,7 +25,7 @@ final class GuideLineRenderer {
         float warnPulse = voidProximity.pulse;
         int warnRgb = config.voidWarning.warningColorRgb & 0x00FFFFFF;
         int[] warnPrideColors = config.voidWarning.warningPrideEnabled
-                ? PrideFlag.colorsFor(config.voidWarning.warningPrideFlag, config.voidWarning.customPrideColors)
+                ? renderColorsFor(config.voidWarning.warningPrideFlag, config.voidWarning.customPrideColors)
                 : null;
         boolean warningActive = warnAmount > 0.001f || warnPulse > 0.001f;
 
@@ -53,6 +53,16 @@ final class GuideLineRenderer {
         int[] finalCuePride = warningActive ? warnPrideColors : cuePrideColors;
         drawBlendedRect(ctx, x, y, length, thickness, alpha, baseRgb, basePrideColors, finalCueRgb, finalCuePride,
                 colorMix);
+    }
+
+    private static int[] renderColorsFor(String id, int[] customColors) {
+        PrideFlag flag = PrideFlag.byId(id);
+        if (flag != PrideFlag.CUSTOM) {
+            return flag.colors();
+        }
+        return customColors != null && customColors.length >= PrideFlag.MIN_CUSTOM_COLORS
+                ? customColors
+                : PrideFlag.RAINBOW.colors();
     }
 
     private static void drawCenteredRect(GuiGraphicsExtractor ctx, int cx, int cy, int width, int height, int color) {

@@ -46,6 +46,8 @@ final class ProfileJson {
                 "showOnlyWithFirework", defaults.visibility.showOnlyWithFirework, repairs);
         profile.visibility.showInThirdPerson = readBoolean(json, section, "showInThirdPerson",
                 "showInThirdPerson", defaults.visibility.showInThirdPerson, repairs);
+        profile.visibility.anyElytraGlide = readBoolean(json, section, "anyElytraGlide",
+                "anyElytraGlide", defaults.visibility.anyElytraGlide, repairs);
     }
 
     private static void readPitch(JsonObject json, Profile profile, Profile defaults, RepairLog repairs) {
