@@ -9,7 +9,6 @@ import net.minecraft.client.KeyMapping;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.network.chat.Component;
-import org.lwjgl.glfw.GLFW;
 
 public final class KeyBindings {
     private static final KeyMapping.Category KEY_CATEGORY = KeyMapping.Category
@@ -26,14 +25,14 @@ public final class KeyBindings {
     public static KeyBindings register() {
         KeyMapping toggleGuides = KeyMappingHelper.registerKeyMapping(new KeyMapping(
                 "key.elytrapitchhelper.toggle",
-                InputConstants.Type.KEYSYM,
-                GLFW.GLFW_KEY_UNKNOWN,
+                InputConstants.Type.KEYBOARD,
+                InputConstants.UNKNOWN.getValue(),
                 KEY_CATEGORY));
 
         KeyMapping openConfig = KeyMappingHelper.registerKeyMapping(new KeyMapping(
                 "key.elytrapitchhelper.open_config",
-                InputConstants.Type.KEYSYM,
-                GLFW.GLFW_KEY_UNKNOWN,
+                InputConstants.Type.KEYBOARD,
+                InputConstants.UNKNOWN.getValue(),
                 KEY_CATEGORY));
 
         return new KeyBindings(toggleGuides, openConfig);

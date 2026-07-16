@@ -3,6 +3,7 @@ package com.asphyxiamywife.elytrapitchhelper.screen;
 import com.asphyxiamywife.elytrapitchhelper.config.PrideFlag;
 import com.asphyxiamywife.elytrapitchhelper.screen.widget.NumberSlider;
 import com.asphyxiamywife.elytrapitchhelper.util.MathUtil;
+import com.mojang.blaze3d.platform.InputConstants;
 import com.mojang.blaze3d.platform.NativeImage;
 import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.client.gui.components.AbstractWidget;
@@ -14,7 +15,6 @@ import net.minecraft.client.input.MouseButtonEvent;
 import net.minecraft.client.renderer.texture.DynamicTexture;
 import net.minecraft.network.chat.CommonComponents;
 import net.minecraft.network.chat.Component;
-import org.lwjgl.glfw.GLFW;
 
 import java.util.function.IntConsumer;
 
@@ -159,12 +159,11 @@ final class ColorEditorScreen extends Screen {
 
     @Override
     public boolean keyPressed(KeyEvent event) {
-        if ((event.key() == GLFW.GLFW_KEY_ENTER || event.key() == GLFW.GLFW_KEY_KP_ENTER)
-                && hexBox != null && hexBox.isFocused()) {
+        if (event.isConfirmation() && hexBox != null && hexBox.isFocused()) {
             commitHexBox();
             return true;
         }
-        if (event.key() == GLFW.GLFW_KEY_ESCAPE && hexBox != null && hexBox.isFocused()) {
+        if (event.isEscape() && hexBox != null && hexBox.isFocused()) {
             blurHexBox();
             return true;
         }
@@ -181,7 +180,7 @@ final class ColorEditorScreen extends Screen {
 
     @Override
     public boolean mouseDragged(MouseButtonEvent event, double dragX, double dragY) {
-        if (paletteDrag != PaletteDrag.NONE && event.button() == GLFW.GLFW_MOUSE_BUTTON_LEFT) {
+        if (paletteDrag != PaletteDrag.NONE && event.button() == InputConstants.MOUSE_BUTTON_LEFT) {
             updatePaletteColor(event.x(), event.y(), paletteDrag);
             return true;
         }
@@ -190,7 +189,7 @@ final class ColorEditorScreen extends Screen {
 
     @Override
     public boolean mouseReleased(MouseButtonEvent event) {
-        if (paletteDrag != PaletteDrag.NONE && event.button() == GLFW.GLFW_MOUSE_BUTTON_LEFT) {
+        if (paletteDrag != PaletteDrag.NONE && event.button() == InputConstants.MOUSE_BUTTON_LEFT) {
             paletteDrag = PaletteDrag.NONE;
             setDragging(false);
             return true;
@@ -588,7 +587,7 @@ final class ColorEditorScreen extends Screen {
     }
 
     private boolean startPaletteDrag(MouseButtonEvent event) {
-        if (prideEnabled || event.button() != GLFW.GLFW_MOUSE_BUTTON_LEFT) {
+        if (prideEnabled || event.button() != InputConstants.MOUSE_BUTTON_LEFT) {
             return false;
         }
 

@@ -10,6 +10,7 @@ import com.asphyxiamywife.elytrapitchhelper.screen.widget.ActiveProfileButton;
 import com.asphyxiamywife.elytrapitchhelper.screen.widget.CategoryTabButton;
 import com.asphyxiamywife.elytrapitchhelper.screen.widget.ColorEditButton;
 import com.asphyxiamywife.elytrapitchhelper.screen.widget.NumberSlider;
+import com.mojang.blaze3d.platform.InputConstants;
 import net.minecraft.client.gui.Font;
 import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.client.gui.components.AbstractScrollArea;
@@ -26,7 +27,6 @@ import net.minecraft.client.input.KeyEvent;
 import net.minecraft.client.input.MouseButtonEvent;
 import net.minecraft.network.chat.CommonComponents;
 import net.minecraft.network.chat.Component;
-import org.lwjgl.glfw.GLFW;
 
 import java.nio.file.Path;
 import java.time.Duration;
@@ -506,7 +506,7 @@ public final class ConfigScreen extends Screen {
 
     @Override
     public boolean mouseDragged(MouseButtonEvent event, double dragX, double dragY) {
-        if (profileScrollbarDragging && event.button() == GLFW.GLFW_MOUSE_BUTTON_LEFT) {
+        if (profileScrollbarDragging && event.button() == InputConstants.MOUSE_BUTTON_LEFT) {
             scrollProfileListToMouse(event.y());
             return true;
         }
@@ -515,7 +515,7 @@ public final class ConfigScreen extends Screen {
 
     @Override
     public boolean mouseReleased(MouseButtonEvent event) {
-        if (profileScrollbarDragging && event.button() == GLFW.GLFW_MOUSE_BUTTON_LEFT) {
+        if (profileScrollbarDragging && event.button() == InputConstants.MOUSE_BUTTON_LEFT) {
             stopProfileScrollbarDrag();
             return true;
         }
@@ -524,11 +524,10 @@ public final class ConfigScreen extends Screen {
 
     @Override
     public boolean keyPressed(KeyEvent event) {
-        if ((event.key() == GLFW.GLFW_KEY_ENTER || event.key() == GLFW.GLFW_KEY_KP_ENTER)
-                && commitFocusedTextField()) {
+        if (event.isConfirmation() && commitFocusedTextField()) {
             return true;
         }
-        if (event.key() == GLFW.GLFW_KEY_ESCAPE && blurFocusedTextField()) {
+        if (event.isEscape() && blurFocusedTextField()) {
             return true;
         }
         return super.keyPressed(event);
@@ -668,7 +667,7 @@ public final class ConfigScreen extends Screen {
     }
 
     private boolean startProfileScrollbarDrag(MouseButtonEvent event) {
-        if (editingProfile || event.button() != GLFW.GLFW_MOUSE_BUTTON_LEFT) {
+        if (editingProfile || event.button() != InputConstants.MOUSE_BUTTON_LEFT) {
             return false;
         }
 
