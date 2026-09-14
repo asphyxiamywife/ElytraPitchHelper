@@ -33,6 +33,12 @@ bin/
 
 run/
 
+# The default platform runtime resolves the config directory relative to the working directory, so a
+# test that installs the global store writes one into the repo root or the module it runs from.
+# Anchored: an unanchored "config/" would also swallow the config source package at any depth.
+/config/
+/*/config/
+
 # java
 
 hs_err_*.log

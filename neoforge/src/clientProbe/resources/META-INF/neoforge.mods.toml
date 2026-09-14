@@ -1,0 +1,11 @@
+modLoader="javafml"
+loaderVersion="[1,)"
+license="CC0-1.0"
+[[mods]]
+modId="eph_client_probe"
+version="1.0.0"
+displayName="EPH client contract (development only)"
+[[mixins]]
+config="eph-client-probe.mixins.json"
+[[mixins]]
+config="eph-client-probe-neoforge.mixins.json"

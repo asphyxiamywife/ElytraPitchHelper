@@ -1,0 +1,141 @@
+{
+  "schema": 1,
+  "scenario": "ledge_to_void",
+  "cadence": "apply-input-server-level-entity-tick-capture",
+  "worldSeed": 0,
+  "worldFixture": "odd_overworld.json",
+  "worldSha256": "e8e9e804afe17926d4f16ac75165cc3dc0829a228beb24ebc49ccb441d13bd8b",
+  "minBuildY": -64,
+  "maxBuildY": 127,
+  "gameMode": "creative",
+  "player": {
+    "position": [
+      0.5,
+      5,
+      0.5
+    ],
+    "velocity": [
+      0,
+      0,
+      0
+    ],
+    "pitch": 20,
+    "yaw": 0,
+    "fallFlying": false,
+    "noGravity": true,
+    "unbreakableElytra": false
+  },
+  "clearBox": [
+    -2,
+    -64,
+    -2,
+    3,
+    127,
+    40
+  ],
+  "blocks": [
+    [
+      0,
+      0,
+      0,
+      "stone"
+    ],
+    [
+      0,
+      10,
+      0,
+      "stone"
+    ],
+    [
+      1,
+      10,
+      0,
+      "stone"
+    ]
+  ],
+  "samples": [
+    {
+      "position": null,
+      "velocity": null,
+      "damageFromMax": null,
+      "rocket": null,
+      "blocks": [],
+      "invalidate": "none",
+      "voidYOverride": null
+    },
+    {
+      "position": [
+        1.5,
+        5,
+        0.5
+      ],
+      "velocity": null,
+      "damageFromMax": null,
+      "rocket": null,
+      "blocks": [],
+      "invalidate": "none",
+      "voidYOverride": null
+    },
+    {
+      "position": [
+        0.5,
+        5,
+        0.5
+      ],
+      "velocity": null,
+      "damageFromMax": null,
+      "rocket": null,
+      "blocks": [
+        [
+          0,
+          0,
+          0,
+          "air"
+        ]
+      ],
+      "invalidate": "column",
+      "voidYOverride": null
+    },
+    {
+      "position": null,
+      "velocity": null,
+      "damageFromMax": null,
+      "rocket": null,
+      "blocks": [
+        [
+          0,
+          0,
+          0,
+          "stone"
+        ]
+      ],
+      "invalidate": "none",
+      "voidYOverride": null
+    },
+    {
+      "position": null,
+      "velocity": null,
+      "damageFromMax": null,
+      "rocket": null,
+      "blocks": [],
+      "invalidate": "chunk",
+      "voidYOverride": null
+    },
+    {
+      "position": null,
+      "velocity": null,
+      "damageFromMax": null,
+      "rocket": null,
+      "blocks": [
+        [
+          0,
+          0,
+          0,
+          "air"
+        ]
+      ],
+      "invalidate": "chunk",
+      "voidYOverride": null
+    }
+  ]
+}

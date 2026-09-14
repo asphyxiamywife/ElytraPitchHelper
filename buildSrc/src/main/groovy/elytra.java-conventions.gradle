@@ -1,0 +1,33 @@
+plugins {
+    id 'java-library'
+}
+
+base {
+    archivesName = "${rootProject.archives_base_name}-${project.name}"
+}
+
+java {
+    withSourcesJar()
+}
+
+dependencies {
+    testImplementation platform("org.junit:junit-bom:${rootProject.junit_version}")
+    testImplementation "org.junit.jupiter:junit-jupiter"
+    testRuntimeOnly "org.junit.platform:junit-platform-launcher"
+}
+
+tasks.withType(Test).configureEach {
+    useJUnitPlatform()
+
+    def isolatedWorkingDirectory = layout.buildDirectory.dir("test-work/${name}")
+    workingDir isolatedWorkingDirectory
+    doFirst {
+        isolatedWorkingDirectory.get().asFile.mkdirs()
+    }
+}
+
+tasks.named("test") {
+    useJUnitPlatform {
+        excludeTags "smoke"
+    }
+}

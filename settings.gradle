@@ -4,7 +4,81 @@ pluginManagement {
 			name = 'Fabric'
 			url = 'https://maven.fabricmc.net/'
 		}
+		maven {
+			name = 'NeoForge'
+			url = 'https://maven.neoforged.net/releases'
+		}
 		mavenCentral()
 		gradlePluginPortal()
 	}
 }
+
+dependencyResolutionManagement {
+	repositoriesMode = RepositoriesMode.PREFER_PROJECT
+	repositories {
+		mavenCentral()
+		maven {
+			name = 'Fabric'
+			url = 'https://maven.fabricmc.net/'
+		}
+		maven {
+			name = 'NeoForge'
+			url = 'https://maven.neoforged.net/releases'
+		}
+		maven {
+			name = 'TerraformersMC'
+			url = 'https://maven.terraformersmc.com/releases'
+		}
+	}
+}
+
+def normalizeLoader = { String loader ->
+	def normalized = loader.trim().toLowerCase()
+	if (normalized == "forge") {
+		return "neoforge"
+	}
+	if (normalized == "fabric" || normalized == "neoforge") {
+		return normalized
+	}
+	throw new GradleException("Unknown loader '${loader}'. Use fabric, forge, neoforge, or all.")
+}
+
+def loaderProperty = providers.gradleProperty("loaders")
+		.orElse(providers.gradleProperty("loader"))
+		.orElse("")
+		.get()
+		.trim()
+def requestedLoaderTasks = gradle.startParameter.taskNames.collect { it.toLowerCase() }
+def taskLoaderRequests = []
+if (requestedLoaderTasks.any { it == "buildfabric" || it == ":buildfabric" }) {
+	taskLoaderRequests << "fabric"
+}
+if (requestedLoaderTasks.any { it == "buildforge" || it == ":buildforge"
+		|| it == "buildneoforge" || it == ":buildneoforge" }) {
+	taskLoaderRequests << "neoforge"
+}
+
+def enabledLoaders
+if (!loaderProperty.isEmpty()) {
+	def requestedLoaders = loaderProperty.split(",")
+			.collect { it.trim() }
+			.findAll { !it.isEmpty() }
+	if (requestedLoaders.any { it.equalsIgnoreCase("all") }) {
+		enabledLoaders = ["fabric", "neoforge"]
+	} else {
+		enabledLoaders = requestedLoaders.collect { normalizeLoader(it) }.unique()
+	}
+} else if (!taskLoaderRequests.isEmpty()) {
+	enabledLoaders = taskLoaderRequests.unique()
+} else {
+	enabledLoaders = ["fabric", "neoforge"]
+}
+
+if (!taskLoaderRequests.isEmpty() && !enabledLoaders.containsAll(taskLoaderRequests)) {
+	throw new GradleException("Requested loader task does not match -Ploaders=${loaderProperty}.")
+}
+
+rootProject.name = "ElytraPitchHelper"
+
+include "common"
+enabledLoaders.each { include it }

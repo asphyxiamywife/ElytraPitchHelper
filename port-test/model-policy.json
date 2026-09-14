@@ -1,0 +1,81 @@
+{
+  "schema": 1,
+  "baseline": "eph-3.0",
+  "serialization": "decimal-9-half-even",
+  "cadence": "set-clock-apply-input-update-sample",
+  "scenarios": [
+    "either_mode_turns",
+    "height_crossing",
+    "hidden_guides",
+    "nonfinite_recovery",
+    "reset_and_disable",
+    "terrain_invalidation",
+    "velocity_alternating",
+    "velocity_no_invented_crossing",
+    "visibility_modes",
+    "void_pulse_thresholds",
+    "void_simple_height",
+    "void_terrain_suppression"
+  ],
+  "fields": {
+    "sample": {
+      "comparison": "EXACT"
+    },
+    "timeMillis": {
+      "comparison": "EXACT"
+    },
+    "leg": {
+      "comparison": "EXACT"
+    },
+    "flashLeg": {
+      "comparison": "EXACT"
+    },
+    "glyphStartedLeg": {
+      "comparison": "EXACT"
+    },
+    "glyphAfterLeg": {
+      "comparison": "EXACT"
+    },
+    "voidRelevant": {
+      "comparison": "EXACT"
+    },
+    "visible": {
+      "comparison": "EXACT"
+    },
+    "groundSupport": {
+      "comparison": "EXACT"
+    },
+    "cueAmount": {
+      "comparison": "EPSILON",
+      "epsilon": 1e-06
+    },
+    "flash": {
+      "comparison": "EPSILON",
+      "epsilon": 1e-06
+    },
+    "glyphProgress": {
+      "comparison": "EPSILON",
+      "epsilon": 1e-06
+    },
+    "glyphOpacity": {
+      "comparison": "EPSILON",
+      "epsilon": 1e-06
+    },
+    "voidWarning": {
+      "comparison": "EPSILON",
+      "epsilon": 1e-06
+    },
+    "voidPulse": {
+      "comparison": "EPSILON",
+      "epsilon": 1e-06
+    }
+  },
+  "invariants": [
+    "finite-unit-strengths",
+    "truthful-ground-support",
+    "motion-glyph-direction",
+    "simple-void-monotonicity",
+    "guide-ordering",
+    "cue-leg-routing"
+  ]
+}

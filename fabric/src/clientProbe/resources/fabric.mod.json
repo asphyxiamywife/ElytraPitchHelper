@@ -1,0 +1,1 @@
+{"schemaVersion":1,"id":"eph_client_probe","version":"1.0.0","name":"EPH client contract (development only)","environment":"client","mixins":["eph-client-probe.mixins.json","eph-client-probe-fabric.mixins.json"]}

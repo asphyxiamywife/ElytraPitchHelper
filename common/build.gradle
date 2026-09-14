@@ -1,0 +1,217 @@
+plugins {
+    id 'elytra.java-conventions'
+    id 'net.fabricmc.fabric-loom'
+    id 'java-test-fixtures'
+}
+
+dependencies {
+    minecraft "com.mojang:minecraft:${rootProject.minecraft_version}"
+    compileOnly "net.fabricmc:fabric-loader:${rootProject.loader_version}"
+
+    testFixturesCompileOnly "net.fabricmc:fabric-loader:${rootProject.loader_version}"
+    testFixturesApi platform("org.junit:junit-bom:${rootProject.junit_version}")
+    testFixturesApi "org.junit.jupiter:junit-jupiter"
+    testFixturesApi "com.code-intelligence:jazzer-junit:${rootProject.jazzer_version}"
+    testFixturesApi "com.google.code.gson:gson:${rootProject.gson_version}"
+
+    testCompileOnly "net.fabricmc:fabric-loader:${rootProject.loader_version}"
+    testImplementation "com.code-intelligence:jazzer-junit:${rootProject.jazzer_version}"
+}
+
+sourceSets {
+    jmh {
+        java.srcDir "src/jmh/java"
+        compileClasspath += sourceSets.main.output + configurations.testRuntimeClasspath
+        runtimeClasspath += output + compileClasspath
+    }
+}
+
+dependencies {
+    jmhImplementation sourceSets.main.output
+    jmhImplementation "org.openjdk.jmh:jmh-core:${rootProject.jmh_version}"
+    jmhAnnotationProcessor "org.openjdk.jmh:jmh-generator-annprocess:${rootProject.jmh_version}"
+}
+
+tasks.register("jmh", JavaExec) {
+    description = "Runs JMH microbenchmarks for render-thread hot paths."
+    group = "verification"
+    dependsOn jmhClasses
+    classpath = sourceSets.jmh.runtimeClasspath
+    mainClass = "org.openjdk.jmh.Main"
+}
+
+def fuzzSourceRoot = file("src/test/java")
+def fuzzTestClasses = fileTree(fuzzSourceRoot) { include "**/*FuzzTest.java" }
+        .files
+        .collect {
+            fuzzSourceRoot.toPath().relativize(it.toPath())
+                    .toString()
+                    .replaceAll(/\.java$/, "")
+                    .replace(File.separator, ".")
+        }
+        .sort()
+
+def fuzzTasks = fuzzTestClasses.collect { String testClass ->
+    def simpleName = testClass.substring(testClass.lastIndexOf(".") + 1)
+    tasks.register("fuzz${simpleName - "FuzzTest"}", Test) {
+        description = "Runs the ${simpleName} fuzz target."
+        group = "verification"
+
+        testClassesDirs = sourceSets.test.output.classesDirs
+        classpath = sourceSets.test.runtimeClasspath
+        useJUnitPlatform()
+        environment "JAZZER_FUZZ", "1"
+        if (providers.gradleProperty("fuzzDuration").isPresent()) {
+            systemProperty "jazzer.max_duration", providers.gradleProperty("fuzzDuration").get()
+        }
+        filter {
+            includeTestsMatching testClass
+        }
+        shouldRunAfter tasks.named("test")
+    }
+}
+
+tasks.register("fuzz") {
+    description = "Runs all fuzz targets for their configured durations."
+    group = "verification"
+    dependsOn fuzzTasks
+}
+
+def portBoundarySources = files(fileTree('src/main/java') { include '**/*.java' },
+        fileTree('src/probe/java') { include '**/*.java' },
+        rootProject.fileTree('fabric/src/probe/java') { include '**/*.java' },
+        rootProject.fileTree('neoforge/src/probe/java') { include '**/*.java' })
+tasks.register('portCertBoundary') {
+    description = 'Checks that the semantic probe path has no client-only Minecraft references.'
+    group = 'verification'
+    inputs.files(portBoundarySources)
+    doLast {
+        def sources = [:]
+        portBoundarySources.files.each { source ->
+            def body = source.getText('UTF-8')
+            def packageMatch = body =~ /(?m)^package\s+([\w.]+);/
+            if (packageMatch.find()) {
+                sources[packageMatch.group(1) + '.' + (source.name - '.java')] = body
+            }
+        }
+        def prefix = 'com.asphyxiamywife.elytrapitchhelper.'
+        def pending = new ArrayDeque(sources.keySet().findAll {
+            it.startsWith(prefix + 'flight.') || it.startsWith(prefix + 'probe.') || it == prefix + 'hud.LevelColumnProbe'
+        })
+        def visited = new HashSet()
+        def violations = []
+        while (!pending.isEmpty()) {
+            def name = pending.removeFirst()
+            if (!visited.add(name)) continue
+            def body = sources[name]
+            if (body =~ /\b(net\.minecraft\.client|com\.mojang\.blaze3d)\b/) {
+                violations.add(name)
+            }
+            def packageName = name.substring(0, name.lastIndexOf('.'))
+            sources.each { dependency, ignored ->
+                def simpleName = dependency.substring(dependency.lastIndexOf('.') + 1)
+                def samePackage = dependency.substring(0, dependency.lastIndexOf('.')) == packageName
+                def imported = body.contains('import ' + dependency + ';') ||
+                        body.contains('import static ' + dependency + '.') ||
+                        body.contains('import ' + dependency.substring(0, dependency.lastIndexOf('.')) + '.*;')
+                if (body.contains(dependency) || ((samePackage || imported) &&
+                        (body =~ /\b${java.util.regex.Pattern.quote(simpleName)}\b/))) {
+                    pending.add(dependency)
+                }
+            }
+        }
+        if (!violations.isEmpty()) {
+            throw new GradleException('Client-only references under semantic probe path: ' + violations.sort().join(', '))
+        }
+        logger.lifecycle('Semantic probe source boundary passed ({} classes).', visited.size())
+    }
+}
+tasks.named('check') { dependsOn tasks.named('portCertBoundary') }
+
+sourceSets {
+    portModel {
+        compileClasspath += sourceSets.main.output
+        runtimeClasspath += sourceSets.main.output
+    }
+}
+dependencies {
+    portModelImplementation platform("org.junit:junit-bom:${rootProject.junit_version}")
+    portModelImplementation 'org.junit.jupiter:junit-jupiter'
+    portModelImplementation "com.google.code.gson:gson:${rootProject.gson_version}"
+    portModelRuntimeOnly 'org.junit.platform:junit-platform-launcher'
+    portModelRuntimeOnly 'org.slf4j:slf4j-api:2.0.17'
+}
+
+def portCorpus = rootProject.layout.projectDirectory.dir('port-test')
+def modelReport = layout.buildDirectory.dir('reports/port-cert/model')
+tasks.register('portCertModel', Test) {
+    description = 'Verifies the immutable, Minecraft-independent EPH 3.0 model corpus.'
+    group = 'verification'
+    testClassesDirs = sourceSets.portModel.output.classesDirs
+    classpath = sourceSets.portModel.runtimeClasspath
+    inputs.dir(portCorpus)
+    outputs.dir(modelReport)
+    systemProperty 'eph.portCorpus', portCorpus.asFile.absolutePath
+    systemProperty 'eph.modelReport', modelReport.get().asFile.absolutePath
+    useJUnitPlatform()
+}
+tasks.register('modelGoldenCandidates', JavaExec) {
+    description = 'Writes model golden candidates to build/reports/port-cert/model for review.'
+    group = 'verification'
+    classpath = sourceSets.portModel.runtimeClasspath
+    mainClass = 'com.asphyxiamywife.elytrapitchhelper.hud.ModelCorpus'
+    args portCorpus.asFile.absolutePath, modelReport.get().asFile.absolutePath
+}
+tasks.named('check') { dependsOn tasks.named('portCertModel') }
+
+sourceSets {
+    probe {
+        compileClasspath += sourceSets.main.output + sourceSets.main.compileClasspath
+        runtimeClasspath += sourceSets.main.output + sourceSets.main.runtimeClasspath
+    }
+}
+
+tasks.named('processProbeResources') {
+    from(rootProject.file('port-test/scenarios/world/odd_overworld.json')) {
+        into 'data/minecraft/dimension_type'
+        rename { 'overworld.json' }
+    }
+}
+def probeVersion = rootProject.minecraft_version.toString()
+def probeAcceptance = providers.gradleProperty('acceptGoldens').isPresent()
+def probeReports = rootProject.layout.buildDirectory.dir('reports/port-cert')
+def probeHasBothLoaders = rootProject.findProject(':fabric') != null && rootProject.findProject(':neoforge') != null
+tasks.register('verifyProbeObservations', JavaExec) {
+    description = 'Compares fresh loader observations and optionally promotes a non-reference corpus.'
+    group = 'verification'
+    classpath = sourceSets.portModel.runtimeClasspath
+    mainClass = 'com.asphyxiamywife.elytrapitchhelper.porttest.ProbeCertificate'
+    args portCorpus.asFile.absolutePath, probeVersion, probeReports.get().asFile.absolutePath, probeAcceptance.toString()
+    dependsOn ':probeAcceptanceGuard'
+    if (probeHasBothLoaders) {
+        dependsOn ':fabric:runProbe', ':neoforge:runGameTestServer'
+    }
+    doFirst {
+        if (!probeHasBothLoaders) throw new GradleException('portCertProbe requires both Fabric and NeoForge; use -Ploaders=all.')
+    }
+}
+
+sourceSets {
+    clientProbe {
+        compileClasspath += sourceSets.main.output + sourceSets.main.compileClasspath
+        runtimeClasspath += sourceSets.main.output + sourceSets.main.runtimeClasspath
+    }
+}
+
+def clientReports = rootProject.layout.buildDirectory.dir('reports/port-cert/client')
+tasks.register('verifyClientObservations', JavaExec) {
+    description = 'Verifies live client completion claims for both loaders.'
+    group = 'verification'
+    classpath = sourceSets.portModel.runtimeClasspath
+    mainClass = 'com.asphyxiamywife.elytrapitchhelper.porttest.ClientCertificate'
+    args probeVersion, clientReports.get().asFile.absolutePath
+    if (probeHasBothLoaders) dependsOn ':fabric:runClientProbe', ':neoforge:runClientProbe'
+    doFirst {
+        if (!probeHasBothLoaders) throw new GradleException('portCertClient requires both Fabric and NeoForge; use -Ploaders=all.')
+    }
+}

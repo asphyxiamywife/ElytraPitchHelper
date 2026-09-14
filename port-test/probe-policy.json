@@ -1,0 +1,95 @@
+{
+  "schema": 1,
+  "referenceVersion": "26.1.2",
+  "cadence": "apply-input-server-level-entity-tick-capture",
+  "scenarios": [
+    "probe_sustained_glide",
+    "near_dead_elytra",
+    "build_height_boundary",
+    "ledge_to_void"
+  ],
+  "fields": {
+    "tick": {
+      "comparison": "EXACT"
+    },
+    "fallFlyingTicks": {
+      "comparison": "EXACT"
+    },
+    "fallFlying": {
+      "comparison": "EXACT"
+    },
+    "usableElytra": {
+      "comparison": "EXACT"
+    },
+    "rocket": {
+      "comparison": "EXACT"
+    },
+    "elytraDamage": {
+      "comparison": "EXACT"
+    },
+    "elytraMaxDamage": {
+      "comparison": "EXACT"
+    },
+    "dimension": {
+      "comparison": "EXACT"
+    },
+    "minBuildY": {
+      "comparison": "EXACT"
+    },
+    "maxBuildY": {
+      "comparison": "EXACT"
+    },
+    "voidY": {
+      "comparison": "EXACT"
+    },
+    "scanBottomY": {
+      "comparison": "EXACT"
+    },
+    "scanTopY": {
+      "comparison": "EXACT"
+    },
+    "groundSupport": {
+      "comparison": "EXACT"
+    },
+    "pitch": {
+      "comparison": "EPSILON",
+      "epsilon": 1e-07
+    },
+    "y": {
+      "comparison": "EPSILON",
+      "epsilon": 1e-07
+    },
+    "verticalSpeed": {
+      "comparison": "EPSILON",
+      "epsilon": 1e-08
+    },
+    "horizontalSpeed": {
+      "comparison": "EPSILON",
+      "epsilon": 1e-08
+    },
+    "minX": {
+      "comparison": "EPSILON",
+      "epsilon": 1e-07
+    },
+    "maxX": {
+      "comparison": "EPSILON",
+      "epsilon": 1e-07
+    },
+    "minY": {
+      "comparison": "EPSILON",
+      "epsilon": 1e-07
+    },
+    "maxY": {
+      "comparison": "EPSILON",
+      "epsilon": 1e-07
+    },
+    "minZ": {
+      "comparison": "EPSILON",
+      "epsilon": 1e-07
+    },
+    "maxZ": {
+      "comparison": "EPSILON",
+      "epsilon": 1e-07
+    }
+  }
+}
