@@ -6,7 +6,7 @@ import net.minecraft.client.gui.components.AbstractWidget;
 import net.minecraft.client.gui.narration.NarrationElementOutput;
 import net.minecraft.network.chat.CommonComponents;
 import net.minecraft.network.chat.Component;
-import org.lwjgl.glfw.GLFW;
+import com.mojang.blaze3d.platform.InputConstants;
 
 import java.util.function.BooleanSupplier;
 
@@ -102,7 +102,7 @@ public abstract class SettingRow extends AbstractWidget {
 
     @Override
     public boolean keyPressed(net.minecraft.client.input.KeyEvent event) {
-        boolean backwards = (event.modifiers() & org.lwjgl.glfw.GLFW.GLFW_MOD_SHIFT) != 0;
+        boolean backwards = (event.modifiers() & InputConstants.MOD_SHIFT) != 0;
         if (active && isResetKey(event.key()) && isResetModified()) {
             playClick();
             onReset.run();
@@ -116,13 +116,13 @@ public abstract class SettingRow extends AbstractWidget {
     }
 
     public static boolean isActivationKey(int key) {
-        return key == org.lwjgl.glfw.GLFW.GLFW_KEY_ENTER
-                || key == org.lwjgl.glfw.GLFW.GLFW_KEY_KP_ENTER
-                || key == org.lwjgl.glfw.GLFW.GLFW_KEY_SPACE;
+        return key == InputConstants.KEY_RETURN
+                || key == InputConstants.KEY_NUMPADENTER
+                || key == InputConstants.KEY_SPACE;
     }
 
     public static boolean isResetKey(int key) {
-        return key == GLFW.GLFW_KEY_DELETE || key == GLFW.GLFW_KEY_BACKSPACE;
+        return key == InputConstants.KEY_DELETE || key == InputConstants.KEY_BACKSPACE;
     }
 
     public static boolean resetZoneContains(int rowX, int rowWidth, double mouseX) {
@@ -138,7 +138,7 @@ public abstract class SettingRow extends AbstractWidget {
         if (resetModified == null || !resetZoneContains(getX(), getWidth(), event.x())) {
             return false;
         }
-        if (event.button() == GLFW.GLFW_MOUSE_BUTTON_LEFT && active && isResetModified()) {
+        if (event.button() == InputConstants.MOUSE_BUTTON_LEFT && active && isResetModified()) {
             playClick();
             onReset.run();
         }

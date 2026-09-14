@@ -18,7 +18,7 @@ import net.minecraft.client.input.KeyEvent;
 import net.minecraft.client.input.MouseButtonEvent;
 import net.minecraft.network.chat.CommonComponents;
 import net.minecraft.network.chat.Component;
-import org.lwjgl.glfw.GLFW;
+import com.mojang.blaze3d.platform.InputConstants;
 
 import java.util.Arrays;
 import java.util.function.BooleanSupplier;
@@ -300,12 +300,12 @@ final class ColorEditorScreen extends Screen implements ConfigWorkflowChild, Col
         if (prideFlagDropdown != null && prideFlagDropdown.handleOpenKeyPressed(event)) {
             return true;
         }
-        if ((event.key() == GLFW.GLFW_KEY_ENTER || event.key() == GLFW.GLFW_KEY_KP_ENTER)
+        if ((event.key() == InputConstants.KEY_RETURN || event.key() == InputConstants.KEY_NUMPADENTER)
                 && hexBox != null && hexBox.isFocused()) {
             commitHexBox();
             return true;
         }
-        if (event.key() == GLFW.GLFW_KEY_ESCAPE && hexBox != null && hexBox.isFocused()) {
+        if (event.key() == InputConstants.KEY_ESCAPE && hexBox != null && hexBox.isFocused()) {
             blurHexBox();
             return true;
         }

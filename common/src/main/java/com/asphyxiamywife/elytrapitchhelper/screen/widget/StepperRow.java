@@ -4,7 +4,7 @@ import net.minecraft.client.gui.Font;
 import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.client.input.MouseButtonEvent;
 import net.minecraft.network.chat.Component;
-import org.lwjgl.glfw.GLFW;
+import com.mojang.blaze3d.platform.InputConstants;
 
 import java.util.function.BooleanSupplier;
 import java.util.function.Supplier;
@@ -77,8 +77,8 @@ public final class StepperRow extends SettingRow {
     @Override
     public boolean keyPressed(net.minecraft.client.input.KeyEvent event) {
         if (active) {
-            boolean add = event.key() == GLFW.GLFW_KEY_EQUAL || event.key() == GLFW.GLFW_KEY_KP_ADD;
-            boolean remove = event.key() == GLFW.GLFW_KEY_MINUS || event.key() == GLFW.GLFW_KEY_KP_SUBTRACT;
+            boolean add = event.key() == InputConstants.KEY_EQUALS || event.key() == InputConstants.KEY_ADD;
+            boolean remove = event.key() == InputConstants.KEY_MINUS || event.key() == org.lwjgl.sdl.SDLScancode.SDL_SCANCODE_KP_MINUS;
             if (add && canAdd.getAsBoolean()) {
                 playClick();
                 onAdd.run();
@@ -95,8 +95,8 @@ public final class StepperRow extends SettingRow {
 
     @Override
     protected boolean isValidClickButton(net.minecraft.client.input.MouseButtonInfo button) {
-        return button.button() == GLFW.GLFW_MOUSE_BUTTON_LEFT
-                || button.button() == GLFW.GLFW_MOUSE_BUTTON_RIGHT;
+        return button.button() == InputConstants.MOUSE_BUTTON_LEFT
+                || button.button() == InputConstants.MOUSE_BUTTON_RIGHT;
     }
 
     @Override
@@ -110,7 +110,7 @@ public final class StepperRow extends SettingRow {
             return;
         }
         playClick();
-        if (event.button() == GLFW.GLFW_MOUSE_BUTTON_RIGHT) {
+        if (event.button() == InputConstants.MOUSE_BUTTON_RIGHT) {
             onPrevious.run();
         } else {
             onNext.run();

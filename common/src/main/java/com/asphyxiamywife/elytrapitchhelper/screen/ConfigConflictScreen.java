@@ -6,7 +6,7 @@ import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.client.input.KeyEvent;
 import net.minecraft.network.chat.Component;
-import org.lwjgl.glfw.GLFW;
+import com.mojang.blaze3d.platform.InputConstants;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -92,12 +92,12 @@ final class ConfigConflictScreen extends Screen {
     @Override
     public boolean keyPressed(KeyEvent event) {
         int amount = switch (event.key()) {
-            case GLFW.GLFW_KEY_UP -> -LINE_HEIGHT;
-            case GLFW.GLFW_KEY_DOWN -> LINE_HEIGHT;
-            case GLFW.GLFW_KEY_PAGE_UP -> -Math.max(LINE_HEIGHT, height - 94);
-            case GLFW.GLFW_KEY_PAGE_DOWN -> Math.max(LINE_HEIGHT, height - 94);
-            case GLFW.GLFW_KEY_HOME -> -maxScroll();
-            case GLFW.GLFW_KEY_END -> maxScroll();
+            case InputConstants.KEY_UP -> -LINE_HEIGHT;
+            case InputConstants.KEY_DOWN -> LINE_HEIGHT;
+            case InputConstants.KEY_PAGEUP -> -Math.max(LINE_HEIGHT, height - 94);
+            case InputConstants.KEY_PAGEDOWN -> Math.max(LINE_HEIGHT, height - 94);
+            case InputConstants.KEY_HOME -> -maxScroll();
+            case InputConstants.KEY_END -> maxScroll();
             default -> 0;
         };
         if (amount != 0) {

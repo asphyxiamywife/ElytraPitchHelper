@@ -4,7 +4,7 @@ import com.asphyxiamywife.elytrapitchhelper.config.Config;
 import net.minecraft.client.gui.components.EditBox;
 import net.minecraft.client.gui.components.events.GuiEventListener;
 import net.minecraft.client.input.KeyEvent;
-import org.lwjgl.glfw.GLFW;
+import com.mojang.blaze3d.platform.InputConstants;
 
 import java.util.function.Supplier;
 import java.util.function.ToIntFunction;
@@ -112,9 +112,9 @@ final class EditorSearchController {
         }
 
         int modifiers = event.modifiers();
-        boolean findShortcut = ScreenShortcuts.isPrimary(event) && event.key() == GLFW.GLFW_KEY_F;
-        boolean slashShortcut = event.key() == GLFW.GLFW_KEY_SLASH
-                && (modifiers & (GLFW.GLFW_MOD_CONTROL | GLFW.GLFW_MOD_SUPER | GLFW.GLFW_MOD_ALT)) == 0
+        boolean findShortcut = ScreenShortcuts.isPrimary(event) && event.key() == InputConstants.KEY_F;
+        boolean slashShortcut = event.key() == InputConstants.KEY_SLASH
+                && (modifiers & (InputConstants.MOD_CONTROL | InputConstants.MOD_SUPER | InputConstants.MOD_ALT)) == 0
                 && focused != settingsSearchBox;
         if (!findShortcut && !slashShortcut) {
             return false;

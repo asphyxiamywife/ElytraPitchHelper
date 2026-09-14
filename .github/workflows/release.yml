@@ -55,7 +55,7 @@ jobs:
           fi
 
       - name: build
-        run: ./gradlew --non-interactive build -Ploaders=all
+        run: ./gradlew --non-interactive check buildFabric -Ploaders=fabric
 
       - name: locate release jars
         id: jars
@@ -78,17 +78,11 @@ jobs:
           }
 
           locate_loader_jar fabric
-          locate_loader_jar neoforge
 
       - name: attest Fabric release jar
         uses: actions/attest@v4
         with:
           subject-path: ${{ steps.jars.outputs.fabric_path }}
-
-      - name: attest NeoForge release jar
-        uses: actions/attest@v4
-        with:
-          subject-path: ${{ steps.jars.outputs.neoforge_path }}
 
       - name: create release
         shell: bash
@@ -96,14 +90,13 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           TAG_NAME: ${{ github.ref_name }}
           FABRIC_JAR: ${{ steps.jars.outputs.fabric_path }}
-          NEOFORGE_JAR: ${{ steps.jars.outputs.neoforge_path }}
         run: |
           if gh release view "$TAG_NAME" >/dev/null 2>&1; then
             echo "Release $TAG_NAME already exists; refusing to update a release asset." >&2
             exit 1
           fi
 
-          gh release create "$TAG_NAME" "$FABRIC_JAR" "$NEOFORGE_JAR" \
+          gh release create "$TAG_NAME" "$FABRIC_JAR" \
             --draft \
             --verify-tag \
             --title "Release $TAG_NAME" \

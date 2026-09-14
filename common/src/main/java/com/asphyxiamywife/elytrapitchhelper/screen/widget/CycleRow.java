@@ -4,7 +4,7 @@ import net.minecraft.client.gui.Font;
 import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.client.input.MouseButtonEvent;
 import net.minecraft.network.chat.Component;
-import org.lwjgl.glfw.GLFW;
+import com.mojang.blaze3d.platform.InputConstants;
 
 import java.util.function.Supplier;
 
@@ -37,8 +37,8 @@ public final class CycleRow extends SettingRow {
 
     @Override
     protected boolean isValidClickButton(net.minecraft.client.input.MouseButtonInfo button) {
-        return button.button() == GLFW.GLFW_MOUSE_BUTTON_LEFT
-                || button.button() == GLFW.GLFW_MOUSE_BUTTON_RIGHT;
+        return button.button() == InputConstants.MOUSE_BUTTON_LEFT
+                || button.button() == InputConstants.MOUSE_BUTTON_RIGHT;
     }
 
     @Override
@@ -68,7 +68,7 @@ public final class CycleRow extends SettingRow {
     @Override
     protected void onRowClick(MouseButtonEvent event, boolean doubleClick) {
         playClick();
-        if (event.button() == GLFW.GLFW_MOUSE_BUTTON_RIGHT) {
+        if (event.button() == InputConstants.MOUSE_BUTTON_RIGHT) {
             previous.run();
         } else {
             next.run();

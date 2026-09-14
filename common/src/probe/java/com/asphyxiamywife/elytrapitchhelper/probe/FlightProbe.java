@@ -39,7 +39,7 @@ public final class FlightProbe {
 
     private FlightProbe(GameTestHelper helper) throws Exception {
         this.helper = helper;
-        helper.assertTrue(net.minecraft.SharedConstants.getCurrentVersion().name()
+        helper.assertTrue(net.minecraft.SharedConstants.getCurrentVersion().id()
                 .equals(System.getProperty("eph.minecraftVersion")), "Resolved Minecraft version differs from running engine");
         JsonObject policy = read(corpus.resolve("probe-policy.json"));
         ids = policy.getAsJsonArray("scenarios");
@@ -61,7 +61,7 @@ public final class FlightProbe {
         if (scenarioIndex == ids.size()) {
             JsonObject complete = new JsonObject();
             complete.addProperty("schema", 1);
-            complete.addProperty("minecraftVersion", net.minecraft.SharedConstants.getCurrentVersion().name());
+            complete.addProperty("minecraftVersion", net.minecraft.SharedConstants.getCurrentVersion().id());
             complete.addProperty("policySha256", digest(corpus.resolve("probe-policy.json")));
             complete.add("scenarios", ids.deepCopy());
             Files.writeString(report.resolve("complete.json"), JSON.toJson(complete) + "\n");

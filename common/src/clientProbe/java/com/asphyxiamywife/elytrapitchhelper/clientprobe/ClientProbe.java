@@ -61,7 +61,7 @@ public final class ClientProbe {
                 client.options.renderDistance().set(2);
                 client.options.simulationDistance().set(5);
                 client.options.framerateLimit().set(60);
-                require(SharedConstants.getCurrentVersion().name().equals(System.getProperty("eph.minecraftVersion")), "Wrong client engine version");
+                require(SharedConstants.getCurrentVersion().id().equals(System.getProperty("eph.minecraftVersion")), "Wrong client engine version");
                 Set<String> keys = Arrays.stream(client.options.keyMappings).map(k -> k.getName()).collect(Collectors.toSet());
                 require(keys.containsAll(Set.of("key.elytrapitchhelper.toggle", "key.elytrapitchhelper.open_config",
                         "key.elytrapitchhelper.open_profiles", "key.elytrapitchhelper.open_palette_modifier",
@@ -110,7 +110,7 @@ public final class ClientProbe {
                 require(hudAttachments == 1, "Expected one product HUD layer after crosshair");
                 JsonObject result = new JsonObject();
                 result.addProperty("schema", 1);
-                result.addProperty("minecraftVersion", SharedConstants.getCurrentVersion().name());
+                result.addProperty("minecraftVersion", SharedConstants.getCurrentVersion().id());
                 result.addProperty("status", "PASS");
                 for (String claim : List.of("entrypoint", "hudAttachment", "keys", "mixinAudit", "localPlayer", "hudRender", "blockCallback", "chunkCallback")) result.addProperty(claim, true);
                 Path report = Path.of(System.getProperty("eph.clientReport"));

@@ -2,7 +2,7 @@ package com.asphyxiamywife.elytrapitchhelper.screen;
 
 import com.asphyxiamywife.elytrapitchhelper.screen.widget.SettingRow;
 import org.junit.jupiter.api.Test;
-import org.lwjgl.glfw.GLFW;
+import com.mojang.blaze3d.platform.InputConstants;
 
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -10,24 +10,24 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 final class SettingRowKeysTest {
     @Test
     void enterAndSpaceActivateARow() {
-        assertTrue(SettingRow.isActivationKey(GLFW.GLFW_KEY_ENTER));
-        assertTrue(SettingRow.isActivationKey(GLFW.GLFW_KEY_KP_ENTER));
-        assertTrue(SettingRow.isActivationKey(GLFW.GLFW_KEY_SPACE));
+        assertTrue(SettingRow.isActivationKey(InputConstants.KEY_RETURN));
+        assertTrue(SettingRow.isActivationKey(InputConstants.KEY_NUMPADENTER));
+        assertTrue(SettingRow.isActivationKey(InputConstants.KEY_SPACE));
     }
 
     @Test
     void arrowsAndEscapeAreLeftAlone() {
-        for (int key : new int[] {GLFW.GLFW_KEY_LEFT, GLFW.GLFW_KEY_RIGHT, GLFW.GLFW_KEY_UP,
-                GLFW.GLFW_KEY_DOWN, GLFW.GLFW_KEY_ESCAPE, GLFW.GLFW_KEY_TAB}) {
+        for (int key : new int[] {InputConstants.KEY_LEFT, InputConstants.KEY_RIGHT, InputConstants.KEY_UP,
+                InputConstants.KEY_DOWN, InputConstants.KEY_ESCAPE, InputConstants.KEY_TAB}) {
             assertFalse(SettingRow.isActivationKey(key), () -> "key " + key + " should pass through");
         }
     }
 
     @Test
     void deleteAndBackspaceAreResetKeysOnly() {
-        assertTrue(SettingRow.isResetKey(GLFW.GLFW_KEY_DELETE));
-        assertTrue(SettingRow.isResetKey(GLFW.GLFW_KEY_BACKSPACE));
-        assertFalse(SettingRow.isResetKey(GLFW.GLFW_KEY_ENTER));
-        assertFalse(SettingRow.isResetKey(GLFW.GLFW_KEY_LEFT));
+        assertTrue(SettingRow.isResetKey(InputConstants.KEY_DELETE));
+        assertTrue(SettingRow.isResetKey(InputConstants.KEY_BACKSPACE));
+        assertFalse(SettingRow.isResetKey(InputConstants.KEY_RETURN));
+        assertFalse(SettingRow.isResetKey(InputConstants.KEY_LEFT));
     }
 }

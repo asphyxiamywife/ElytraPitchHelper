@@ -4,7 +4,7 @@ import com.asphyxiamywife.elytrapitchhelper.screen.widget.SliderRow;
 import net.minecraft.client.input.KeyEvent;
 import net.minecraft.network.chat.Component;
 import org.junit.jupiter.api.Test;
-import org.lwjgl.glfw.GLFW;
+import com.mojang.blaze3d.platform.InputConstants;
 
 import java.util.concurrent.atomic.AtomicInteger;
 
@@ -27,13 +27,13 @@ final class SliderRowKeysTest {
                 });
         row.setFocused(true);
         row.active = false;
-        assertFalse(row.keyPressed(new KeyEvent(GLFW.GLFW_KEY_RIGHT, 0, 0)));
-        assertFalse(row.keyPressed(new KeyEvent(GLFW.GLFW_KEY_LEFT, 0, 0)));
+        assertFalse(row.keyPressed(new KeyEvent(InputConstants.KEY_RIGHT, 0, 0)));
+        assertFalse(row.keyPressed(new KeyEvent(InputConstants.KEY_LEFT, 0, 0)));
         assertEquals(50, value.get());
         assertEquals(0, interactions.get());
 
         row.active = true;
-        assertTrue(row.keyPressed(new KeyEvent(GLFW.GLFW_KEY_RIGHT, 0, 0)));
+        assertTrue(row.keyPressed(new KeyEvent(InputConstants.KEY_RIGHT, 0, 0)));
         assertEquals(51, value.get());
         assertEquals(2, interactions.get());
     }

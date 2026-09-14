@@ -6,7 +6,7 @@ import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.client.input.KeyEvent;
 import net.minecraft.client.input.MouseButtonEvent;
 import net.minecraft.network.chat.Component;
-import org.lwjgl.glfw.GLFW;
+import com.mojang.blaze3d.platform.InputConstants;
 
 import java.util.function.DoubleConsumer;
 
@@ -194,8 +194,8 @@ public final class SliderRow extends SettingRow {
     @Override
     public boolean keyPressed(KeyEvent event) {
         int direction = switch (event.key()) {
-            case GLFW.GLFW_KEY_LEFT -> -1;
-            case GLFW.GLFW_KEY_RIGHT -> 1;
+            case InputConstants.KEY_LEFT -> -1;
+            case InputConstants.KEY_RIGHT -> 1;
             default -> 0;
         };
         if (!active || direction == 0) {

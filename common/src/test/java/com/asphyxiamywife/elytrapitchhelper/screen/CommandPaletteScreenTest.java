@@ -3,7 +3,7 @@ package com.asphyxiamywife.elytrapitchhelper.screen;
 import org.junit.jupiter.api.Test;
 import net.minecraft.client.input.MouseButtonEvent;
 import net.minecraft.client.input.MouseButtonInfo;
-import org.lwjgl.glfw.GLFW;
+import com.mojang.blaze3d.platform.InputConstants;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
@@ -44,8 +44,8 @@ final class CommandPaletteScreenTest {
         CommandPaletteScreen screen = (CommandPaletteScreen) unsafeClass
                 .getMethod("allocateInstance", Class.class)
                 .invoke(unsafeField.get(null), CommandPaletteScreen.class);
-        for (int button : new int[] {GLFW.GLFW_MOUSE_BUTTON_RIGHT,
-                GLFW.GLFW_MOUSE_BUTTON_MIDDLE, GLFW.GLFW_MOUSE_BUTTON_4}) {
+        for (int button : new int[] {InputConstants.MOUSE_BUTTON_RIGHT,
+                InputConstants.MOUSE_BUTTON_MIDDLE, InputConstants.MOUSE_BUTTON_4}) {
             assertFalse(screen.mouseClicked(new MouseButtonEvent(100, 100,
                     new MouseButtonInfo(button, 0)), false));
         }

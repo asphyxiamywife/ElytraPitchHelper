@@ -1,7 +1,7 @@
 package com.asphyxiamywife.elytrapitchhelper.screen;
 
 import net.minecraft.client.input.MouseButtonEvent;
-import org.lwjgl.glfw.GLFW;
+import com.mojang.blaze3d.platform.InputConstants;
 
 import java.util.function.BooleanSupplier;
 import java.util.function.IntSupplier;
@@ -80,7 +80,7 @@ final class RowScrollController {
     }
 
     boolean startDrag(MouseButtonEvent event) {
-        if (!active.getAsBoolean() || event.button() != GLFW.GLFW_MOUSE_BUTTON_LEFT) {
+        if (!active.getAsBoolean() || event.button() != InputConstants.MOUSE_BUTTON_LEFT) {
             return false;
         }
         ProfileScrollGeometry current = geometry.get();
@@ -99,7 +99,7 @@ final class RowScrollController {
     }
 
     boolean drag(MouseButtonEvent event) {
-        if (!dragging || event.button() != GLFW.GLFW_MOUSE_BUTTON_LEFT) {
+        if (!dragging || event.button() != InputConstants.MOUSE_BUTTON_LEFT) {
             return false;
         }
         scrollToMouse(event.y());
@@ -107,7 +107,7 @@ final class RowScrollController {
     }
 
     boolean release(MouseButtonEvent event) {
-        if (!dragging || event.button() != GLFW.GLFW_MOUSE_BUTTON_LEFT) {
+        if (!dragging || event.button() != InputConstants.MOUSE_BUTTON_LEFT) {
             return false;
         }
         stopDrag();

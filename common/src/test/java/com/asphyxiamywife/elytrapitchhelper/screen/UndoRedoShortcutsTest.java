@@ -2,7 +2,7 @@ package com.asphyxiamywife.elytrapitchhelper.screen;
 
 import net.minecraft.client.input.KeyEvent;
 import org.junit.jupiter.api.Test;
-import org.lwjgl.glfw.GLFW;
+import com.mojang.blaze3d.platform.InputConstants;
 
 import java.util.concurrent.atomic.AtomicInteger;
 
@@ -16,10 +16,10 @@ final class UndoRedoShortcutsTest {
         AtomicInteger redo = new AtomicInteger();
         AtomicInteger restored = new AtomicInteger();
 
-        assertTrue(handle(GLFW.GLFW_KEY_Z, GLFW.GLFW_MOD_CONTROL, undo, redo, restored));
-        assertTrue(handle(GLFW.GLFW_KEY_Z, GLFW.GLFW_MOD_SUPER | GLFW.GLFW_MOD_SHIFT,
+        assertTrue(handle(InputConstants.KEY_Z, InputConstants.MOD_CONTROL, undo, redo, restored));
+        assertTrue(handle(InputConstants.KEY_Z, InputConstants.MOD_SUPER | InputConstants.MOD_SHIFT,
                 undo, redo, restored));
-        assertTrue(handle(GLFW.GLFW_KEY_Y, GLFW.GLFW_MOD_CONTROL, undo, redo, restored));
+        assertTrue(handle(InputConstants.KEY_Y, InputConstants.MOD_CONTROL, undo, redo, restored));
 
         org.junit.jupiter.api.Assertions.assertEquals(1, undo.get());
         org.junit.jupiter.api.Assertions.assertEquals(2, redo.get());
@@ -29,10 +29,10 @@ final class UndoRedoShortcutsTest {
     @Test
     void unrelatedAndUnmodifiedKeysAreNotConsumed() {
         AtomicInteger calls = new AtomicInteger();
-        assertFalse(UndoRedoShortcuts.handle(new KeyEvent(GLFW.GLFW_KEY_Z, 0, 0),
+        assertFalse(UndoRedoShortcuts.handle(new KeyEvent(InputConstants.KEY_Z, 0, 0),
                 () -> { calls.incrementAndGet(); return true; },
                 () -> { calls.incrementAndGet(); return true; }, calls::incrementAndGet));
-        assertFalse(UndoRedoShortcuts.handle(new KeyEvent(GLFW.GLFW_KEY_F, 0, GLFW.GLFW_MOD_CONTROL),
+        assertFalse(UndoRedoShortcuts.handle(new KeyEvent(InputConstants.KEY_F, 0, InputConstants.MOD_CONTROL),
                 () -> { calls.incrementAndGet(); return true; },
                 () -> { calls.incrementAndGet(); return true; }, calls::incrementAndGet));
         org.junit.jupiter.api.Assertions.assertEquals(0, calls.get());
@@ -41,7 +41,7 @@ final class UndoRedoShortcutsTest {
     @Test
     void handledShortcutOnlyRunsRestoreHookWhenHistoryChanged() {
         AtomicInteger restored = new AtomicInteger();
-        assertTrue(UndoRedoShortcuts.handle(new KeyEvent(GLFW.GLFW_KEY_Z, 0, GLFW.GLFW_MOD_CONTROL),
+        assertTrue(UndoRedoShortcuts.handle(new KeyEvent(InputConstants.KEY_Z, 0, InputConstants.MOD_CONTROL),
                 () -> false, () -> false, restored::incrementAndGet));
         org.junit.jupiter.api.Assertions.assertEquals(0, restored.get());
     }

@@ -5,7 +5,7 @@ import com.mojang.blaze3d.platform.InputConstants;
 import net.minecraft.client.KeyMapping;
 import net.minecraft.client.input.KeyEvent;
 import org.junit.jupiter.api.Test;
-import org.lwjgl.glfw.GLFW;
+import com.mojang.blaze3d.platform.InputConstants;
 
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -19,44 +19,44 @@ final class KeyBindingsTest {
 
     @Test
     void paletteShortcutWorksRegardlessOfWhichBoundKeyIsPressedLast() {
-        KeyMapping modifier = mapping("modifier", GLFW.GLFW_KEY_LEFT_CONTROL);
-        KeyMapping palette = mapping("palette", GLFW.GLFW_KEY_K);
+        KeyMapping modifier = mapping("modifier", InputConstants.KEY_LCONTROL);
+        KeyMapping palette = mapping("palette", InputConstants.KEY_K);
 
-        assertTrue(KeyBindings.isCommandPaletteShortcut(keyEvent(GLFW.GLFW_KEY_K), palette, modifier,
+        assertTrue(KeyBindings.isCommandPaletteShortcut(keyEvent(InputConstants.KEY_K), palette, modifier,
                 Set.of(modifier)::contains));
-        assertTrue(KeyBindings.isCommandPaletteShortcut(keyEvent(GLFW.GLFW_KEY_LEFT_CONTROL), palette, modifier,
+        assertTrue(KeyBindings.isCommandPaletteShortcut(keyEvent(InputConstants.KEY_LCONTROL), palette, modifier,
                 Set.of(palette)::contains));
     }
 
     @Test
     void paletteShortcutRequiresBothBoundKeys() {
-        KeyMapping modifier = mapping("modifier-alone", GLFW.GLFW_KEY_LEFT_CONTROL);
-        KeyMapping palette = mapping("palette-alone", GLFW.GLFW_KEY_K);
+        KeyMapping modifier = mapping("modifier-alone", InputConstants.KEY_LCONTROL);
+        KeyMapping palette = mapping("palette-alone", InputConstants.KEY_K);
 
-        assertFalse(KeyBindings.isCommandPaletteShortcut(keyEvent(GLFW.GLFW_KEY_K), palette, modifier,
+        assertFalse(KeyBindings.isCommandPaletteShortcut(keyEvent(InputConstants.KEY_K), palette, modifier,
                 ignored -> false));
-        assertFalse(KeyBindings.isCommandPaletteShortcut(keyEvent(GLFW.GLFW_KEY_P), palette, modifier,
+        assertFalse(KeyBindings.isCommandPaletteShortcut(keyEvent(InputConstants.KEY_P), palette, modifier,
                 ignored -> true));
     }
 
     @Test
     void paletteShortcutDoesNotOpenWhenPreflightFails() {
-        KeyMapping modifier = mapping("modifier-preflight", GLFW.GLFW_KEY_LEFT_CONTROL);
-        KeyMapping palette = mapping("palette-preflight", GLFW.GLFW_KEY_K);
+        KeyMapping modifier = mapping("modifier-preflight", InputConstants.KEY_LCONTROL);
+        KeyMapping palette = mapping("palette-preflight", InputConstants.KEY_K);
         AtomicBoolean opened = new AtomicBoolean();
 
-        assertTrue(KeyBindings.handleCommandPaletteShortcut(keyEvent(GLFW.GLFW_KEY_K), palette, modifier,
+        assertTrue(KeyBindings.handleCommandPaletteShortcut(keyEvent(InputConstants.KEY_K), palette, modifier,
                 Set.of(modifier)::contains, () -> false, () -> opened.set(true)));
         assertFalse(opened.get());
     }
 
     @Test
     void palettePressSurvivesBothKeysBeingReleasedBeforeTheTick() {
-        KeyMapping modifier = mapping("tap-modifier", GLFW.GLFW_KEY_LEFT_CONTROL);
-        KeyMapping palette = mapping("tap-palette", GLFW.GLFW_KEY_K);
+        KeyMapping modifier = mapping("tap-modifier", InputConstants.KEY_LCONTROL);
+        KeyMapping palette = mapping("tap-palette", InputConstants.KEY_K);
         KeyBindings bindings = new KeyBindings(null, null, null, modifier, palette);
         modifier.setDown(true);
-        bindings.recordPaletteClick(InputConstants.Type.KEYSYM.getOrCreate(GLFW.GLFW_KEY_K), true);
+        bindings.recordPaletteClick(InputConstants.Type.KEYBOARD.getOrCreate(InputConstants.KEY_K), true);
         modifier.setDown(false);
         palette.setDown(false);
         assertTrue(bindings.consumePaletteClick());
@@ -65,11 +65,11 @@ final class KeyBindingsTest {
 
     @Test
     void modifierPressedLastIsCapturedButSeparateTapsAndScreensAreIgnored() {
-        KeyMapping modifier = mapping("last-modifier", GLFW.GLFW_KEY_LEFT_CONTROL);
-        KeyMapping palette = mapping("last-palette", GLFW.GLFW_KEY_K);
+        KeyMapping modifier = mapping("last-modifier", InputConstants.KEY_LCONTROL);
+        KeyMapping palette = mapping("last-palette", InputConstants.KEY_K);
         KeyBindings bindings = new KeyBindings(null, null, null, modifier, palette);
-        var modifierKey = InputConstants.Type.KEYSYM.getOrCreate(GLFW.GLFW_KEY_LEFT_CONTROL);
-        var paletteKey = InputConstants.Type.KEYSYM.getOrCreate(GLFW.GLFW_KEY_K);
+        var modifierKey = InputConstants.Type.KEYBOARD.getOrCreate(InputConstants.KEY_LCONTROL);
+        var paletteKey = InputConstants.Type.KEYBOARD.getOrCreate(InputConstants.KEY_K);
         bindings.recordPaletteClick(paletteKey, true);
         bindings.recordPaletteClick(modifierKey, true);
         assertFalse(bindings.consumePaletteClick());
@@ -82,7 +82,7 @@ final class KeyBindingsTest {
     }
 
     private static KeyMapping mapping(String name, int key) {
-        return new KeyMapping("key.elytrapitchhelper.test." + name, InputConstants.Type.KEYSYM, key, CATEGORY);
+        return new KeyMapping("key.elytrapitchhelper.test." + name, InputConstants.Type.KEYBOARD, key, CATEGORY);
     }
 
     private static KeyEvent keyEvent(int key) {

@@ -3,7 +3,7 @@ package com.asphyxiamywife.elytrapitchhelper.screen;
 import net.minecraft.client.input.MouseButtonEvent;
 import net.minecraft.client.input.MouseButtonInfo;
 import org.junit.jupiter.api.Test;
-import org.lwjgl.glfw.GLFW;
+import com.mojang.blaze3d.platform.InputConstants;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -84,7 +84,7 @@ final class ScrollbarDragTest {
     }
 
     private static MouseButtonEvent press(double x, double y) {
-        return new MouseButtonEvent(x, y, new MouseButtonInfo(GLFW.GLFW_MOUSE_BUTTON_LEFT, 0));
+        return new MouseButtonEvent(x, y, new MouseButtonInfo(InputConstants.MOUSE_BUTTON_LEFT, 0));
     }
 
     private static int scrollPerThumbPixel(int trackHeight, int contentHeight, int maxScroll) {

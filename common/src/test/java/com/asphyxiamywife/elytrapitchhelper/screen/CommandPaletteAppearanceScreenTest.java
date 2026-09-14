@@ -9,7 +9,7 @@ import net.minecraft.client.InputType;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.input.KeyEvent;
 import org.junit.jupiter.api.Test;
-import org.lwjgl.glfw.GLFW;
+import com.mojang.blaze3d.platform.InputConstants;
 
 import java.lang.reflect.Field;
 import java.util.concurrent.atomic.AtomicReference;
@@ -61,15 +61,15 @@ final class CommandPaletteAppearanceScreenTest {
             }
             int oldShadow = baseline.commandPaletteAppearance().shadowOpacity();
             int oldBlur = baseline.commandPaletteAppearance().blurAmount();
-            KeyEvent right = new KeyEvent(GLFW.GLFW_KEY_RIGHT, 0, 0);
+            KeyEvent right = new KeyEvent(InputConstants.KEY_RIGHT, 0, 0);
             assertTrue(((SliderRow) screen.children().get(0)).keyPressed(right));
             assertEquals(oldShadow + 1, sharedProfile.get().commandPaletteAppearance().shadowOpacity());
 
-            screen.keyPressed(new KeyEvent(GLFW.GLFW_KEY_Z, 0, GLFW.GLFW_MOD_CONTROL));
+            screen.keyPressed(new KeyEvent(InputConstants.KEY_Z, 0, InputConstants.MOD_CONTROL));
             assertEquals(oldShadow, sharedProfile.get().commandPaletteAppearance().shadowOpacity());
-            screen.keyPressed(new KeyEvent(GLFW.GLFW_KEY_Y, 0, GLFW.GLFW_MOD_CONTROL));
+            screen.keyPressed(new KeyEvent(InputConstants.KEY_Y, 0, InputConstants.MOD_CONTROL));
             assertEquals(oldShadow + 1, sharedProfile.get().commandPaletteAppearance().shadowOpacity());
-            screen.keyPressed(new KeyEvent(GLFW.GLFW_KEY_Z, 0, GLFW.GLFW_MOD_CONTROL));
+            screen.keyPressed(new KeyEvent(InputConstants.KEY_Z, 0, InputConstants.MOD_CONTROL));
 
             assertTrue(((SliderRow) screen.children().get(1)).keyPressed(right));
             assertEquals(oldBlur + 1, sharedProfile.get().commandPaletteAppearance().blurAmount());

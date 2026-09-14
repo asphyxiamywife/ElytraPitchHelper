@@ -8,7 +8,7 @@ import net.minecraft.client.input.MouseButtonEvent;
 import net.minecraft.client.input.MouseButtonInfo;
 import net.minecraft.network.chat.Component;
 import org.junit.jupiter.api.Test;
-import org.lwjgl.glfw.GLFW;
+import com.mojang.blaze3d.platform.InputConstants;
 
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -35,7 +35,7 @@ final class SettingRowResetTest {
         AtomicInteger resets = new AtomicInteger();
         TestRow row = row(true, resets);
 
-        row.onClick(click(ROW_X + ROW_WIDTH - 1, GLFW.GLFW_MOUSE_BUTTON_LEFT), false);
+        row.onClick(click(ROW_X + ROW_WIDTH - 1, InputConstants.MOUSE_BUTTON_LEFT), false);
 
         assertEquals(1, resets.get());
         assertEquals(0, row.contentClicks);
@@ -46,7 +46,7 @@ final class SettingRowResetTest {
         AtomicInteger resets = new AtomicInteger();
         TestRow row = row(true, resets);
 
-        row.onClick(click(ROW_X + 20, GLFW.GLFW_MOUSE_BUTTON_LEFT), false);
+        row.onClick(click(ROW_X + 20, InputConstants.MOUSE_BUTTON_LEFT), false);
 
         assertEquals(0, resets.get());
         assertEquals(1, row.contentClicks);
@@ -58,8 +58,8 @@ final class SettingRowResetTest {
         TestRow unmodified = row(false, resets);
         TestRow modified = row(true, resets);
 
-        unmodified.onClick(click(ROW_X + ROW_WIDTH - 1, GLFW.GLFW_MOUSE_BUTTON_LEFT), false);
-        modified.onClick(click(ROW_X + ROW_WIDTH - 1, GLFW.GLFW_MOUSE_BUTTON_RIGHT), false);
+        unmodified.onClick(click(ROW_X + ROW_WIDTH - 1, InputConstants.MOUSE_BUTTON_LEFT), false);
+        modified.onClick(click(ROW_X + ROW_WIDTH - 1, InputConstants.MOUSE_BUTTON_RIGHT), false);
 
         assertEquals(0, resets.get());
         assertEquals(0, unmodified.contentClicks);
@@ -73,9 +73,9 @@ final class SettingRowResetTest {
         TestRow row = new TestRow();
         row.setReset(modified::get, resets::incrementAndGet);
 
-        assertTrue(row.keyPressed(new KeyEvent(GLFW.GLFW_KEY_DELETE, 0, 0)));
+        assertTrue(row.keyPressed(new KeyEvent(InputConstants.KEY_DELETE, 0, 0)));
         modified.set(false);
-        assertFalse(row.keyPressed(new KeyEvent(GLFW.GLFW_KEY_BACKSPACE, 0, 0)));
+        assertFalse(row.keyPressed(new KeyEvent(InputConstants.KEY_BACKSPACE, 0, 0)));
         assertEquals(1, resets.get());
     }
 

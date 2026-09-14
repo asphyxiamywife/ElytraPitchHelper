@@ -13,7 +13,7 @@ import net.minecraft.client.input.KeyEvent;
 import net.minecraft.client.input.MouseButtonEvent;
 import net.minecraft.network.chat.CommonComponents;
 import net.minecraft.network.chat.Component;
-import org.lwjgl.glfw.GLFW;
+import com.mojang.blaze3d.platform.InputConstants;
 
 import java.util.List;
 import java.util.Objects;
@@ -123,7 +123,7 @@ public final class DropdownButton<T> extends Button {
             return false;
         }
 
-        if (event.button() != GLFW.GLFW_MOUSE_BUTTON_LEFT) {
+        if (event.button() != InputConstants.MOUSE_BUTTON_LEFT) {
             close();
             return true;
         }
@@ -181,7 +181,7 @@ public final class DropdownButton<T> extends Button {
         if (!open) {
             return false;
         }
-        if (event.key() == GLFW.GLFW_KEY_ESCAPE) {
+        if (event.key() == InputConstants.KEY_ESCAPE) {
             close();
             return true;
         }
@@ -190,7 +190,7 @@ public final class DropdownButton<T> extends Button {
 
     @Override
     public boolean mouseClicked(MouseButtonEvent event, boolean doubleClick) {
-        if (!open && event.button() == GLFW.GLFW_MOUSE_BUTTON_RIGHT
+        if (!open && event.button() == InputConstants.MOUSE_BUTTON_RIGHT
                 && active && visible && containsCollapsed(event.x(), event.y())) {
             cycle(-1);
             playDownSound(Minecraft.getInstance().getSoundManager());

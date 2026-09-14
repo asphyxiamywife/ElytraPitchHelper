@@ -12,7 +12,7 @@ import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.client.input.KeyEvent;
 import net.minecraft.client.input.MouseButtonEvent;
 import net.minecraft.network.chat.Component;
-import org.lwjgl.glfw.GLFW;
+import com.mojang.blaze3d.platform.InputConstants;
 
 import java.util.List;
 
@@ -110,19 +110,19 @@ public final class CommandPaletteScreen extends Screen implements ConfigWorkflow
         if (KeyBindings.handleCommandPaletteShortcut(minecraft, event)) {
             return true;
         }
-        if (event.key() == GLFW.GLFW_KEY_ESCAPE) {
+        if (event.key() == InputConstants.KEY_ESCAPE) {
             onClose();
             return true;
         }
-        if (event.key() == GLFW.GLFW_KEY_DOWN) {
+        if (event.key() == InputConstants.KEY_DOWN) {
             moveSelection(1);
             return true;
         }
-        if (event.key() == GLFW.GLFW_KEY_UP) {
+        if (event.key() == InputConstants.KEY_UP) {
             moveSelection(-1);
             return true;
         }
-        if (event.key() == GLFW.GLFW_KEY_ENTER || event.key() == GLFW.GLFW_KEY_KP_ENTER) {
+        if (event.key() == InputConstants.KEY_RETURN || event.key() == InputConstants.KEY_NUMPADENTER) {
             executeSelected();
             return true;
         }
@@ -131,7 +131,7 @@ public final class CommandPaletteScreen extends Screen implements ConfigWorkflow
 
     @Override
     public boolean mouseClicked(MouseButtonEvent event, boolean doubleClick) {
-        if (event.button() != GLFW.GLFW_MOUSE_BUTTON_LEFT) {
+        if (event.button() != InputConstants.MOUSE_BUTTON_LEFT) {
             return false;
         }
         refreshResultsIfNeeded();
@@ -144,7 +144,7 @@ public final class CommandPaletteScreen extends Screen implements ConfigWorkflow
             executeSelected();
             return true;
         }
-        if (event.button() == GLFW.GLFW_MOUSE_BUTTON_LEFT && !insidePanel(event.x(), event.y())) {
+        if (event.button() == InputConstants.MOUSE_BUTTON_LEFT && !insidePanel(event.x(), event.y())) {
             onClose();
             return true;
         }

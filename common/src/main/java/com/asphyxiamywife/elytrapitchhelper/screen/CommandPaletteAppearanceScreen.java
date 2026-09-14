@@ -1,5 +1,6 @@
 package com.asphyxiamywife.elytrapitchhelper.screen;
 
+import com.mojang.blaze3d.platform.InputConstants;
 import com.asphyxiamywife.elytrapitchhelper.config.CommandPaletteAppearanceSettings;
 import com.asphyxiamywife.elytrapitchhelper.config.Config;
 import com.asphyxiamywife.elytrapitchhelper.config.Profile;
@@ -111,7 +112,7 @@ final class CommandPaletteAppearanceScreen extends Screen implements ConfigWorkf
         if (history.handleShortcut(event, this::rebuildWidgets)) {
             return true;
         }
-        if (event.key() == org.lwjgl.glfw.GLFW.GLFW_KEY_ESCAPE) {
+        if (event.key() == InputConstants.KEY_ESCAPE) {
             onClose();
             return true;
         }

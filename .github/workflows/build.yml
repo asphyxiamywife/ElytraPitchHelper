@@ -26,13 +26,25 @@ jobs:
       - name: make gradle wrapper executable
         run: chmod +x ./gradlew
       - name: build
-        run: ./gradlew --non-interactive build -Ploaders=all -PsnapshotBuild=true
+        run: ./gradlew --non-interactive check buildFabric -Ploaders=fabric -PsnapshotBuild=true
       - name: install headless client dependencies
         run: |
           sudo apt-get update
-          sudo apt-get install -y xvfb libgl1-mesa-dri libflite1
-      - name: certify Minecraft port contracts
-        run: xvfb-run -a ./gradlew --non-interactive portCert -Ploaders=all -PsnapshotBuild=true --max-workers=1
+          sudo apt-get install -y xvfb libgl1-mesa-dri libglx-mesa0 libvulkan1 mesa-vulkan-drivers libflite1
+          lavapipe_icd="$(find /usr/share/vulkan/icd.d -maxdepth 1 -type f -name 'lvp_icd*.json' -print -quit)"
+          if [[ -z "$lavapipe_icd" ]]; then
+            echo "Mesa lavapipe Vulkan ICD was not installed" >&2
+            exit 1
+          fi
+          echo "LIBGL_ALWAYS_SOFTWARE=1" >> "$GITHUB_ENV"
+          echo "VK_DRIVER_FILES=$lavapipe_icd" >> "$GITHUB_ENV"
+      - name: certify Fabric port contracts
+        run: >-
+          xvfb-run -a -s "-screen 0 1280x720x24 -ac +extension GLX +render -noreset"
+          ./gradlew --non-interactive
+          :common:portCertBoundary :common:portCertModel
+          :fabric:runProbe :fabric:runClientProbe
+          -Ploaders=fabric -PsnapshotBuild=true --max-workers=1
       - name: upload port diagnostics
         if: always()
         uses: actions/upload-artifact@v7
@@ -43,9 +55,7 @@ jobs:
             common/build/reports/port-cert/
             common/build/reports/tests/portCertModel/
             fabric/build/run/probe/logs/
-            neoforge/build/run/probe/logs/
             fabric/build/run/clientProbe/logs/
-            neoforge/build/run/clientProbe/logs/
           if-no-files-found: ignore
       - name: locate mod jars
         id: jars
@@ -67,14 +77,8 @@ jobs:
           }
 
           locate_loader_jar fabric
-          locate_loader_jar neoforge
       - name: upload Fabric mod jar
         uses: actions/upload-artifact@v7
         with:
           path: ${{ steps.jars.outputs.fabric_path }}
-          archive: false
-      - name: upload NeoForge mod jar
-        uses: actions/upload-artifact@v7
-        with:
-          path: ${{ steps.jars.outputs.neoforge_path }}
           archive: false

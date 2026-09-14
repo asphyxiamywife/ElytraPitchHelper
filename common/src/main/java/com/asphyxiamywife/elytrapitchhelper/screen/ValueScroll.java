@@ -2,7 +2,6 @@ package com.asphyxiamywife.elytrapitchhelper.screen;
 
 import com.mojang.blaze3d.platform.InputConstants;
 import net.minecraft.client.Minecraft;
-import org.lwjgl.glfw.GLFW;
 
 import java.util.function.DoublePredicate;
 
@@ -14,8 +13,8 @@ final class ValueScroll {
 
     static boolean isAdjusting(Minecraft client) {
         return client != null
-                && (InputConstants.isKeyDown(client.getWindow(), GLFW.GLFW_KEY_LEFT_SHIFT)
-                        || InputConstants.isKeyDown(client.getWindow(), GLFW.GLFW_KEY_RIGHT_SHIFT));
+                && (InputConstants.isKeyDown(InputConstants.KEY_LSHIFT)
+                        || InputConstants.isKeyDown(InputConstants.KEY_RSHIFT));
     }
 
     int steps(double scrollX, double scrollY) {

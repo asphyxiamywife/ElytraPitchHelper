@@ -29,7 +29,7 @@ import net.minecraft.client.input.CharacterEvent;
 import net.minecraft.client.input.KeyEvent;
 import net.minecraft.client.input.MouseButtonEvent;
 import net.minecraft.network.chat.Component;
-import org.lwjgl.glfw.GLFW;
+import com.mojang.blaze3d.platform.InputConstants;
 
 import java.nio.file.Path;
 import java.time.Duration;
@@ -482,11 +482,11 @@ public final class ConfigScreen extends Screen implements ProfileEditorPanel.Hos
         if (!isTextFieldFocused() && history.handleShortcut(event)) {
             return true;
         }
-        if ((event.key() == GLFW.GLFW_KEY_ENTER || event.key() == GLFW.GLFW_KEY_KP_ENTER)
+        if ((event.key() == InputConstants.KEY_RETURN || event.key() == InputConstants.KEY_NUMPADENTER)
                 && finishFocusedTextField()) {
             return true;
         }
-        if (event.key() == GLFW.GLFW_KEY_ESCAPE && finishFocusedTextField()) {
+        if (event.key() == InputConstants.KEY_ESCAPE && finishFocusedTextField()) {
             return true;
         }
         if (handleRowFocusKey(event)) {
@@ -887,11 +887,11 @@ public final class ConfigScreen extends Screen implements ProfileEditorPanel.Hos
         if (!(getFocused() instanceof SettingRow) && !(getFocused() instanceof SectionHeader)) {
             return false;
         }
-        boolean backwards = (event.modifiers() & GLFW.GLFW_MOD_SHIFT) != 0;
+        boolean backwards = (event.modifiers() & InputConstants.MOD_SHIFT) != 0;
         return switch (event.key()) {
-            case GLFW.GLFW_KEY_DOWN -> editorPanel.moveRowFocus(1);
-            case GLFW.GLFW_KEY_UP -> editorPanel.moveRowFocus(-1);
-            case GLFW.GLFW_KEY_TAB -> editorPanel.moveRowFocus(backwards ? -1 : 1);
+            case InputConstants.KEY_DOWN -> editorPanel.moveRowFocus(1);
+            case InputConstants.KEY_UP -> editorPanel.moveRowFocus(-1);
+            case InputConstants.KEY_TAB -> editorPanel.moveRowFocus(backwards ? -1 : 1);
             default -> false;
         };
     }
@@ -906,10 +906,10 @@ public final class ConfigScreen extends Screen implements ProfileEditorPanel.Hos
             return false;
         }
         return switch (event.key()) {
-            case GLFW.GLFW_KEY_PAGE_DOWN -> editorScrolling.scrollPage(1);
-            case GLFW.GLFW_KEY_PAGE_UP -> editorScrolling.scrollPage(-1);
-            case GLFW.GLFW_KEY_HOME -> editorScrolling.scrollToEdge(true);
-            case GLFW.GLFW_KEY_END -> editorScrolling.scrollToEdge(false);
+            case InputConstants.KEY_PAGEDOWN -> editorScrolling.scrollPage(1);
+            case InputConstants.KEY_PAGEUP -> editorScrolling.scrollPage(-1);
+            case InputConstants.KEY_HOME -> editorScrolling.scrollToEdge(true);
+            case InputConstants.KEY_END -> editorScrolling.scrollToEdge(false);
             default -> false;
         };
     }
@@ -919,7 +919,7 @@ public final class ConfigScreen extends Screen implements ProfileEditorPanel.Hos
     }
 
     private boolean handleExplicitSaveShortcut(KeyEvent event) {
-        if (!ScreenShortcuts.isPrimary(event) || event.key() != GLFW.GLFW_KEY_S) {
+        if (!ScreenShortcuts.isPrimary(event) || event.key() != InputConstants.KEY_S) {
             return false;
         }
         blurFocusedEditBox();
@@ -929,7 +929,7 @@ public final class ConfigScreen extends Screen implements ProfileEditorPanel.Hos
     }
 
     private boolean handleCycleButtonRightClick(MouseButtonEvent event) {
-        if (event.button() != GLFW.GLFW_MOUSE_BUTTON_RIGHT) {
+        if (event.button() != InputConstants.MOUSE_BUTTON_RIGHT) {
             return false;
         }
         List<? extends GuiEventListener> children = children();

@@ -8,7 +8,7 @@ import com.mojang.blaze3d.platform.cursor.CursorTypes;
 import net.minecraft.client.gui.Font;
 import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.client.input.MouseButtonEvent;
-import org.lwjgl.glfw.GLFW;
+import com.mojang.blaze3d.platform.InputConstants;
 
 final class ColorEditorPreviewController {
     private static final String CUSTOM_STRIPE_MARKER = "v";
@@ -69,7 +69,7 @@ final class ColorEditorPreviewController {
     }
 
     boolean selectStripe(MouseButtonEvent event) {
-        if (event.button() != GLFW.GLFW_MOUSE_BUTTON_LEFT) {
+        if (event.button() != InputConstants.MOUSE_BUTTON_LEFT) {
             return false;
         }
         ColorEditorLayout layout = host.colorEditorLayout();

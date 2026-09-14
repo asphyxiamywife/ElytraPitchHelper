@@ -1,13 +1,13 @@
 package com.asphyxiamywife.elytrapitchhelper.screen;
 
 import net.minecraft.client.input.KeyEvent;
-import org.lwjgl.glfw.GLFW;
+import com.mojang.blaze3d.platform.InputConstants;
 
 final class ScreenShortcuts {
     private ScreenShortcuts() {
     }
 
     static boolean isPrimary(KeyEvent event) {
-        return (event.modifiers() & (GLFW.GLFW_MOD_CONTROL | GLFW.GLFW_MOD_SUPER)) != 0;
+        return (event.modifiers() & (InputConstants.MOD_CONTROL | InputConstants.MOD_SUPER)) != 0;
     }
 }

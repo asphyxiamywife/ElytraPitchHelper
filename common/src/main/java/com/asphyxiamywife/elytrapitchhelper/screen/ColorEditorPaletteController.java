@@ -9,7 +9,7 @@ import static com.asphyxiamywife.elytrapitchhelper.screen.ColorMath.rgbToHsv;
 import com.mojang.blaze3d.platform.cursor.CursorTypes;
 import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.client.input.MouseButtonEvent;
-import org.lwjgl.glfw.GLFW;
+import com.mojang.blaze3d.platform.InputConstants;
 
 final class ColorEditorPaletteController {
     interface Host {
@@ -65,7 +65,7 @@ final class ColorEditorPaletteController {
     }
 
     boolean startDrag(MouseButtonEvent event) {
-        if (host.paletteDisabled() || event.button() != GLFW.GLFW_MOUSE_BUTTON_LEFT) {
+        if (host.paletteDisabled() || event.button() != InputConstants.MOUSE_BUTTON_LEFT) {
             return false;
         }
         DragTarget hit = hit(event.x(), event.y());
@@ -81,7 +81,7 @@ final class ColorEditorPaletteController {
     }
 
     boolean drag(MouseButtonEvent event) {
-        if (dragTarget == DragTarget.NONE || event.button() != GLFW.GLFW_MOUSE_BUTTON_LEFT) {
+        if (dragTarget == DragTarget.NONE || event.button() != InputConstants.MOUSE_BUTTON_LEFT) {
             return false;
         }
         updateColor(event.x(), event.y(), dragTarget);
@@ -89,7 +89,7 @@ final class ColorEditorPaletteController {
     }
 
     boolean release(MouseButtonEvent event) {
-        if (dragTarget == DragTarget.NONE || event.button() != GLFW.GLFW_MOUSE_BUTTON_LEFT) {
+        if (dragTarget == DragTarget.NONE || event.button() != InputConstants.MOUSE_BUTTON_LEFT) {
             return false;
         }
         dragTarget = DragTarget.NONE;

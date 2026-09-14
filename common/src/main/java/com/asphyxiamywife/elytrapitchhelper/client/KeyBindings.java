@@ -10,7 +10,6 @@ import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.client.input.KeyEvent;
 import net.minecraft.network.chat.Component;
-import org.lwjgl.glfw.GLFW;
 
 import java.util.Locale;
 import java.util.function.BooleanSupplier;
@@ -41,32 +40,32 @@ public final class KeyBindings {
     public static KeyBindings register(Function<KeyMapping, KeyMapping> registrar) {
         KeyMapping toggleGuides = registrar.apply(new KeyMapping(
                 "key.elytrapitchhelper.toggle",
-                InputConstants.Type.KEYSYM,
-                GLFW.GLFW_KEY_UNKNOWN,
+                InputConstants.Type.KEYBOARD,
+                InputConstants.UNKNOWN.getValue(),
                 KEY_CATEGORY));
 
         KeyMapping openConfig = registrar.apply(new KeyMapping(
                 "key.elytrapitchhelper.open_config",
-                InputConstants.Type.KEYSYM,
-                GLFW.GLFW_KEY_UNKNOWN,
+                InputConstants.Type.KEYBOARD,
+                InputConstants.UNKNOWN.getValue(),
                 KEY_CATEGORY));
 
         KeyMapping openProfiles = registrar.apply(new KeyMapping(
                 "key.elytrapitchhelper.open_profiles",
-                InputConstants.Type.KEYSYM,
-                GLFW.GLFW_KEY_UNKNOWN,
+                InputConstants.Type.KEYBOARD,
+                InputConstants.UNKNOWN.getValue(),
                 KEY_CATEGORY));
 
         KeyMapping openPaletteModifier = registrar.apply(new KeyMapping(
                 "key.elytrapitchhelper.open_palette_modifier",
-                InputConstants.Type.KEYSYM,
+                InputConstants.Type.KEYBOARD,
                 defaultPaletteModifierKey(),
                 KEY_CATEGORY));
 
         KeyMapping openPalette = registrar.apply(new KeyMapping(
                 "key.elytrapitchhelper.open_palette",
-                InputConstants.Type.KEYSYM,
-                GLFW.GLFW_KEY_K,
+                InputConstants.Type.KEYBOARD,
+                InputConstants.KEY_K,
                 KEY_CATEGORY));
 
         KeyBindings keyBindings = new KeyBindings(toggleGuides, openConfig, openProfiles,
@@ -133,7 +132,7 @@ public final class KeyBindings {
             return false;
         }
         return handleCommandPaletteShortcut(event, keyBindings.openPalette, keyBindings.openPaletteModifier,
-                keyMapping -> isBoundKeyDown(client, keyMapping), beforeOpen, () -> openCommandPalette(client));
+                KeyBindings::isBoundKeyDown, beforeOpen, () -> openCommandPalette(client));
     }
 
     static boolean handleCommandPaletteShortcut(KeyEvent event, KeyMapping paletteKey, KeyMapping modifierKey,
@@ -153,12 +152,11 @@ public final class KeyBindings {
                 || modifierKey.matches(event) && isDown.test(paletteKey);
     }
 
-    private static boolean isBoundKeyDown(Minecraft client, KeyMapping keyMapping) {
+    private static boolean isBoundKeyDown(KeyMapping keyMapping) {
         InputConstants.Key key = InputConstants.getKey(keyMapping.saveString());
         return switch (key.getType()) {
-            case KEYSYM -> InputConstants.isKeyDown(client.getWindow(), key.getValue());
-            case MOUSE -> GLFW.glfwGetMouseButton(client.getWindow().handle(), key.getValue()) == GLFW.GLFW_PRESS;
-            case SCANCODE -> keyMapping.isDown();
+            case KEYBOARD -> InputConstants.isKeyDown(key.getValue());
+            case MOUSE -> keyMapping.isDown();
         };
     }
 
@@ -220,6 +218,6 @@ public final class KeyBindings {
 
     private static int defaultPaletteModifierKey() {
         String osName = System.getProperty("os.name", "").toLowerCase(Locale.ROOT);
-        return osName.contains("mac") ? GLFW.GLFW_KEY_LEFT_SUPER : GLFW.GLFW_KEY_LEFT_CONTROL;
+        return osName.contains("mac") ? InputConstants.KEY_LGUI : InputConstants.KEY_LCONTROL;
     }
 }
