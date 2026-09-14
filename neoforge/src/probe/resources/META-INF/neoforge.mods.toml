@@ -1,0 +1,7 @@
+modLoader="javafml"
+loaderVersion="[1,)"
+license="CC0-1.0"
+[[mods]]
+modId="eph_port_probe"
+version="1.0.0"
+displayName="EPH port probe (development only)"

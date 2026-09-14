@@ -1,0 +1,88 @@
+{
+  "version": 2,
+  "name": "Default",
+  "visibility": {
+    "showOnlyWithFirework": false,
+    "showInThirdPerson": false,
+    "anyElytraGlide": true
+  },
+  "pitch": {
+    "targetUpMinecraft": -40.0,
+    "targetDownMinecraft": 40.0,
+    "toleranceDegrees": 6.0,
+    "maxOffsetPixels": 42,
+    "offsetPerDegree": 2.0
+  },
+  "line": {
+    "lengthPixels": 26,
+    "widthPixels": 2,
+    "colorRgb": 16777215,
+    "prideEnabled": false,
+    "prideFlag": "rainbow",
+    "customPrideColors": [
+      14943491,
+      16747520,
+      16772352,
+      32806,
+      2375822,
+      7547266
+    ],
+    "cueFlashIntensity": 100
+  },
+  "amplitude": {
+    "enabled": true,
+    "triggerMode": 1,
+    "downBlocks": 50,
+    "upBlocks": 50,
+    "toleranceBlocks": 4,
+    "downVelocity": 2.2,
+    "upVelocity": 0.5,
+    "repeatDiveCue": false,
+    "repeatClimbCue": true,
+    "motionGlyphsEnabled": true,
+    "pullUpGlyphMillis": 700,
+    "releaseDownGlyphMillis": 1400,
+    "cueColorRgb": 16711680,
+    "cuePrideEnabled": false,
+    "cuePrideFlag": "rainbow",
+    "customPrideColors": [
+      14943491,
+      16747520,
+      16772352,
+      32806,
+      2375822,
+      7547266
+    ]
+  },
+  "voidWarning": {
+    "enabled": true,
+    "mode": 0,
+    "lookaheadSeconds": 5.0,
+    "simpleWarningBlocks": 48,
+    "warningColorRgb": 9502967,
+    "warningPrideEnabled": false,
+    "warningPrideFlag": "rainbow",
+    "customPrideColors": [
+      14943491,
+      16747520,
+      16772352,
+      32806,
+      2375822,
+      7547266
+    ],
+    "toleranceOverride": false,
+    "customToleranceDegrees": 6.0,
+    "maxOffsetOverride": true,
+    "customMaxOffsetPixels": 200,
+    "dimensionYOverrides": {}
+  },
+  "commandPaletteAppearance": {
+    "shadowOpacity": 60,
+    "blurAmount": 0,
+    "accentColorRgb": 13091327,
+    "baseColorRgb": 1118481
+  },
+  "diagnostics": {
+    "flightTelemetryLogging": false
+  }
+}

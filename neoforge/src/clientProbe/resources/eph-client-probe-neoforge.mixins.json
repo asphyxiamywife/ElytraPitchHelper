@@ -1,0 +1,1 @@
+{"required":true,"minVersion":"0.8","package":"com.asphyxiamywife.elytrapitchhelper.clientprobe.neoforge","compatibilityLevel":"JAVA_25","client":["HudRegistrationProbeMixin"],"injectors":{"defaultRequire":1}}

@@ -1,0 +1,135 @@
+plugins {
+    id 'elytra.loader-conventions'
+    id 'net.neoforged.gradle.userdev'
+}
+
+subsystems.conventions.sourceSets.shouldMainSourceSetBeAutomaticallyAddedToRuns = false
+
+runs {
+    configureEach {
+        workingDirectory project.layout.projectDirectory.dir("run").dir(name)
+        if (name != 'gameTestServer') {
+            modSource project.sourceSets.main
+        }
+    }
+
+    client {
+    }
+
+}
+
+dependencies {
+    implementation "net.neoforged:neoforge:${rootProject.neo_version}"
+    implementation project(":common")
+
+    testImplementation project(":common")
+    testImplementation testFixtures(project(":common"))
+}
+
+processResources {
+    def replaceProperties = [
+            minecraft_version      : rootProject.minecraft_version,
+            minecraft_version_range: rootProject.minecraft_version_range,
+            neo_version            : rootProject.neo_version,
+            mod_id                 : rootProject.mod_id,
+            mod_name               : rootProject.mod_name,
+            mod_license            : rootProject.mod_license,
+            mod_version            : project.version
+    ]
+    inputs.properties replaceProperties
+
+    filesMatching("META-INF/neoforge.mods.toml") {
+        expand replaceProperties
+    }
+}
+
+sourceSets {
+    probeCommon {
+        java.setSrcDirs([])
+        resources.setSrcDirs([])
+        output.classesDirs.setFrom(project(':common').sourceSets.main.output.classesDirs)
+        runtimeClasspath += configurations.runtimeClasspath
+    }
+    probe {
+        java.srcDir rootProject.file('common/src/probe/java')
+        resources.srcDir rootProject.file('common/src/probe/resources')
+        compileClasspath += sourceSets.main.compileClasspath
+        runtimeClasspath += configurations.runtimeClasspath
+    }
+}
+runs {
+    gameTestServer {
+        modSources.add('eph_port_probe', sourceSets.probe)
+        modSources.add('eph_port_probe', sourceSets.probeCommon)
+        workingDirectory layout.buildDirectory.dir('run/probe')
+        arguments.addAll('--tests', 'eph_port_probe:*')
+        systemProperty 'eph.probeReport', rootProject.layout.buildDirectory.dir('reports/port-cert/neoforge').get().asFile.absolutePath
+    }
+}
+
+tasks.named('probeCommonClasses') { dependsOn ':common:classes' }
+tasks.named('processProbeResources') {
+    from(rootProject.file('port-test/scenarios/world/odd_overworld.json')) {
+        into 'data/minecraft/dimension_type'
+        rename { 'overworld.json' }
+    }
+}
+runs.gameTestServer {
+    systemProperty 'eph.probeCorpus', rootProject.file('port-test').absolutePath
+    systemProperty 'eph.minecraftVersion', rootProject.minecraft_version.toString()
+}
+tasks.register('clearProbeObservations', Delete) {
+    dependsOn ':clearProbeSummary'
+    delete rootProject.layout.buildDirectory.dir('reports/port-cert/neoforge')
+    delete layout.buildDirectory.dir('run/probe/gametestserver')
+}
+tasks.matching { it.name == 'runGameTestServer' }.configureEach {
+    dependsOn tasks.named('clearProbeObservations'), ':common:portCertBoundary'
+    timeout = java.time.Duration.ofMinutes(3)
+}
+
+sourceSets {
+    clientCommon {
+        java.setSrcDirs([])
+        resources.srcDir rootProject.file('common/src/main/resources')
+        output.classesDirs.setFrom(project(':common').sourceSets.main.output.classesDirs)
+        runtimeClasspath += configurations.runtimeClasspath
+    }
+    clientProbe {
+        java.srcDir rootProject.file('common/src/clientProbe/java')
+        resources.srcDir rootProject.file('common/src/clientProbe/resources')
+        compileClasspath += sourceSets.main.compileClasspath
+        runtimeClasspath += configurations.runtimeClasspath
+    }
+}
+runs {
+    clientProbe {
+        configure runs.client
+        modSources.add('neoforge', sourceSets.clientCommon)
+        modSources.add('eph_client_probe', sourceSets.clientProbe)
+        workingDirectory layout.buildDirectory.dir('run/clientProbe')
+        systemProperty 'eph.minecraftVersion', rootProject.minecraft_version.toString()
+        systemProperty 'eph.clientReport', rootProject.layout.buildDirectory.file('reports/port-cert/client/neoforge.json').get().asFile.absolutePath
+        systemProperty 'mixin.debug.verbose', 'true'
+        jvmArguments.add('-Xmx1G')
+    }
+}
+tasks.named('clientCommonClasses') { dependsOn ':common:classes' }
+def clientProbeDirectory = layout.buildDirectory.dir('run/clientProbe').get().asFile
+def clientProbeReport = rootProject.layout.buildDirectory.file('reports/port-cert/client/neoforge.json').get().asFile
+tasks.register('clearClientProbe', Delete) {
+    dependsOn ':clearClientSummary', ':probeAcceptanceGuard'
+    delete layout.buildDirectory.dir('run/clientProbe')
+    delete clientProbeReport
+    doLast { clientProbeDirectory.mkdirs() }
+}
+tasks.matching { it.name == 'runClientProbe' }.configureEach {
+    dependsOn tasks.named('clearClientProbe')
+    timeout = java.time.Duration.ofMinutes(4)
+    environment 'ALSOFT_DRIVERS', 'null'
+    doLast {
+        if (!clientProbeReport.isFile() || new groovy.json.JsonSlurper().parse(clientProbeReport).status != 'PASS') {
+            throw new GradleException('Client boot did not produce a successful completion marker: ' + clientProbeReport)
+        }
+    }
+}

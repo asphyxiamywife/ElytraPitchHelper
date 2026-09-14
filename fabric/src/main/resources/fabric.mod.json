@@ -1,0 +1,38 @@
+{
+	"schemaVersion": 1,
+	"id": "elytrapitchhelper",
+	"version": "${version}",
+	"name": "Elytra Pitch Helper",
+	"description": "Shows pitch and relative height guides for energy-sustaining Elytra flight.",
+	"authors": [
+		"asphyxiamywife"
+	],
+	"contact": {
+		"homepage": "https://modrinth.com/mod/elytrapitchhelper",
+		"issues": "https://github.com/asphyxiamywife/ElytraPitchHelper/issues",
+		"sources": "https://github.com/asphyxiamywife/ElytraPitchHelper"
+	},
+	"license": "CC0-1.0",
+	"icon": "assets/elytrapitchhelper/icon.png",
+	"environment": "client",
+	"entrypoints": {
+		"client": [
+			"com.asphyxiamywife.elytrapitchhelper.ElytraPitchHelperClient"
+		],
+		"modmenu": [
+			"com.asphyxiamywife.elytrapitchhelper.integration.ModMenuIntegration"
+		]
+	},
+	"mixins": [
+		"elytrapitchhelper.mixins.json"
+	],
+	"depends": {
+		"fabricloader": ">=${loader_version}",
+		"minecraft": "${minecraft_version_range}",
+		"java": ">=25",
+		"fabric-api": "*"
+	},
+	"suggests": {
+		"modmenu": "*"
+	}
+}

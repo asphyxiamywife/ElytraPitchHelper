@@ -1,0 +1,75 @@
+{
+  "schema": 1,
+  "scenario": "near_dead_elytra",
+  "cadence": "apply-input-server-level-entity-tick-capture",
+  "worldSeed": 0,
+  "worldFixture": "odd_overworld.json",
+  "worldSha256": "e8e9e804afe17926d4f16ac75165cc3dc0829a228beb24ebc49ccb441d13bd8b",
+  "minBuildY": -64,
+  "maxBuildY": 127,
+  "gameMode": "creative",
+  "player": {
+    "position": [
+      0.5,
+      96,
+      0.5
+    ],
+    "velocity": [
+      0,
+      -0.1,
+      1.5
+    ],
+    "pitch": 20,
+    "yaw": 0,
+    "fallFlying": true,
+    "noGravity": false,
+    "unbreakableElytra": false
+  },
+  "clearBox": [
+    -2,
+    -64,
+    -2,
+    3,
+    127,
+    40
+  ],
+  "blocks": [],
+  "samples": [
+    {
+      "position": null,
+      "velocity": null,
+      "damageFromMax": -2,
+      "rocket": "main",
+      "blocks": [],
+      "invalidate": "none",
+      "voidYOverride": null
+    },
+    {
+      "position": null,
+      "velocity": null,
+      "damageFromMax": -1,
+      "rocket": "off",
+      "blocks": [],
+      "invalidate": "none",
+      "voidYOverride": null
+    },
+    {
+      "position": null,
+      "velocity": null,
+      "damageFromMax": 0,
+      "rocket": "none",
+      "blocks": [],
+      "invalidate": "none",
+      "voidYOverride": null
+    },
+    {
+      "position": null,
+      "velocity": null,
+      "damageFromMax": 1,
+      "rocket": "none",
+      "blocks": [],
+      "invalidate": "none",
+      "voidYOverride": null
+    }
+  ]
+}

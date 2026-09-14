@@ -1,0 +1,129 @@
+plugins {
+    id 'elytra.loader-conventions'
+    id 'net.fabricmc.fabric-loom'
+}
+
+repositories {
+    maven { url = "https://maven.terraformersmc.com/releases" }
+    mavenCentral()
+}
+
+loom {
+    splitEnvironmentSourceSets()
+
+    mods {
+        "elytrapitchhelper" {
+            sourceSet project(":common").sourceSets.main
+            sourceSet sourceSets.main
+            sourceSet sourceSets.client
+        }
+    }
+}
+
+dependencies {
+    minecraft "com.mojang:minecraft:${rootProject.minecraft_version}"
+    implementation project(":common")
+
+    implementation "net.fabricmc:fabric-loader:${rootProject.loader_version}"
+    implementation "net.fabricmc.fabric-api:fabric-api:${rootProject.fabric_api_version}"
+    compileOnly("com.terraformersmc:modmenu:${rootProject.modmenu_version}")
+
+    testImplementation project(":common")
+    testImplementation testFixtures(project(":common"))
+    testImplementation sourceSets.client.output
+}
+
+processResources {
+    def properties = [
+            "version": project.version,
+            "loader_version": rootProject.loader_version,
+            "minecraft_version_range": rootProject.fabric_minecraft_version_range
+    ]
+    inputs.properties properties
+
+    filesMatching("fabric.mod.json") {
+        expand properties
+    }
+}
+
+sourceSets {
+    probe {
+        compileClasspath += sourceSets.main.compileClasspath + project(':common').sourceSets.probe.output
+        runtimeClasspath += sourceSets.main.runtimeClasspath + project(':common').sourceSets.probe.output
+    }
+}
+loom {
+    mods {
+        eph_port_probe {
+            sourceSet sourceSets.probe
+            sourceSet project(':common').sourceSets.probe
+        }
+    }
+    runs {
+        probe {
+            server()
+            source sourceSets.probe
+            runDir 'build/run/probe'
+            vmArg '-Dfabric-api.gametest'
+            vmArg '-Dfabric-api.gametest.filter=eph_port_probe:*'
+            vmArg "-Deph.probeReport=${rootProject.layout.buildDirectory.dir('reports/port-cert/fabric').get().asFile}"
+        }
+    }
+}
+loom.runs.probe {
+    vmArg "-Deph.probeCorpus=${rootProject.file('port-test').absolutePath}"
+    vmArg "-Deph.minecraftVersion=${rootProject.minecraft_version}"
+}
+tasks.register('clearProbeObservations', Delete) {
+    dependsOn ':clearProbeSummary'
+    delete rootProject.layout.buildDirectory.dir('reports/port-cert/fabric')
+    delete layout.buildDirectory.dir('run/probe/world')
+}
+tasks.named('runProbe') {
+    dependsOn tasks.named('clearProbeObservations'), ':common:portCertBoundary'
+    timeout = java.time.Duration.ofMinutes(3)
+}
+
+sourceSets {
+    clientProbe {
+        compileClasspath += sourceSets.client.compileClasspath + sourceSets.client.output + project(':common').sourceSets.clientProbe.output
+        runtimeClasspath += sourceSets.client.runtimeClasspath + project(':common').sourceSets.clientProbe.output
+    }
+}
+loom {
+    mods {
+        eph_client_probe {
+            sourceSet sourceSets.clientProbe
+            sourceSet project(':common').sourceSets.clientProbe
+        }
+    }
+    runs {
+        clientProbe {
+            client()
+            source sourceSets.clientProbe
+            runDir 'build/run/clientProbe'
+            vmArg "-Deph.minecraftVersion=${rootProject.minecraft_version}"
+            vmArg "-Deph.clientReport=${rootProject.layout.buildDirectory.file('reports/port-cert/client/fabric.json').get().asFile}"
+            vmArg '-Dmixin.debug.verbose=true'
+            vmArg '-Xmx1G'
+        }
+    }
+}
+def clientProbeDirectory = layout.buildDirectory.dir('run/clientProbe').get().asFile
+def clientProbeReport = rootProject.layout.buildDirectory.file('reports/port-cert/client/fabric.json').get().asFile
+tasks.register('clearClientProbe', Delete) {
+    dependsOn ':clearClientSummary', ':probeAcceptanceGuard'
+    delete layout.buildDirectory.dir('run/clientProbe')
+    delete clientProbeReport
+    doLast { clientProbeDirectory.mkdirs() }
+}
+tasks.named('runClientProbe') {
+    dependsOn tasks.named('clearClientProbe')
+    timeout = java.time.Duration.ofMinutes(4)
+    environment 'ALSOFT_DRIVERS', 'null'
+    doLast {
+        if (!clientProbeReport.isFile() || new groovy.json.JsonSlurper().parse(clientProbeReport).status != 'PASS') {
+            throw new GradleException('Client boot did not produce a successful completion marker: ' + clientProbeReport)
+        }
+    }
+}

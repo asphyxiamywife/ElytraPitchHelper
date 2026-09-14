@@ -1,172 +1,125 @@
 plugins {
-	id 'net.fabricmc.fabric-loom' version "${loom_version}"
-	id 'maven-publish'
+    id 'net.fabricmc.fabric-loom' version "${loom_version}" apply false
+    id 'net.neoforged.gradle.userdev' version "${neogradle_version}" apply false
 }
 
 def snapshotBuild = providers.gradleProperty("snapshotBuild")
-		.map { it.equalsIgnoreCase("true") }
-		.orElse(false)
+        .map { it.equalsIgnoreCase("true") }
+        .orElse(false)
 def actionsCommit = providers.environmentVariable("GITHUB_SHA")
-		.map { it.take(7) }
-		.orElse("")
+        .map { it.take(7) }
+        .orElse("")
+if (snapshotBuild.get() && actionsCommit.get().isBlank()) {
+    logger.warn("snapshotBuild=true but GITHUB_SHA is unset; building release version " +
+            "${project.mod_version} instead of a snapshot.")
+}
+def resolvedVersion = snapshotBuild.get() && !actionsCommit.get().isBlank()
+        ? "${project.mod_version}.actions.${actionsCommit.get()}"
+        : project.mod_version
 
-version = snapshotBuild.get() && !actionsCommit.get().isBlank()
-		? "${project.mod_version}.actions.${actionsCommit.get()}"
-		: project.mod_version
-group = project.maven_group
-
-base {
-	archivesName = project.archives_base_name
+allprojects {
+    version = resolvedVersion
+    group = rootProject.maven_group
 }
 
-repositories {
-	// Add repositories to retrieve artifacts from in here.
-	// You should only use this when depending on other mods because
-	// Loom adds the essential maven repositories to download Minecraft and libraries from automatically.
-	// See https://docs.gradle.org/current/userguide/declaring_repositories.html
-	// for more information about repositories.
-	maven { url = "https://maven.terraformersmc.com/releases" }
-	maven { url = "https://api.modrinth.com/maven" }
+subprojects {
+    tasks.withType(JavaCompile).configureEach {
+        options.release = 25
+    }
+
+    tasks.withType(ProcessResources).configureEach {
+        exclude "**/.DS_Store"
+    }
+
+    plugins.withType(JavaPlugin).configureEach {
+        java {
+            toolchain.languageVersion = JavaLanguageVersion.of(25)
+            sourceCompatibility = JavaVersion.VERSION_25
+            targetCompatibility = JavaVersion.VERSION_25
+        }
+    }
 }
 
-loom {
-	splitEnvironmentSourceSets()
-
-	mods {
-		"elytrapitchhelper" {
-			sourceSet sourceSets.main
-			sourceSet sourceSets.client
-		}
-	}
-
+tasks.register("smokeTest") {
+    description = "Runs headless smoke tests for packaged entrypoints and client config startup."
+    group = "verification"
+    if (findProject(":fabric") != null) {
+        dependsOn ":fabric:smokeTest"
+    }
+    if (findProject(":neoforge") != null) {
+        dependsOn ":neoforge:smokeTest"
+    }
 }
-
-dependencies {
-	// To change the versions see the gradle.properties file
-	minecraft "com.mojang:minecraft:${project.minecraft_version}"
-
-	implementation "net.fabricmc:fabric-loader:${project.loader_version}"
-
-	// Fabric API integrations used by the HUD, lifecycle events, and key bindings.
-	implementation "net.fabricmc.fabric-api:fabric-api:${project.fabric_api_version}"
-
-	// Optional Mod Menu integration
-	compileOnly("com.terraformersmc:modmenu:${modmenu_version}")
-
-	testImplementation sourceSets.client.output
-	testImplementation platform("org.junit:junit-bom:5.10.3")
-	testImplementation "org.junit.jupiter:junit-jupiter"
-	testImplementation "com.code-intelligence:jazzer-junit:0.30.0"
-	testRuntimeOnly "org.junit.platform:junit-platform-launcher"
-
-}
-
-processResources {
-	def version = project.version
-	inputs.property "version", version
-
-	filesMatching("fabric.mod.json") {
-		expand "version": version
-	}
-}
-
-tasks.withType(JavaCompile).configureEach {
-	it.options.release = 25
-}
-
-tasks.withType(Test).configureEach {
-	useJUnitPlatform()
-}
-
-test {
-	useJUnitPlatform {
-		excludeTags "smoke"
-	}
-}
-
-tasks.register("smokeTest", Test) {
-	description = "Runs headless smoke tests for packaged entrypoints and client config startup."
-	group = "verification"
-
-	testClassesDirs = sourceSets.test.output.classesDirs
-	classpath = sourceSets.test.runtimeClasspath
-	useJUnitPlatform {
-		includeTags "smoke"
-	}
-	shouldRunAfter test
-}
-
-def registerFuzzTask = { String taskName, String testClass ->
-	tasks.register(taskName, Test) {
-		description = "Runs the ${testClass.substring(testClass.lastIndexOf('.') + 1)} fuzz target."
-		group = "verification"
-
-		testClassesDirs = sourceSets.test.output.classesDirs
-		classpath = sourceSets.test.runtimeClasspath
-		useJUnitPlatform()
-		environment "JAZZER_FUZZ", "1"
-		if (providers.gradleProperty("fuzzDuration").isPresent()) {
-			systemProperty "jazzer.max_duration", providers.gradleProperty("fuzzDuration").get()
-		}
-		filter {
-			includeTestsMatching testClass
-		}
-		shouldRunAfter test
-	}
-}
-
-registerFuzzTask("fuzzProfileJson",
-		"com.asphyxiamywife.elytrapitchhelper.config.ProfileJsonFuzzTest")
-registerFuzzTask("fuzzProfileFileNames",
-		"com.asphyxiamywife.elytrapitchhelper.config.ProfileFileNamesFuzzTest")
-registerFuzzTask("fuzzConfigModel",
-		"com.asphyxiamywife.elytrapitchhelper.config.ConfigModelFuzzTest")
-registerFuzzTask("fuzzHudLogic",
-		"com.asphyxiamywife.elytrapitchhelper.hud.HudLogicFuzzTest")
-registerFuzzTask("fuzzScreenLogic",
-		"com.asphyxiamywife.elytrapitchhelper.screen.ScreenLogicFuzzTest")
 
 tasks.register("fuzz") {
-	description = "Runs all fuzz targets for their configured durations."
-	group = "verification"
-	dependsOn fuzzProfileJson, fuzzProfileFileNames, fuzzConfigModel, fuzzHudLogic, fuzzScreenLogic
+    description = "Runs all fuzz targets for their configured durations."
+    group = "verification"
+    dependsOn ":common:fuzz"
 }
 
-check.dependsOn smokeTest
-
-java {
-	// Loom will automatically attach sourcesJar to a RemapSourcesJar task and to the "build" task
-	// if it is present.
-	// If you remove this line, sources will not be generated.
-	withSourcesJar()
-
-	sourceCompatibility = JavaVersion.VERSION_25
-	targetCompatibility = JavaVersion.VERSION_25
+tasks.register("check") {
+    description = "Runs verification for the included loader modules."
+    group = "verification"
+    dependsOn ":common:check"
+    if (findProject(":fabric") != null) {
+        dependsOn ":fabric:check"
+    }
+    if (findProject(":neoforge") != null) {
+        dependsOn ":neoforge:check"
+    }
 }
 
-jar {
-	def projectName = project.name
-	inputs.property "projectName", projectName
-
-	from("LICENSE") {
-		rename { "${it}_$projectName"}
-	}
+tasks.register("buildFabric") {
+    description = "Builds only the Fabric loader module and its shared common code."
+    group = "build"
+    dependsOn ":fabric:build"
 }
 
-// configure the maven publication
-publishing {
-	publications {
-		create("mavenJava", MavenPublication) {
-			artifactId = project.archives_base_name
-			from components.java
-		}
-	}
+tasks.register("buildNeoForge") {
+    description = "Builds only the NeoForge loader module and its shared common code."
+    group = "build"
+    dependsOn ":neoforge:build"
+}
 
-	// See https://docs.gradle.org/current/userguide/publishing_maven.html for information on how to set up publishing.
-	repositories {
-		// Add repositories to publish to here.
-		// Notice: This block does NOT have the same function as the block in the top level.
-		// The repositories here will be used for publishing your artifact, not for
-		// retrieving dependencies.
-	}
+def probeAcceptRequested = providers.gradleProperty('acceptGoldens').isPresent()
+def probeMinecraftVersion = minecraft_version.toString()
+tasks.register('probeAcceptanceGuard') {
+    mustRunAfter ':portCertificateReadOnlyGuard'
+    doLast {
+        if (probeAcceptRequested && probeMinecraftVersion == '26.1.2') {
+            throw new GradleException('Cannot accept goldens for reference version 26.1.2. Reference goldens are immutable.')
+        }
+    }
+}
+tasks.register('clearProbeSummary', Delete) {
+    dependsOn ':probeAcceptanceGuard'
+    delete layout.buildDirectory.file('reports/port-cert/probe-summary.json')
+}
+tasks.register('portCertProbe') {
+    description = 'Verifies real-engine observation contracts and Fabric/NeoForge parity.'
+    group = 'verification'
+    dependsOn ':common:verifyProbeObservations'
+}
+
+tasks.register('portCertificateReadOnlyGuard') {
+    doLast {
+        if (probeAcceptRequested) throw new GradleException('portCert is read-only. Use portCertProbe -PacceptGoldens for explicit non-reference promotion.')
+    }
+}
+tasks.register('clearClientSummary', Delete) {
+    dependsOn ':probeAcceptanceGuard'
+    delete layout.buildDirectory.file('reports/port-cert/client/summary.json')
+}
+tasks.register('portCertClient') {
+    description = 'Verifies actual client boot, HUD drawing, mixins and LocalPlayer capture on both loaders.'
+    group = 'verification'
+    dependsOn ':common:verifyClientObservations'
+}
+tasks.register('portCert') {
+    description = 'Read-only certificate of server-safe capture, model semantics, engine parity and client integration.'
+    group = 'verification'
+    dependsOn ':portCertificateReadOnlyGuard', ':common:portCertBoundary', ':common:portCertModel', ':portCertProbe', ':portCertClient'
+    doLast {
+        logger.lifecycle('Port contract: PASS — boundary (A), EPH model (B), engine/loader parity (C), client integration (D).')
+    }
 }

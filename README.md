@@ -4,7 +4,7 @@ while gliding, the mod shows subtle pitch indicators at +40° and –40°, so u 
 
 ![output](https://github.com/user-attachments/assets/5586de9c-9d75-4815-b7e1-e0d6782f2cb6)
 
-as of v2.1.0, theres also an optional amplitude cue that helps u time climb and dive cycles based on height or velocity. its useful for maintaining a consistent rhythm without watching numbers.
+as of v3.0.0, theres also an optional amplitude cue that helps u time climb and dive cycles based on height or velocity. its useful for maintaining a consistent rhythm without watching numbers. each cue also leaves a tiny motion glyph: a brisk pull-up after the dive and a slower release after the climb, so the two turns dont look falsely identical. theres a void warning too, for when the ground u were counting on isnt there.
 
 did i mention it also includes pride themes that increase ur flight abilities by 20%? ...theyd call it elytra gay helper
 
@@ -12,20 +12,25 @@ did i mention it also includes pride themes that increase ur flight abilities by
 
 ## configuration
 
-open the config screen in-game via mod menu or the keybind (unbound by default). all options are documented there.
+open the config screen in-game via mod menu (fabric) or the mods list (neoforge), or bind a key for it. keybinds live under **Elytra Pitch Helper** in the controls screen:
 
-config lives under `config/elytra-pitch-helper/` with one json per profile. profiles let u save different setups and switch between them from the config screen.
+- **command palette** — `ctrl+k`, or `cmd+k` on macos. search every setting and action, run it from the list. what u use most floats to the top.
+- **toggle guides** — unbound by default.
+- **open config** — unbound by default.
+- **open profiles** — unbound by default.
 
-## migrating from v1.x.x / v2.0.0
-
-the mod will try to migrate ur old config automatically. if anything looks off, the main changes are:
-
-- all tuning options moved into grouped profile sections (e.g. `targetUpMinecraft` → `pitch.targetUpMinecraft`, `lineColorRgb` → `line.colorRgb`, etc.)
-- `centerTickColorRgb` was removed.
-- config moved from a single `elytra-pitch-helper.json` to the `config/elytra-pitch-helper/` folder with separate profile files.
+config lives under `config/elytra-pitch-helper/`, with one json per profile in `profiles/` and the mod's own internals in `.internal/`.
 
 ## compilation
-run `./gradlew build` and find the jar in `build/libs/`
+
+run `./gradlew build` to build every loader, or build just one loader with:
+
+```sh
+./gradlew buildFabric
+./gradlew buildNeoForge
+```
+
+jars are written under each loader module's `build/libs/` directory.
 
 ## fuzzing
 
@@ -34,10 +39,15 @@ the regular `./gradlew test` run replays the fuzz regression corpus. to run cove
 ```sh
 ./gradlew fuzzProfileJson
 ./gradlew fuzzProfileFileNames
+./gradlew fuzzProfileBackups
 ./gradlew fuzzConfigModel
+./gradlew fuzzClientLogic
+./gradlew fuzzCoreUtilities
 ./gradlew fuzzHudLogic
 ./gradlew fuzzScreenLogic
 ```
+
+a target is registered for every `*FuzzTest.java` under `common/src/test/java`, so a new one needs no build change. crashing inputs belong in `src/test/resources` next to their target, where the plain `test` run replays them.
 
 each target runs for 30 seconds by default. `./gradlew fuzz` runs all targets.
 override the duration when needed with, for example,

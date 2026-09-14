@@ -1,0 +1,34 @@
+plugins {
+    id 'elytra.java-conventions'
+}
+
+tasks.register("smokeTest", Test) {
+    description = "Runs headless smoke tests for the ${project.name} entrypoint and client config startup."
+    group = "verification"
+
+    testClassesDirs = sourceSets.test.output.classesDirs
+    classpath = sourceSets.test.runtimeClasspath
+    useJUnitPlatform {
+        includeTags "smoke"
+    }
+    shouldRunAfter tasks.named("test")
+}
+
+tasks.named("check") {
+    dependsOn tasks.named("smokeTest")
+}
+
+tasks.named("sourcesJar") {
+    from(project(":common").sourceSets.main.allSource)
+}
+
+tasks.named("jar") {
+    def licenseProjectName = project.name
+    inputs.property "licenseProjectName", licenseProjectName
+
+    from(project(":common").sourceSets.main.output)
+
+    from(rootProject.file("LICENSE")) {
+        rename { "${it}_${licenseProjectName}" }
+    }
+}

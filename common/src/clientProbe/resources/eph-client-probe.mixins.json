@@ -1,0 +1,1 @@
+{"required":true,"minVersion":"0.8","package":"com.asphyxiamywife.elytrapitchhelper.clientprobe.mixin","compatibilityLevel":"JAVA_25","client":["MinecraftProbeMixin","BootstrapProbeMixin","HudProbeMixin","GraphicsProbeMixin"],"injectors":{"defaultRequire":1}}
