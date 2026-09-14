@@ -17,7 +17,7 @@ import com.asphyxiamywife.elytrapitchhelper.screen.widget.DropdownButton;
 import com.asphyxiamywife.elytrapitchhelper.util.MonotonicClock;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.Font;
-import net.minecraft.client.gui.GuiGraphicsExtractor;
+import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.components.AbstractWidget;
 import net.minecraft.client.gui.components.CycleButton;
 import net.minecraft.client.gui.components.EditBox;
@@ -224,7 +224,7 @@ public final class ConfigScreen extends Screen implements ProfileEditorPanel.Hos
     }
 
     @Override
-    public void extractRenderState(GuiGraphicsExtractor context, int mouseX, int mouseY, float delta) {
+    public void render(GuiGraphics context, int mouseX, int mouseY, float delta) {
         Component renderedTitle = editingProfile()
                 ? null
                 : Component.translatable("screen.elytrapitchhelper.profiles.title");
@@ -236,10 +236,10 @@ public final class ConfigScreen extends Screen implements ProfileEditorPanel.Hos
             listPanel.extractBackdrop(context);
         }
         if (renderedTitle != null) {
-            context.centeredText(font, renderedTitle, width / 2, 15, 0xFFFFFF);
+            context.drawCenteredString(font, renderedTitle, width / 2, 15, 0xFFFFFF);
         }
         if (config.isReadOnly()) {
-            context.centeredText(font,
+            context.drawCenteredString(font,
                     Component.translatable("screen.elytrapitchhelper.config.newer_version_read_only"),
                     width / 2, 28, 0xFFFF5555);
         }
@@ -251,7 +251,7 @@ public final class ConfigScreen extends Screen implements ProfileEditorPanel.Hos
             panel.extractRowsClipped(context, contentMouseX, contentMouseY, delta, editorLayout());
         }
         try {
-            super.extractRenderState(context, contentMouseX, contentMouseY, delta);
+            super.render(context, contentMouseX, contentMouseY, delta);
         } finally {
             if (panel != null) {
                 panel.restoreRows();
@@ -1167,7 +1167,7 @@ public final class ConfigScreen extends Screen implements ProfileEditorPanel.Hos
     @Override
     public void sendOverlay(Component message) {
         if (minecraft != null && minecraft.player != null) {
-            minecraft.player.sendOverlayMessage(message);
+            minecraft.player.displayClientMessage(message, true);
         }
     }
 

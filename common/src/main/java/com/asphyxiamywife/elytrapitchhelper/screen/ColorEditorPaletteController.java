@@ -7,7 +7,7 @@ import static com.asphyxiamywife.elytrapitchhelper.screen.ColorMath.hueFromVecto
 import static com.asphyxiamywife.elytrapitchhelper.screen.ColorMath.rgbToHsv;
 
 import com.mojang.blaze3d.platform.cursor.CursorTypes;
-import net.minecraft.client.gui.GuiGraphicsExtractor;
+import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.input.MouseButtonEvent;
 import org.lwjgl.glfw.GLFW;
 
@@ -45,7 +45,7 @@ final class ColorEditorPaletteController {
         this.host = host;
     }
 
-    void render(GuiGraphicsExtractor context, ColorEditorLayout layout, int mouseX, int mouseY) {
+    void render(GuiGraphics context, ColorEditorLayout layout, int mouseX, int mouseY) {
         renderer.render(context, layout, hue, saturation, value, host.paletteDisabled());
         if (ScreenGeometry.contains(layout.paletteX(), layout.paletteY(), layout.paletteSize(),
                 layout.paletteSize(), mouseX, mouseY)) {

@@ -452,7 +452,7 @@ final class PaletteActions {
 
     private static void sendOverlay(Minecraft client, Component message) {
         if (client.player != null) {
-            client.player.sendOverlayMessage(message);
+            client.player.displayClientMessage(message, true);
         }
     }
 

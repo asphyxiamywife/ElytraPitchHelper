@@ -2,7 +2,7 @@ package com.asphyxiamywife.elytrapitchhelper.screen;
 
 import com.asphyxiamywife.elytrapitchhelper.config.ConfigConflictDiff;
 import com.asphyxiamywife.elytrapitchhelper.screen.widget.FlatButton;
-import net.minecraft.client.gui.GuiGraphicsExtractor;
+import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.client.input.KeyEvent;
 import net.minecraft.network.chat.Component;
@@ -45,9 +45,9 @@ final class ConfigConflictScreen extends Screen {
     }
 
     @Override
-    public void extractRenderState(GuiGraphicsExtractor context, int mouseX, int mouseY, float delta) {
-        context.centeredText(font, title, width / 2, 12, 0xFFFFAA00);
-        context.centeredText(font,
+    public void render(GuiGraphics context, int mouseX, int mouseY, float delta) {
+        context.drawCenteredString(font, title, width / 2, 12, 0xFFFFAA00);
+        context.drawCenteredString(font,
                 Component.translatable("screen.elytrapitchhelper.save_conflict.diff_hint"),
                 width / 2, 25, 0xFFB8B8B8);
 
@@ -61,7 +61,7 @@ final class ConfigConflictScreen extends Screen {
         int y = top + 5 - scroll % LINE_HEIGHT;
         for (int index = first; index < lines.size() && y < bottom; index++) {
             DisplayLine line = lines.get(index);
-            context.text(font, line.text(), left + 6, y, line.color(), false);
+            context.drawString(font, line.text(), left + 6, y, line.color(), false);
             y += LINE_HEIGHT;
         }
         context.disableScissor();
@@ -73,7 +73,7 @@ final class ConfigConflictScreen extends Screen {
             ScrollbarPainter.paint(context, right - 7, 6, top + 1, viewportHeight,
                     metrics.thumbY(), metrics.thumbHeight(), mouseX >= right - 8, false);
         }
-        super.extractRenderState(context, mouseX, mouseY, delta);
+        super.render(context, mouseX, mouseY, delta);
     }
 
     @Override

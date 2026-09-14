@@ -6,17 +6,20 @@ import static com.asphyxiamywife.elytrapitchhelper.screen.ColorMath.hsvToRgb;
 import static com.asphyxiamywife.elytrapitchhelper.screen.ColorMath.hueFromVector;
 import static com.asphyxiamywife.elytrapitchhelper.screen.ColorMath.squareToDisk;
 
+import com.asphyxiamywife.elytrapitchhelper.ModConstants;
 import com.asphyxiamywife.elytrapitchhelper.util.MathUtil;
 import com.mojang.blaze3d.platform.NativeImage;
-import com.mojang.blaze3d.systems.RenderSystem;
-import com.mojang.blaze3d.textures.FilterMode;
-import com.mojang.blaze3d.textures.GpuSampler;
-import net.minecraft.client.gui.GuiGraphicsExtractor;
+import net.minecraft.client.Minecraft;
+import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.renderer.texture.DynamicTexture;
+import net.minecraft.resources.Identifier;
 
 final class ColorPaletteRenderer implements AutoCloseable {
     private static final int PALETTE_TEXTURE_SCALE = 2;
     private static final int MARKER_TEXTURE_SCALE = 4;
+    private static final Identifier PALETTE_TEXTURE_ID = ModConstants.id("color_editor/palette");
+    private static final Identifier HUE_MARKER_TEXTURE_ID = ModConstants.id("color_editor/hue_marker");
+    private static final Identifier SHADE_MARKER_TEXTURE_ID = ModConstants.id("color_editor/shade_marker");
 
     private DynamicTexture paletteTexture;
     private int paletteTextureSize;
@@ -26,16 +29,16 @@ final class ColorPaletteRenderer implements AutoCloseable {
     private DynamicTexture shadeMarkerTexture;
     private int shadeMarkerRadius;
 
-    void render(GuiGraphicsExtractor context, ColorEditorLayout layout, double hue, double saturation,
+    void render(GuiGraphics context, ColorEditorLayout layout, double hue, double saturation,
             double value, boolean disabled) {
         if (layout.paletteSize() <= 0) {
             return;
         }
         ensurePaletteTexture(layout, hue);
         if (paletteTexture != null) {
-            context.blit(paletteTexture.getTextureView(), linearSampler(), layout.paletteX(),
-                    layout.paletteY(), layout.paletteX() + layout.paletteSize(),
-                    layout.paletteY() + layout.paletteSize(), 0.0f, 1.0f, 0.0f, 1.0f);
+            context.blit(PALETTE_TEXTURE_ID, layout.paletteX(), layout.paletteY(),
+                    layout.paletteX() + layout.paletteSize(), layout.paletteY() + layout.paletteSize(),
+                    0.0f, 1.0f, 0.0f, 1.0f);
         }
 
         if (disabled) {
@@ -71,7 +74,7 @@ final class ColorPaletteRenderer implements AutoCloseable {
     @Override
     public void close() {
         if (paletteTexture != null) {
-            paletteTexture.close();
+            release(PALETTE_TEXTURE_ID, paletteTexture);
             paletteTexture = null;
             paletteTextureSize = 0;
             paletteTextureHue = -1.0;
@@ -91,6 +94,7 @@ final class ColorPaletteRenderer implements AutoCloseable {
             NativeImage image = new NativeImage(textureSize, textureSize, true);
             writePalettePixels(image, layout, hue);
             paletteTexture = new DynamicTexture(() -> "elytrapitchhelper color palette", image);
+            Minecraft.getInstance().getTextureManager().register(PALETTE_TEXTURE_ID, paletteTexture);
             paletteTextureSize = textureSize;
         } else {
             writePalettePixels(paletteTexture.getPixels(), layout, hue);
@@ -144,11 +148,12 @@ final class ColorPaletteRenderer implements AutoCloseable {
         return MathUtil.clamp01(signedDistance * textureScale + 0.5);
     }
 
-    private void drawMarker(GuiGraphicsExtractor context, int centerX, int centerY, int radius, boolean hueMarker) {
+    private void drawMarker(GuiGraphics context, int centerX, int centerY, int radius, boolean hueMarker) {
         DynamicTexture markerTexture = markerTexture(radius, hueMarker);
         int halfSize = radius + 3;
-        context.blit(markerTexture.getTextureView(), linearSampler(), centerX - halfSize,
-                centerY - halfSize, centerX + halfSize + 1, centerY + halfSize + 1, 0.0f, 1.0f, 0.0f, 1.0f);
+        Identifier textureId = hueMarker ? HUE_MARKER_TEXTURE_ID : SHADE_MARKER_TEXTURE_ID;
+        context.blit(textureId, centerX - halfSize, centerY - halfSize,
+                centerX + halfSize + 1, centerY + halfSize + 1, 0.0f, 1.0f, 0.0f, 1.0f);
     }
 
     private DynamicTexture markerTexture(int radius, boolean hueMarker) {
@@ -159,11 +164,13 @@ final class ColorPaletteRenderer implements AutoCloseable {
         }
 
         if (texture != null) {
-            texture.close();
+            release(hueMarker ? HUE_MARKER_TEXTURE_ID : SHADE_MARKER_TEXTURE_ID, texture);
         }
 
         NativeImage image = markerImage(radius);
         texture = new DynamicTexture(() -> "elytrapitchhelper color marker", image);
+        Minecraft.getInstance().getTextureManager().register(
+                hueMarker ? HUE_MARKER_TEXTURE_ID : SHADE_MARKER_TEXTURE_ID, texture);
         if (hueMarker) {
             hueMarkerTexture = texture;
             hueMarkerRadius = radius;
@@ -216,20 +223,25 @@ final class ColorPaletteRenderer implements AutoCloseable {
         return alphaChannel << 24 | colorChannel << 16 | colorChannel << 8 | colorChannel;
     }
 
-    private static GpuSampler linearSampler() {
-        return RenderSystem.getSamplerCache().getClampToEdge(FilterMode.LINEAR);
-    }
-
     private void closeMarkerTextures() {
         if (hueMarkerTexture != null) {
-            hueMarkerTexture.close();
+            release(HUE_MARKER_TEXTURE_ID, hueMarkerTexture);
             hueMarkerTexture = null;
             hueMarkerRadius = 0;
         }
         if (shadeMarkerTexture != null) {
-            shadeMarkerTexture.close();
+            release(SHADE_MARKER_TEXTURE_ID, shadeMarkerTexture);
             shadeMarkerTexture = null;
             shadeMarkerRadius = 0;
+        }
+    }
+
+    private static void release(Identifier id, DynamicTexture texture) {
+        Minecraft minecraft = Minecraft.getInstance();
+        if (minecraft != null) {
+            minecraft.getTextureManager().release(id);
+        } else {
+            texture.close();
         }
     }
 }

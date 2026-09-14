@@ -1,12 +1,20 @@
 plugins {
     id 'elytra.java-conventions'
-    id 'net.fabricmc.fabric-loom'
+    id 'fabric-loom'
     id 'java-test-fixtures'
+}
+
+repositories {
+    maven { name = 'ParchmentMC'; url = 'https://maven.parchmentmc.org' }
 }
 
 dependencies {
     minecraft "com.mojang:minecraft:${rootProject.minecraft_version}"
-    compileOnly "net.fabricmc:fabric-loader:${rootProject.loader_version}"
+    mappings loom.layered() {
+        officialMojangMappings()
+        parchment("org.parchmentmc.data:parchment-${rootProject.minecraft_version}:${rootProject.parchment_version}@zip")
+    }
+    modCompileOnly "net.fabricmc:fabric-loader:${rootProject.loader_version}"
 
     testFixturesCompileOnly "net.fabricmc:fabric-loader:${rootProject.loader_version}"
     testFixturesApi platform("org.junit:junit-bom:${rootProject.junit_version}")
@@ -17,6 +25,10 @@ dependencies {
     testCompileOnly "net.fabricmc:fabric-loader:${rootProject.loader_version}"
     testImplementation "com.code-intelligence:jazzer-junit:${rootProject.jazzer_version}"
 }
+
+// Loom 1.14 publishes the common project as an intermediary-named artifact for Fabric.
+// Keep unit tests on the named development classes; NeoForge also consumes this output directly.
+sourceSets.test.runtimeClasspath = sourceSets.test.output + sourceSets.main.output + configurations.testRuntimeClasspath
 
 sourceSets {
     jmh {

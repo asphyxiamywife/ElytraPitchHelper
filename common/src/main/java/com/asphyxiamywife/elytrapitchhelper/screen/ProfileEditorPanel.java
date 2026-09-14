@@ -12,7 +12,7 @@ import com.asphyxiamywife.elytrapitchhelper.screen.widget.SliderRow;
 import com.asphyxiamywife.elytrapitchhelper.screen.widget.SectionHeader;
 import com.asphyxiamywife.elytrapitchhelper.screen.widget.DropdownButton;
 import com.asphyxiamywife.elytrapitchhelper.util.MathUtil;
-import net.minecraft.client.gui.GuiGraphicsExtractor;
+import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.components.AbstractScrollArea;
 import net.minecraft.client.gui.components.AbstractWidget;
 import net.minecraft.client.gui.components.EditBox;
@@ -291,7 +291,7 @@ final class ProfileEditorPanel {
         return null;
     }
 
-    void extractRowsClipped(GuiGraphicsExtractor context, int mouseX, int mouseY, float delta,
+    void extractRowsClipped(GuiGraphics context, int mouseX, int mouseY, float delta,
             ProfileEditorLayout layout) {
         context.enableScissor(layout.startX(), layout.startY(),
                 layout.startX() + layout.rowWidth(), layout.viewportBottom());
@@ -300,7 +300,7 @@ final class ProfileEditorPanel {
             if (!widget.visible) {
                 continue;
             }
-            widget.extractRenderState(context, mouseX, mouseY, delta);
+            widget.render(context, mouseX, mouseY, delta);
             widget.visible = false;
             suppressed.add(widget);
         }
@@ -328,7 +328,7 @@ final class ProfileEditorPanel {
         suppressed.clear();
     }
 
-    void extractBackdrop(GuiGraphicsExtractor context) {
+    void extractBackdrop(GuiGraphics context) {
         ProfileEditorLayout layout = host.editorLayout();
         int x = layout.rowX(0);
         int width = layout.rowWidth(0);

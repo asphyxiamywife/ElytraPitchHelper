@@ -8,7 +8,7 @@ import com.asphyxiamywife.elytrapitchhelper.util.MathUtil;
 import com.asphyxiamywife.elytrapitchhelper.screen.widget.DropdownButton;
 import com.asphyxiamywife.elytrapitchhelper.screen.widget.SliderRow;
 import net.minecraft.client.gui.Font;
-import net.minecraft.client.gui.GuiGraphicsExtractor;
+import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.components.AbstractWidget;
 import net.minecraft.client.gui.components.Tooltip;
 import net.minecraft.client.gui.components.Button;
@@ -228,7 +228,7 @@ final class ColorEditorScreen extends Screen implements ConfigWorkflowChild, Col
     }
 
     @Override
-    public void extractRenderState(GuiGraphicsExtractor context, int mouseX, int mouseY, float delta) {
+    public void render(GuiGraphics context, int mouseX, int mouseY, float delta) {
         ColorEditorLayout layout = colorEditorLayout();
         boolean dropdownOpen = prideFlagDropdown != null && prideFlagDropdown.isOpen();
         int contentMouseX = dropdownOpen ? -1 : mouseX;
@@ -238,7 +238,7 @@ final class ColorEditorScreen extends Screen implements ConfigWorkflowChild, Col
         int previewY = layout.previewY();
         int previewHeight = previewHeight();
 
-        context.centeredText(font, title, width / 2, 15, 0xFFFFFF);
+        context.drawCenteredString(font, title, width / 2, 15, 0xFFFFFF);
         paintControlBackdrop(context, layout);
         palette.render(context, layout, contentMouseX, contentMouseY);
         if (previewRenderer == null) {
@@ -248,16 +248,16 @@ final class ColorEditorScreen extends Screen implements ConfigWorkflowChild, Col
                     color & 0x00FFFFFF);
         }
 
-        context.text(font, Component.translatable("option.elytrapitchhelper.color.hex"), previewX, layout.hexY() + 6,
+        context.drawString(font, Component.translatable("option.elytrapitchhelper.color.hex"), previewX, layout.hexY() + 6,
                 0xFFFFFF);
-        super.extractRenderState(context, contentMouseX, contentMouseY, delta);
+        super.render(context, contentMouseX, contentMouseY, delta);
         if (dropdownOpen) {
             context.nextStratum();
             prideFlagDropdown.extractDropdownOverlay(context, font, mouseX, mouseY);
         }
     }
 
-    private void paintControlBackdrop(GuiGraphicsExtractor context, ColorEditorLayout layout) {
+    private void paintControlBackdrop(GuiGraphics context, ColorEditorLayout layout) {
         int x = layout.controlX();
         int width = layout.controlWidth();
         if (prideControlsVisible) {
@@ -794,7 +794,7 @@ final class ColorEditorScreen extends Screen implements ConfigWorkflowChild, Col
 
     @FunctionalInterface
     interface PreviewRenderer {
-        void render(GuiGraphicsExtractor context, Font font, int x, int y, int width, int height, int color);
+        void render(GuiGraphics context, Font font, int x, int y, int width, int height, int color);
     }
 
     interface HistoryController {

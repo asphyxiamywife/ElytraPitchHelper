@@ -1,7 +1,7 @@
 package com.asphyxiamywife.elytrapitchhelper.screen.widget;
 
 import net.minecraft.client.gui.Font;
-import net.minecraft.client.gui.GuiGraphicsExtractor;
+import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.input.MouseButtonEvent;
 import net.minecraft.network.chat.Component;
 
@@ -27,7 +27,7 @@ public final class ColorRow extends SettingRow {
     }
 
     @Override
-    protected void renderControl(GuiGraphicsExtractor context, int mouseX, int mouseY, float delta) {
+    protected void renderControl(GuiGraphics context, int mouseX, int mouseY, float delta) {
         Component reading = narratedValue();
         int swatchX = contentRight() - SWATCH;
         SettingRowPainter.paintRightAligned(context, font(), reading, swatchX - SWATCH_GAP
@@ -48,8 +48,8 @@ public final class ColorRow extends SettingRow {
                 }
             }
         }
-        context.outline(swatchX - 1, swatchY - 1, SWATCH + 2, SWATCH + 2, faded(0xFF000000));
-        context.outline(swatchX, swatchY, SWATCH, SWATCH, faded(0x80FFFFFF));
+        context.renderOutline(swatchX - 1, swatchY - 1, SWATCH + 2, SWATCH + 2, faded(0xFF000000));
+        context.renderOutline(swatchX, swatchY, SWATCH, SWATCH, faded(0x80FFFFFF));
     }
 
     @Override

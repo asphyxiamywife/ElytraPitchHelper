@@ -3,7 +3,7 @@ package com.asphyxiamywife.elytrapitchhelper.screen;
 import com.asphyxiamywife.elytrapitchhelper.config.CommandPaletteAppearanceSettings;
 import com.asphyxiamywife.elytrapitchhelper.util.MathUtil;
 import net.minecraft.client.gui.Font;
-import net.minecraft.client.gui.GuiGraphicsExtractor;
+import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.network.chat.Component;
 
 import java.util.List;
@@ -59,19 +59,19 @@ final class CommandPalettePreviewRenderer {
         return panelY + PANEL_TOP_PADDING + SEARCH_HEIGHT + SEARCH_ROW_GAP;
     }
 
-    static void drawPanel(GuiGraphicsExtractor context, int panelX, int panelY,
+    static void drawPanel(GuiGraphics context, int panelX, int panelY,
             int panelWidth, int panelHeight, CommandPaletteAppearanceSettings appearance) {
         context.fill(panelX, panelY, panelX + panelWidth, panelY + panelHeight,
                 argb(238, appearance.baseColorRgb()));
-        context.outline(panelX, panelY, panelWidth, panelHeight, argb(255, appearance.accentColorRgb()));
+        context.renderOutline(panelX, panelY, panelWidth, panelHeight, argb(255, appearance.accentColorRgb()));
     }
 
-    static void drawActionRows(GuiGraphicsExtractor context, Font font, int panelX, int panelY, int panelWidth,
+    static void drawActionRows(GuiGraphics context, Font font, int panelX, int panelY, int panelWidth,
             List<PaletteAction> actions, int selectedIndex, CommandPaletteAppearanceSettings appearance) {
         if (actions.isEmpty()) {
             int rowX = panelX + ROW_MARGIN;
             int rowY = firstRowY(panelY);
-            context.text(font, Component.translatable("palette.elytrapitchhelper.no_results"),
+            context.drawString(font, Component.translatable("palette.elytrapitchhelper.no_results"),
                     rowX + 4, rowY + 8, 0xFFAAAAAA, false);
             return;
         }
@@ -84,7 +84,7 @@ final class CommandPalettePreviewRenderer {
         }
     }
 
-    static void drawPreview(GuiGraphicsExtractor context, Font font, int x, int y, int width, int rowCount,
+    static void drawPreview(GuiGraphics context, Font font, int x, int y, int width, int rowCount,
             CommandPaletteAppearanceSettings appearance) {
         int rows = MathUtil.clamp(rowCount, 1, PREVIEW_ROWS.size());
         int panelY = y;
@@ -97,15 +97,15 @@ final class CommandPalettePreviewRenderer {
         }
     }
 
-    static void drawSearchPreview(GuiGraphicsExtractor context, Font font, int panelX, int panelY, int panelWidth,
+    static void drawSearchPreview(GuiGraphics context, Font font, int panelX, int panelY, int panelWidth,
             CommandPaletteAppearanceSettings appearance) {
         int x = panelX + SEARCH_MARGIN;
         int y = panelY + PANEL_TOP_PADDING;
         int width = panelWidth - SEARCH_MARGIN * 2;
         int fill = mix(appearance.baseColorRgb() & 0x00FFFFFF, 0, 0.62f);
         context.fill(x, y, x + width, y + SEARCH_HEIGHT, searchFieldColor(appearance));
-        context.outline(x, y, width, SEARCH_HEIGHT, 0xFFEFEFEF);
-        context.text(font, Component.translatable("palette.elytrapitchhelper.search_hint"),
+        context.renderOutline(x, y, width, SEARCH_HEIGHT, 0xFFEFEFEF);
+        context.drawString(font, Component.translatable("palette.elytrapitchhelper.search_hint"),
                 x + 5, y + 6, argb(255, readableTextColor(fill)), false);
     }
 
@@ -117,7 +117,7 @@ final class CommandPalettePreviewRenderer {
         return (MathUtil.clamp(alpha, 0, 255) << 24) | (rgb & 0x00FFFFFF);
     }
 
-    private static void drawRow(GuiGraphicsExtractor context, Font font, int panelX, int panelY, int panelWidth,
+    private static void drawRow(GuiGraphics context, Font font, int panelX, int panelY, int panelWidth,
             int index, boolean selected, Component title, Component category,
             CommandPaletteAppearanceSettings appearance) {
         int rowX = panelX + ROW_MARGIN;
@@ -127,11 +127,11 @@ final class CommandPalettePreviewRenderer {
         int accent = appearance.accentColorRgb() & 0x00FFFFFF;
         int rowBase = selected ? mix(base, accent, 0.35f) : mix(base, 0xFFFFFF, 0.07f);
         context.fill(rowX, rowY, rowX + rowWidth, rowY + ROW_HEIGHT, argb(selected ? 204 : 170, rowBase));
-        context.outline(rowX, rowY, rowWidth, ROW_HEIGHT,
+        context.renderOutline(rowX, rowY, rowWidth, ROW_HEIGHT,
                 selected ? argb(255, accent) : argb(255, mix(base, 0xFFFFFF, 0.14f)));
-        context.text(font, ScreenText.truncate(font, title.getString(), rowWidth - 12),
+        context.drawString(font, ScreenText.truncate(font, title.getString(), rowWidth - 12),
                 rowX + 6, rowY + 5, argb(255, readableTextColor(rowBase)), false);
-        context.text(font, ScreenText.truncate(font, category.getString(), rowWidth - 12),
+        context.drawString(font, ScreenText.truncate(font, category.getString(), rowWidth - 12),
                 rowX + 6, rowY + 17, argb(255, mix(readableTextColor(rowBase), rowBase, 0.28f)), false);
     }
 

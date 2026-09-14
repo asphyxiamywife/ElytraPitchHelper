@@ -1,6 +1,6 @@
 package com.asphyxiamywife.elytrapitchhelper.screen;
 
-import net.minecraft.client.gui.GuiGraphicsExtractor;
+import net.minecraft.client.gui.GuiGraphics;
 
 final class ProfileChevron {
     static final int SIZE = 7;
@@ -11,7 +11,7 @@ final class ProfileChevron {
     private ProfileChevron() {
     }
 
-    static void paint(GuiGraphicsExtractor context, ProfileRowLayout row, int rowY, boolean open) {
+    static void paint(GuiGraphics context, ProfileRowLayout row, int rowY, boolean open) {
         int x = row.chevronX() + (row.chevronWidth() - SIZE) / 2;
         int y = rowY + (ConfigScreen.CONTROL_HEIGHT - SIZE) / 2;
         int color = open ? OPEN_COLOR : CLOSED_COLOR;

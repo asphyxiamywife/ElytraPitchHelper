@@ -6,7 +6,7 @@ import com.asphyxiamywife.elytrapitchhelper.config.PrideFlag;
 import com.asphyxiamywife.elytrapitchhelper.util.MathUtil;
 import com.mojang.blaze3d.platform.cursor.CursorTypes;
 import net.minecraft.client.gui.Font;
-import net.minecraft.client.gui.GuiGraphicsExtractor;
+import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.input.MouseButtonEvent;
 import org.lwjgl.glfw.GLFW;
 
@@ -47,8 +47,8 @@ final class ColorEditorPreviewController {
         this.cuePeak = cuePeak;
     }
 
-    void render(GuiGraphicsExtractor context, int x, int y, int width, int height, int mouseX, int mouseY) {
-        context.outline(x, y, width, height, 0x99FFFFFF);
+    void render(GuiGraphics context, int x, int y, int width, int height, int mouseX, int mouseY) {
+        context.renderOutline(x, y, width, height, 0x99FFFFFF);
         PreviewLineGeometry line = geometry(x, y, width, height);
         int rgb = host.color() & 0x00FFFFFF;
         int[] prideColors = host.prideEnabled()
@@ -82,7 +82,7 @@ final class ColorEditorPreviewController {
         return true;
     }
 
-    private void drawStripeMarker(GuiGraphicsExtractor context, int previewX, int previewY, int previewWidth,
+    private void drawStripeMarker(GuiGraphics context, int previewX, int previewY, int previewWidth,
             PreviewLineGeometry line) {
         if (!host.editingCustomPride()) {
             return;
@@ -93,7 +93,7 @@ final class ColorEditorPreviewController {
         Font font = host.editorFont();
         int markerY = Math.max(previewY + 2, line.y() - font.lineHeight - 1);
         int markerWidth = font.width(CUSTOM_STRIPE_MARKER);
-        context.text(font, CUSTOM_STRIPE_MARKER, markerX - markerWidth / 2, markerY, 0xFFFFFFFF, true);
+        context.drawString(font, CUSTOM_STRIPE_MARKER, markerX - markerWidth / 2, markerY, 0xFFFFFFFF, true);
     }
 
     private int stripeIndexAt(int previewX, int previewY, int previewWidth, int previewHeight, double mouseX,
@@ -119,12 +119,12 @@ final class ColorEditorPreviewController {
                 renderedLength, centerX, centerY);
     }
 
-    private static void drawCenteredRect(GuiGraphicsExtractor context, int centerX, int centerY, int width,
+    private static void drawCenteredRect(GuiGraphics context, int centerX, int centerY, int width,
             int height, float alpha, int rgb, int[] prideColors) {
         drawRect(context, centerX - width / 2, centerY - height / 2, width, height, alpha, rgb, prideColors);
     }
 
-    private static void drawRect(GuiGraphicsExtractor context, int x, int y, int width, int height, float alpha,
+    private static void drawRect(GuiGraphics context, int x, int y, int width, int height, float alpha,
             int rgb, int[] prideColors) {
         if (prideColors == null || prideColors.length == 0) {
             context.fill(x, y, x + width, y + height, MathUtil.argb(alpha, rgb));

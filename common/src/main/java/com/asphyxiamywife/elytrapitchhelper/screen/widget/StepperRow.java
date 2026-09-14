@@ -1,7 +1,7 @@
 package com.asphyxiamywife.elytrapitchhelper.screen.widget;
 
 import net.minecraft.client.gui.Font;
-import net.minecraft.client.gui.GuiGraphicsExtractor;
+import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.input.MouseButtonEvent;
 import net.minecraft.network.chat.Component;
 import org.lwjgl.glfw.GLFW;
@@ -43,15 +43,15 @@ public final class StepperRow extends SettingRow {
     }
 
     @Override
-    protected void renderControl(GuiGraphicsExtractor context, int mouseX, int mouseY, float delta) {
+    protected void renderControl(GuiGraphics context, int mouseX, int mouseY, float delta) {
         Component reading = narratedValue();
         int baseline = SettingRowPainter.baseline(getY(), getHeight(), font());
         drawSegment(context, removeX(), mouseX, mouseY, Component.literal("−"), canRemove.getAsBoolean());
-        context.text(font(), reading, removeX() + STEP_WIDTH + GAP, baseline, faded(valueColor()), true);
+        context.drawString(font(), reading, removeX() + STEP_WIDTH + GAP, baseline, faded(valueColor()), true);
         drawSegment(context, addX(), mouseX, mouseY, Component.literal("+"), canAdd.getAsBoolean());
     }
 
-    private void drawSegment(GuiGraphicsExtractor context, int x, int mouseX, int mouseY, Component glyph,
+    private void drawSegment(GuiGraphics context, int x, int mouseX, int mouseY, Component glyph,
             boolean usable) {
         boolean hovered = mouseX >= x && mouseX < x + STEP_WIDTH
                 && mouseY >= getY() && mouseY < getY() + getHeight();

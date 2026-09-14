@@ -20,10 +20,9 @@ runs {
 
 dependencies {
     implementation "net.neoforged:neoforge:${rootProject.neo_version}"
-    implementation project(":common")
+    implementation files(rootProject.project(":common").sourceSets.main.output)
 
-    testImplementation project(":common")
-    testImplementation testFixtures(project(":common"))
+    testImplementation files(rootProject.project(":common").sourceSets.testFixtures.output)
 }
 
 processResources {

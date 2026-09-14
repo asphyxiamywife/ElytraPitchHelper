@@ -5,7 +5,7 @@ import com.asphyxiamywife.elytrapitchhelper.client.ConfigStore;
 import com.asphyxiamywife.elytrapitchhelper.client.KeyBindings;
 import com.asphyxiamywife.elytrapitchhelper.config.CommandPaletteAppearanceSettings;
 import com.asphyxiamywife.elytrapitchhelper.util.MathUtil;
-import net.minecraft.client.gui.GuiGraphicsExtractor;
+import net.minecraft.client.gui.GuiGraphics;
 import com.asphyxiamywife.elytrapitchhelper.screen.widget.FlatEditBox;
 import net.minecraft.client.gui.components.EditBox;
 import net.minecraft.client.gui.screens.Screen;
@@ -65,13 +65,13 @@ public final class CommandPaletteScreen extends Screen implements ConfigWorkflow
     }
 
     @Override
-    public void extractBackground(GuiGraphicsExtractor context, int mouseX, int mouseY, float delta) {
+    public void renderBackground(GuiGraphics context, int mouseX, int mouseY, float delta) {
         if (lastScreen != null) {
-            lastScreen.extractBackground(context, mouseX, mouseY, delta);
+            lastScreen.renderBackground(context, mouseX, mouseY, delta);
         } else {
-            super.extractBackground(context, mouseX, mouseY, delta);
+            super.renderBackground(context, mouseX, mouseY, delta);
         }
-        minecraft.gui.extractDeferredSubtitles();
+        minecraft.gui.renderDeferredSubtitles();
     }
 
     @Override
@@ -81,11 +81,11 @@ public final class CommandPaletteScreen extends Screen implements ConfigWorkflow
     }
 
     @Override
-    public void extractRenderState(GuiGraphicsExtractor context, int mouseX, int mouseY, float delta) {
+    public void render(GuiGraphics context, int mouseX, int mouseY, float delta) {
         refreshResultsIfNeeded();
         CommandPaletteAppearanceSettings appearance = appearance();
         if (lastScreen != null) {
-            lastScreen.extractRenderState(context, mouseX, mouseY, delta);
+            lastScreen.render(context, mouseX, mouseY, delta);
             context.nextStratum();
         }
         context.fill(0, 0, width, height,
@@ -99,7 +99,7 @@ public final class CommandPaletteScreen extends Screen implements ConfigWorkflow
         CommandPalettePreviewRenderer.drawPanel(context, panelX, panelY, panelWidth, panelHeight,
                 appearance);
 
-        super.extractRenderState(context, mouseX, mouseY, delta);
+        super.render(context, mouseX, mouseY, delta);
         CommandPalettePreviewRenderer.drawActionRows(context, font, panelX, panelY, panelWidth, results,
                 selectedIndex, appearance);
     }

@@ -23,6 +23,7 @@ import net.minecraft.world.level.ChunkPos;
 import net.minecraft.world.level.GameType;
 import net.minecraft.world.level.LevelSettings;
 import net.minecraft.world.level.WorldDataConfiguration;
+import net.minecraft.world.level.gamerules.GameRules;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.levelgen.WorldOptions;
 import net.minecraft.world.level.levelgen.presets.WorldPresets;
@@ -68,9 +69,8 @@ public final class ClientProbe {
                         "key.elytrapitchhelper.open_palette")), "Product key mappings were not registered");
                 MixinEnvironment.getCurrentEnvironment().audit();
                 client.createWorldOpenFlows().createFreshLevel("eph-client-contract",
-                        new LevelSettings("EPH client contract", GameType.CREATIVE,
-                                new LevelSettings.DifficultySettings(Difficulty.PEACEFUL, false, false),
-                                true, WorldDataConfiguration.DEFAULT),
+                        new LevelSettings("EPH client contract", GameType.CREATIVE, false, Difficulty.PEACEFUL, true,
+                                new GameRules(WorldDataConfiguration.DEFAULT.enabledFeatures()), WorldDataConfiguration.DEFAULT),
                         new WorldOptions(0L, false, false), WorldPresets::createNormalWorldDimensions, new TitleScreen());
                 return;
             }

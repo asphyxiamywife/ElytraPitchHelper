@@ -1,6 +1,6 @@
 package com.asphyxiamywife.elytrapitchhelper.screen;
 
-import net.minecraft.client.gui.GuiGraphicsExtractor;
+import net.minecraft.client.gui.GuiGraphics;
 
 final class PanelBackdrop {
     static final int ROW_BLEED = 1;
@@ -10,7 +10,7 @@ final class PanelBackdrop {
     private PanelBackdrop() {
     }
 
-    static void paintBand(GuiGraphicsExtractor context, int x, int width, int top, int bottom,
+    static void paintBand(GuiGraphics context, int x, int width, int top, int bottom,
             boolean header) {
         if (bottom <= top || width <= 0) {
             return;

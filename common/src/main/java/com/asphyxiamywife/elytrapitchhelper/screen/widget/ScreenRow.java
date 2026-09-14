@@ -1,7 +1,7 @@
 package com.asphyxiamywife.elytrapitchhelper.screen.widget;
 
 import net.minecraft.client.gui.Font;
-import net.minecraft.client.gui.GuiGraphicsExtractor;
+import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.input.MouseButtonEvent;
 import net.minecraft.network.chat.CommonComponents;
 import net.minecraft.network.chat.Component;
@@ -17,7 +17,7 @@ public final class ScreenRow extends SettingRow {
     }
 
     @Override
-    protected void renderControl(GuiGraphicsExtractor context, int mouseX, int mouseY, float delta) {
+    protected void renderControl(GuiGraphics context, int mouseX, int mouseY, float delta) {
         drawRightAligned(context, Component.literal(MARKER), valueColor());
     }
 

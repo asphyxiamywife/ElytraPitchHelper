@@ -1,7 +1,7 @@
 package com.asphyxiamywife.elytrapitchhelper.screen.widget;
 
 import net.minecraft.client.gui.Font;
-import net.minecraft.client.gui.GuiGraphicsExtractor;
+import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.components.AbstractWidget;
 import net.minecraft.client.gui.narration.NarrationElementOutput;
 import net.minecraft.network.chat.CommonComponents;
@@ -79,12 +79,12 @@ public abstract class SettingRow extends AbstractWidget {
         return active ? VALUE_COLOR : DISABLED_COLOR;
     }
 
-    protected void drawRightAligned(GuiGraphicsExtractor context, Component text, int color) {
+    protected void drawRightAligned(GuiGraphics context, Component text, int color) {
         SettingRowPainter.paintRightAligned(context, font, text, valueRight(), getY(), getHeight(), color, alpha);
     }
 
     @Override
-    protected void extractWidgetRenderState(GuiGraphicsExtractor context, int mouseX, int mouseY,
+    protected void renderWidget(GuiGraphics context, int mouseX, int mouseY,
             float delta) {
         SettingRowPainter.paintBackground(context, getX(), getY(), getWidth(), getHeight(),
                 active && isHovered() && !overlayOpen.getAsBoolean(), isFocused(), alpha);
@@ -167,7 +167,7 @@ public abstract class SettingRow extends AbstractWidget {
         playDownSound(net.minecraft.client.Minecraft.getInstance().getSoundManager());
     }
 
-    protected abstract void renderControl(GuiGraphicsExtractor context, int mouseX, int mouseY,
+    protected abstract void renderControl(GuiGraphics context, int mouseX, int mouseY,
             float delta);
 
     protected abstract Component narratedValue();

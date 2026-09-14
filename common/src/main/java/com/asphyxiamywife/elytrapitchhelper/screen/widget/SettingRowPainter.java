@@ -1,7 +1,7 @@
 package com.asphyxiamywife.elytrapitchhelper.screen.widget;
 
 import net.minecraft.client.gui.Font;
-import net.minecraft.client.gui.GuiGraphicsExtractor;
+import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.network.chat.Component;
 
 public final class SettingRowPainter {
@@ -46,7 +46,7 @@ public final class SettingRowPainter {
         return y + (height - font.lineHeight) / 2 + 1;
     }
 
-    public static void paintBackground(GuiGraphicsExtractor context, int x, int y, int width, int height,
+    public static void paintBackground(GuiGraphics context, int x, int y, int width, int height,
             boolean hovered, boolean focused, float alpha) {
         if (hovered || focused) {
             context.fill(x, y, x + width, y + height,
@@ -57,44 +57,44 @@ public final class SettingRowPainter {
         }
     }
 
-    public static void paintFocusMarker(GuiGraphicsExtractor context, int x, int y, int height,
+    public static void paintFocusMarker(GuiGraphics context, int x, int y, int height,
             float alpha) {
         context.fill(x, y + 1, x + FOCUS_MARKER_WIDTH, y + height - 1,
                 faded(FOCUS_MARKER_COLOR, alpha));
     }
 
-    public static void paintLabel(GuiGraphicsExtractor context, Font font, Component label, int x, int y,
+    public static void paintLabel(GuiGraphics context, Font font, Component label, int x, int y,
             int height, int depth, int color, float alpha) {
         if (label == null) {
             return;
         }
-        context.text(font, label, x + ROW_PADDING + depth * INDENT, baseline(y, height, font),
+        context.drawString(font, label, x + ROW_PADDING + depth * INDENT, baseline(y, height, font),
                 faded(color, alpha), true);
     }
 
-    public static void paintSegment(GuiGraphicsExtractor context, Font font, Component glyph, int x, int y,
+    public static void paintSegment(GuiGraphics context, Font font, Component glyph, int x, int y,
             int width, int height, boolean hovered, boolean usable, float alpha) {
         context.fill(x, y + 2, x + width, y + height - 2,
                 faded(hovered && usable ? SEGMENT_HOVER : SEGMENT_BACKGROUND, alpha));
-        context.text(font, glyph, x + (width - font.width(glyph)) / 2, baseline(y, height, font),
+        context.drawString(font, glyph, x + (width - font.width(glyph)) / 2, baseline(y, height, font),
                 faded(usable ? VALUE_COLOR : DISABLED_COLOR, alpha), true);
     }
 
-    public static void paintReset(GuiGraphicsExtractor context, Font font, int rowRight, int y, int height,
+    public static void paintReset(GuiGraphics context, Font font, int rowRight, int y, int height,
             boolean hovered, boolean usable, float alpha) {
         paintSegment(context, font, RESET_GLYPH, rowRight - RESET_GUTTER, y, RESET_GUTTER, height,
                 hovered, usable, alpha);
     }
 
-    public static void paintCentered(GuiGraphicsExtractor context, Font font, Component text, int x,
+    public static void paintCentered(GuiGraphics context, Font font, Component text, int x,
             int width, int y, int height, int color, float alpha) {
-        context.text(font, text, x + (width - font.width(text)) / 2, baseline(y, height, font),
+        context.drawString(font, text, x + (width - font.width(text)) / 2, baseline(y, height, font),
                 faded(color, alpha), true);
     }
 
-    public static void paintRightAligned(GuiGraphicsExtractor context, Font font, Component text, int right,
+    public static void paintRightAligned(GuiGraphics context, Font font, Component text, int right,
             int y, int height, int color, float alpha) {
-        context.text(font, text, right - ROW_PADDING - font.width(text), baseline(y, height, font),
+        context.drawString(font, text, right - ROW_PADDING - font.width(text), baseline(y, height, font),
                 faded(color, alpha), true);
     }
 }

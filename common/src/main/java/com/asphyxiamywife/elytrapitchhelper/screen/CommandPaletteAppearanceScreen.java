@@ -9,7 +9,7 @@ import com.asphyxiamywife.elytrapitchhelper.screen.widget.ColorRow;
 import com.asphyxiamywife.elytrapitchhelper.screen.widget.FlatButton;
 import com.asphyxiamywife.elytrapitchhelper.screen.widget.SettingRow;
 import com.asphyxiamywife.elytrapitchhelper.screen.widget.SliderRow;
-import net.minecraft.client.gui.GuiGraphicsExtractor;
+import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.components.AbstractWidget;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.client.input.KeyEvent;
@@ -80,8 +80,8 @@ final class CommandPaletteAppearanceScreen extends Screen implements ConfigWorkf
     }
 
     @Override
-    public void extractRenderState(GuiGraphicsExtractor context, int mouseX, int mouseY, float delta) {
-        context.centeredText(font, title, width / 2, 15, 0xFFFFFF);
+    public void render(GuiGraphics context, int mouseX, int mouseY, float delta) {
+        context.drawCenteredString(font, title, width / 2, 15, 0xFFFFFF);
         drawPreview(context);
         Layout layout = layout();
         int rowWidth = Math.min(ProfileEditorLayout.MAX_ROW_WIDTH, layout.contentWidth());
@@ -89,7 +89,7 @@ final class CommandPaletteAppearanceScreen extends Screen implements ConfigWorkf
                 layout.controlsY() + (CONTROL_ROWS - 1) * ConfigScreen.ROW_HEIGHT
                         + ConfigScreen.CONTROL_HEIGHT,
                 false);
-        super.extractRenderState(context, mouseX, mouseY, delta);
+        super.render(context, mouseX, mouseY, delta);
     }
 
     @Override
@@ -133,7 +133,7 @@ final class CommandPaletteAppearanceScreen extends Screen implements ConfigWorkf
         });
     }
 
-    private void drawPreview(GuiGraphicsExtractor context) {
+    private void drawPreview(GuiGraphics context) {
         CommandPaletteAppearanceSettings appearance = appearance();
         Layout layout = layout();
         int shadowAlpha = appearance.shadowOpacity() * 255 / 100;

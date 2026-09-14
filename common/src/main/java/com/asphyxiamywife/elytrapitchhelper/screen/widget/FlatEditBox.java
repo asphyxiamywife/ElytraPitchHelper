@@ -1,7 +1,7 @@
 package com.asphyxiamywife.elytrapitchhelper.screen.widget;
 
 import net.minecraft.client.gui.Font;
-import net.minecraft.client.gui.GuiGraphicsExtractor;
+import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.components.EditBox;
 import net.minecraft.client.input.MouseButtonEvent;
 import net.minecraft.network.chat.Component;
@@ -52,7 +52,7 @@ public class FlatEditBox extends EditBox {
     }
 
     @Override
-    public void extractWidgetRenderState(GuiGraphicsExtractor context, int mouseX, int mouseY,
+    public void renderWidget(GuiGraphics context, int mouseX, int mouseY,
             float delta) {
         if (!isVisible()) {
             return;
@@ -60,13 +60,13 @@ public class FlatEditBox extends EditBox {
 
         context.fill(getX(), getY(), getX() + getWidth(), getY() + getHeight(), background);
         if (isFocused()) {
-            context.outline(getX(), getY(), getWidth(), getHeight(), focusBorder);
+            context.renderOutline(getX(), getY(), getWidth(), getHeight(), focusBorder);
         }
 
         Matrix3x2fStack pose = context.pose();
         pose.pushMatrix();
         pose.translate(PAD_X, (getHeight() - LINE_HEIGHT) / 2.0f);
-        super.extractWidgetRenderState(context, mouseX, mouseY, delta);
+        super.renderWidget(context, mouseX, mouseY, delta);
         pose.popMatrix();
     }
 

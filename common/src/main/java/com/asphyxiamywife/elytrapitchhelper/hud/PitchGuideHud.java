@@ -14,7 +14,7 @@ import com.asphyxiamywife.elytrapitchhelper.util.MonotonicClock;
 import net.minecraft.client.CameraType;
 import net.minecraft.client.DeltaTracker;
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.gui.GuiGraphicsExtractor;
+import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.level.LevelHeightAccessor;
 import net.minecraft.world.phys.AABB;
@@ -74,7 +74,7 @@ public final class PitchGuideHud {
         frameState = simulate(config, snapshot.hudRenderState(), flight, world);
     }
 
-    public void render(GuiGraphicsExtractor context, DeltaTracker tickCounter) {
+    public void render(GuiGraphics context, DeltaTracker tickCounter) {
         HudFrameState current = frameState;
         if (!current.visible()) {
             return;
@@ -278,7 +278,7 @@ public final class PitchGuideHud {
     }
 
     private static final class GuiFiller implements GuideLineRenderer.Filler {
-        private GuiGraphicsExtractor context;
+        private GuiGraphics context;
 
         @Override
         public void fill(int x, int y, int x2, int y2, int argb) {

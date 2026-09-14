@@ -70,7 +70,7 @@ public final class ClientBootstrap {
     public static void onClientChunkChanged(ChunkPos pos) {
         ClientBootstrap bootstrap = active;
         if (bootstrap != null) {
-            bootstrap.hud.invalidateGroundChunk(pos.x(), pos.z());
+            bootstrap.hud.invalidateGroundChunk(pos.x, pos.z);
         }
     }
 

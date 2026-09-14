@@ -1,7 +1,7 @@
 package com.asphyxiamywife.elytrapitchhelper.screen.widget;
 
 import net.minecraft.client.gui.Font;
-import net.minecraft.client.gui.GuiGraphicsExtractor;
+import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.components.AbstractWidget;
 import net.minecraft.client.gui.narration.NarrationElementOutput;
 import net.minecraft.client.input.MouseButtonEvent;
@@ -59,21 +59,21 @@ public final class SectionHeader extends AbstractWidget {
     }
 
     @Override
-    protected void extractWidgetRenderState(GuiGraphicsExtractor context, int mouseX, int mouseY,
+    protected void renderWidget(GuiGraphics context, int mouseX, int mouseY,
             float delta) {
         SettingRowPainter.paintBackground(context, getX(), getY(), getWidth(), getHeight(),
                 isHovered(), isFocused(), getAlpha());
         int baseline = getY() + (getHeight() - font.lineHeight) / 2 + 1;
         int arrowX = getX() + SettingRowPainter.ROW_PADDING;
-        context.text(font, showsChildren() ? "▼" : "▶", arrowX, baseline,
+        context.drawString(font, showsChildren() ? "▼" : "▶", arrowX, baseline,
                 searchRevealed && collapsed ? REVEALED_ARROW_COLOR : LABEL_COLOR, true);
 
         int textX = arrowX + ARROW_WIDTH;
-        context.text(font, boldLabel, textX, baseline, LABEL_COLOR, true);
+        context.drawString(font, boldLabel, textX, baseline, LABEL_COLOR, true);
         int labelEnd = textX + font.width(boldLabel);
 
         if (!showsChildren() && !summary.getString().isEmpty()) {
-            context.text(font, summary, labelEnd + 6, baseline, SUMMARY_COLOR, true);
+            context.drawString(font, summary, labelEnd + 6, baseline, SUMMARY_COLOR, true);
             labelEnd += 6 + font.width(summary);
         }
 

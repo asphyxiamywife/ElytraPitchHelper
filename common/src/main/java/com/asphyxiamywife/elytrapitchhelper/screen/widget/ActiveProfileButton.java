@@ -1,6 +1,6 @@
 package com.asphyxiamywife.elytrapitchhelper.screen.widget;
 
-import net.minecraft.client.gui.GuiGraphicsExtractor;
+import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.components.Button;
 import net.minecraft.network.chat.Component;
 
@@ -14,7 +14,7 @@ public final class ActiveProfileButton extends Button {
     }
 
     @Override
-    protected void extractContents(GuiGraphicsExtractor context, int mouseX, int mouseY, float delta) {
+    protected void renderContents(GuiGraphics context, int mouseX, int mouseY, float delta) {
         int size = 12;
         int x = getX() + (getWidth() - size) / 2;
         int y = getY() + (getHeight() - size) / 2;
@@ -26,7 +26,7 @@ public final class ActiveProfileButton extends Button {
         }
     }
 
-    private static void drawDisc(GuiGraphicsExtractor context, int x, int y, int size, int color) {
+    private static void drawDisc(GuiGraphics context, int x, int y, int size, int color) {
         if (size <= 0) {
             return;
         }

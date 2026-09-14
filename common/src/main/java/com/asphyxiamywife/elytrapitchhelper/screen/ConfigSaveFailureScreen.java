@@ -2,7 +2,7 @@ package com.asphyxiamywife.elytrapitchhelper.screen;
 
 import com.asphyxiamywife.elytrapitchhelper.util.MathUtil;
 import com.asphyxiamywife.elytrapitchhelper.screen.widget.FlatButton;
-import net.minecraft.client.gui.GuiGraphicsExtractor;
+import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.network.chat.Component;
 
@@ -50,9 +50,9 @@ final class ConfigSaveFailureScreen extends Screen {
     }
 
     @Override
-    public void extractRenderState(GuiGraphicsExtractor context, int mouseX, int mouseY, float delta) {
-        context.centeredText(font, title, width / 2, 18, 0xFFFF5555);
-        super.extractRenderState(context, mouseX, mouseY, delta);
+    public void render(GuiGraphics context, int mouseX, int mouseY, float delta) {
+        context.drawCenteredString(font, title, width / 2, 18, 0xFFFF5555);
+        super.render(context, mouseX, mouseY, delta);
     }
 
     @Override

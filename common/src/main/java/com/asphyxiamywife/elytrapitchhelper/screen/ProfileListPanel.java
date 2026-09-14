@@ -8,7 +8,7 @@ import com.asphyxiamywife.elytrapitchhelper.screen.widget.RowActionButton;
 import com.asphyxiamywife.elytrapitchhelper.screen.widget.RowBackdrop;
 import com.asphyxiamywife.elytrapitchhelper.screen.widget.ToggleRow;
 import net.minecraft.client.gui.Font;
-import net.minecraft.client.gui.GuiGraphicsExtractor;
+import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.components.AbstractWidget;
 import net.minecraft.client.gui.components.Button;
 import net.minecraft.client.gui.components.EditBox;
@@ -59,7 +59,7 @@ final class ProfileListPanel {
                 host.config().isReadOnly(), host.profileScroll());
     }
 
-    void extractBackdrop(GuiGraphicsExtractor context) {
+    void extractBackdrop(GuiGraphics context) {
         ProfileListPlan plan = host.profileListPlan();
         ProfileListLayout layout = layout(plan);
         int x = layout.startX();
@@ -69,7 +69,7 @@ final class ProfileListPanel {
         PanelBackdrop.paintBand(context, x, width, headerY - PanelBackdrop.ROW_BLEED,
                 headerBottom + PanelBackdrop.ROW_BLEED, true);
         if (host.deleteMode()) {
-            context.centeredText(host.font(),
+            context.drawCenteredString(host.font(),
                     Component.translatable("screen.elytrapitchhelper.profile.delete_prompt"),
                     x + width / 2, headerY + (headerBottom - headerY - host.font().lineHeight) / 2,
                     0xFFFFFFFF);
@@ -84,7 +84,7 @@ final class ProfileListPanel {
         }
     }
 
-    void extractChevrons(GuiGraphicsExtractor context) {
+    void extractChevrons(GuiGraphics context) {
         if (host.deleteMode()) {
             return;
         }

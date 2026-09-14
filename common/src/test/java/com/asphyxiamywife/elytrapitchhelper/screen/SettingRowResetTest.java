@@ -2,7 +2,7 @@ package com.asphyxiamywife.elytrapitchhelper.screen;
 
 import com.asphyxiamywife.elytrapitchhelper.screen.widget.SettingRow;
 import net.minecraft.client.gui.Font;
-import net.minecraft.client.gui.GuiGraphicsExtractor;
+import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.input.KeyEvent;
 import net.minecraft.client.input.MouseButtonEvent;
 import net.minecraft.client.input.MouseButtonInfo;
@@ -99,7 +99,7 @@ final class SettingRowResetTest {
         }
 
         @Override
-        protected void renderControl(GuiGraphicsExtractor context, int mouseX, int mouseY, float delta) {
+        protected void renderControl(GuiGraphics context, int mouseX, int mouseY, float delta) {
         }
 
         @Override

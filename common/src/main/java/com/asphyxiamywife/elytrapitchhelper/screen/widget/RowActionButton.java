@@ -2,7 +2,7 @@ package com.asphyxiamywife.elytrapitchhelper.screen.widget;
 
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.Font;
-import net.minecraft.client.gui.GuiGraphicsExtractor;
+import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.components.AbstractWidget;
 import net.minecraft.client.gui.narration.NarrationElementOutput;
 import net.minecraft.client.input.KeyEvent;
@@ -28,7 +28,7 @@ public final class RowActionButton extends AbstractWidget {
     }
 
     @Override
-    protected void extractWidgetRenderState(GuiGraphicsExtractor context, int mouseX, int mouseY,
+    protected void renderWidget(GuiGraphics context, int mouseX, int mouseY,
             float delta) {
         SettingRowPainter.paintSegment(context, font, getMessage(), getX(), getY(), getWidth(),
                 getHeight(), isHovered(), active, getAlpha());

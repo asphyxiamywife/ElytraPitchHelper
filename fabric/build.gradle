@@ -1,10 +1,11 @@
 plugins {
     id 'elytra.loader-conventions'
-    id 'net.fabricmc.fabric-loom'
+    id 'fabric-loom'
 }
 
 repositories {
     maven { url = "https://maven.terraformersmc.com/releases" }
+    maven { name = 'ParchmentMC'; url = 'https://maven.parchmentmc.org' }
     mavenCentral()
 }
 
@@ -22,11 +23,18 @@ loom {
 
 dependencies {
     minecraft "com.mojang:minecraft:${rootProject.minecraft_version}"
-    implementation project(":common")
+    mappings loom.layered() {
+        officialMojangMappings()
+        parchment("org.parchmentmc.data:parchment-${rootProject.minecraft_version}:${rootProject.parchment_version}@zip")
+    }
+    // Loom 1.14 publishes :common as an intermediary-named artifact, which would shadow the
+    // named development classes at probe/runtime and break GameTest loading (e.g. class_5539).
+    // Consume the named output directly, matching the NeoForge setup.
+    implementation files(rootProject.project(":common").sourceSets.main.output)
 
-    implementation "net.fabricmc:fabric-loader:${rootProject.loader_version}"
-    implementation "net.fabricmc.fabric-api:fabric-api:${rootProject.fabric_api_version}"
-    compileOnly("com.terraformersmc:modmenu:${rootProject.modmenu_version}")
+    modImplementation "net.fabricmc:fabric-loader:${rootProject.loader_version}"
+    modImplementation "net.fabricmc.fabric-api:fabric-api:${rootProject.fabric_api_version}"
+    modCompileOnly("com.terraformersmc:modmenu:${rootProject.modmenu_version}")
 
     testImplementation project(":common")
     testImplementation testFixtures(project(":common"))
@@ -57,6 +65,7 @@ loom {
         eph_port_probe {
             sourceSet sourceSets.probe
             sourceSet project(':common').sourceSets.probe
+            sourceSet project(':common').sourceSets.main
         }
     }
     runs {

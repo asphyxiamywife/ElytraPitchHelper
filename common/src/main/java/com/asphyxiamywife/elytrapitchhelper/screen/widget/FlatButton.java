@@ -2,7 +2,7 @@ package com.asphyxiamywife.elytrapitchhelper.screen.widget;
 
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.Font;
-import net.minecraft.client.gui.GuiGraphicsExtractor;
+import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.components.Button;
 import net.minecraft.network.chat.Component;
 
@@ -30,7 +30,7 @@ public class FlatButton extends Button {
     }
 
     @Override
-    protected void extractContents(GuiGraphicsExtractor context, int mouseX, int mouseY,
+    protected void renderContents(GuiGraphics context, int mouseX, int mouseY,
             float delta) {
         float alpha = getAlpha();
         boolean hovered = active && isHovered();
@@ -42,13 +42,13 @@ public class FlatButton extends Button {
                     SettingRowPainter.faded(HOVER_LIFT, alpha));
         }
         if (active && isFocused()) {
-            context.outline(getX(), getY(), getWidth(), getHeight(),
+            context.renderOutline(getX(), getY(), getWidth(), getHeight(),
                     SettingRowPainter.faded(FOCUS_BORDER, alpha));
         }
 
         Component label = getMessage();
         int color = active ? SettingRowPainter.LABEL_COLOR : SettingRowPainter.DISABLED_COLOR;
-        context.text(font, label, getX() + (getWidth() - font.width(label)) / 2,
+        context.drawString(font, label, getX() + (getWidth() - font.width(label)) / 2,
                 SettingRowPainter.baseline(getY(), getHeight(), font),
                 SettingRowPainter.faded(color, alpha), true);
     }

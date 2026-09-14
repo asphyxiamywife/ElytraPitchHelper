@@ -6,8 +6,8 @@ import com.asphyxiamywife.elytrapitchhelper.screen.ScreenText;
 import com.mojang.blaze3d.platform.cursor.CursorTypes;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.Font;
-import net.minecraft.client.gui.GuiGraphicsExtractor;
-import net.minecraft.client.gui.GuiGraphicsExtractor.HoveredTextEffects;
+import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.client.gui.GuiGraphics.HoveredTextEffects;
 import net.minecraft.client.gui.components.Button;
 import net.minecraft.client.input.KeyEvent;
 import net.minecraft.client.input.MouseButtonEvent;
@@ -209,7 +209,7 @@ public final class DropdownButton<T> extends Button {
         return super.mouseScrolled(mouseX, mouseY, scrollX, scrollY);
     }
 
-    public void extractDropdownOverlay(GuiGraphicsExtractor context, Font font, int mouseX, int mouseY) {
+    public void extractDropdownOverlay(GuiGraphics context, Font font, int mouseX, int mouseY) {
         if (!open || !visible) {
             return;
         }
@@ -220,7 +220,7 @@ public final class DropdownButton<T> extends Button {
             context.requestCursor(active ? CursorTypes.POINTING_HAND : CursorTypes.NOT_ALLOWED);
         }
         context.fill(menu.x, menu.y, menu.x + menu.width, menu.y + menu.height, MENU_FILL_COLOR);
-        context.outline(menu.x, menu.y, menu.width, menu.height, MENU_OUTLINE_COLOR);
+        context.renderOutline(menu.x, menu.y, menu.width, menu.height, MENU_OUTLINE_COLOR);
 
         for (int row = 0; row < menu.visibleRows; row++) {
             int index = scrollIndex + row;
@@ -247,10 +247,10 @@ public final class DropdownButton<T> extends Button {
     }
 
     @Override
-    protected void extractContents(GuiGraphicsExtractor context, int mouseX, int mouseY, float delta) {
+    protected void renderContents(GuiGraphics context, int mouseX, int mouseY, float delta) {
         if (!rowStyle) {
-            extractDefaultSprite(context);
-            extractDefaultLabel(context.textRendererForWidget(this, HoveredTextEffects.NONE));
+            renderDefaultSprite(context);
+            renderDefaultLabel(context.textRendererForWidget(this, HoveredTextEffects.NONE));
             return;
         }
         Font font = Minecraft.getInstance().font;
@@ -360,7 +360,7 @@ public final class DropdownButton<T> extends Button {
         return widest + TEXT_INSET * 2 + (scrollbar ? 8 : 0);
     }
 
-    private void extractRow(GuiGraphicsExtractor context, Font font, T item, int x, int y, int width,
+    private void extractRow(GuiGraphics context, Font font, T item, int x, int y, int width,
             boolean hasScrollbar) {
         int textX = x + 8;
         int textWidth = width - 16;
@@ -378,10 +378,10 @@ public final class DropdownButton<T> extends Button {
 
         String text = ScreenText.truncate(font, valueMessage.apply(item).getString(), Math.max(0, textWidth));
         int textY = y + (getHeight() - font.lineHeight) / 2;
-        context.text(font, text, textX, textY, active ? ROW_TEXT_COLOR : ROW_DISABLED_TEXT_COLOR);
+        context.drawString(font, text, textX, textY, active ? ROW_TEXT_COLOR : ROW_DISABLED_TEXT_COLOR);
     }
 
-    private static void extractSwatch(GuiGraphicsExtractor context, int x, int y, int[] colors) {
+    private static void extractSwatch(GuiGraphics context, int x, int y, int[] colors) {
         int segments = Math.min(SWATCH_SIZE, colors.length);
         for (int i = 0; i < segments; i++) {
             int startX = x + i * SWATCH_SIZE / segments;
@@ -392,11 +392,11 @@ public final class DropdownButton<T> extends Button {
                         0xFF000000 | (colors[colorIndex] & 0x00FFFFFF));
             }
         }
-        context.outline(x - 1, y - 1, SWATCH_SIZE + 2, SWATCH_SIZE + 2, 0xFF000000);
-        context.outline(x, y, SWATCH_SIZE, SWATCH_SIZE, 0xFFFFFFFF);
+        context.renderOutline(x - 1, y - 1, SWATCH_SIZE + 2, SWATCH_SIZE + 2, 0xFF000000);
+        context.renderOutline(x, y, SWATCH_SIZE, SWATCH_SIZE, 0xFFFFFFFF);
     }
 
-    private void extractScrollbar(GuiGraphicsExtractor context, MenuGeometry menu) {
+    private void extractScrollbar(GuiGraphics context, MenuGeometry menu) {
         if (values.size() <= menu.visibleRows) {
             return;
         }

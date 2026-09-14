@@ -1,7 +1,7 @@
 package com.asphyxiamywife.elytrapitchhelper.screen;
 
 import com.mojang.blaze3d.platform.cursor.CursorTypes;
-import net.minecraft.client.gui.GuiGraphicsExtractor;
+import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.components.AbstractScrollArea;
 import net.minecraft.client.gui.narration.NarrationElementOutput;
 import net.minecraft.network.chat.Component;
@@ -14,7 +14,7 @@ final class ProfileScrollBar extends AbstractScrollArea {
 
     private ProfileScrollBar(int x, int y, int width, int height, int contentHeight, int scroll,
             BooleanSupplier dragging, Component narration) {
-        super(x, y, width, height, narration, AbstractScrollArea.defaultSettings(ConfigScreen.ROW_HEIGHT));
+        super(x, y, width, height, narration);
         this.contentHeight = contentHeight;
         this.dragging = dragging;
         setScrollPixels(scroll);
@@ -34,14 +34,14 @@ final class ProfileScrollBar extends AbstractScrollArea {
     }
 
     @Override
-    protected void extractWidgetRenderState(GuiGraphicsExtractor context, int mouseX, int mouseY, float delta) {
-        if (!scrollable()) {
+    protected void renderWidget(GuiGraphics context, int mouseX, int mouseY, float delta) {
+        if (!scrollbarVisible()) {
             return;
         }
 
         boolean held = dragging.getAsBoolean();
         boolean overBar = isOverScrollbar(mouseX, mouseY);
-        ScrollbarPainter.paint(context, scrollBarX(), scrollbarWidth(), getY(), getHeight(),
+        ScrollbarPainter.paint(context, scrollBarX(), SCROLLBAR_WIDTH, getY(), getHeight(),
                 scrollBarY(), scrollerHeight(), overBar, held);
         if (overBar) {
             context.requestCursor(held ? CursorTypes.RESIZE_NS : CursorTypes.POINTING_HAND);
@@ -51,6 +51,11 @@ final class ProfileScrollBar extends AbstractScrollArea {
     @Override
     protected int contentHeight() {
         return contentHeight;
+    }
+
+    @Override
+    protected double scrollRate() {
+        return ConfigScreen.ROW_HEIGHT;
     }
 
     @Override

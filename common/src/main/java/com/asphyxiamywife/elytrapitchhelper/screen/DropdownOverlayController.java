@@ -2,7 +2,7 @@ package com.asphyxiamywife.elytrapitchhelper.screen;
 
 import com.asphyxiamywife.elytrapitchhelper.screen.widget.DropdownButton;
 import net.minecraft.client.gui.Font;
-import net.minecraft.client.gui.GuiGraphicsExtractor;
+import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.input.KeyEvent;
 import net.minecraft.client.input.MouseButtonEvent;
 
@@ -30,7 +30,7 @@ final class DropdownOverlayController {
         dropdown.setOnOpen(() -> closeExcept(dropdown));
     }
 
-    void extractOverlays(GuiGraphicsExtractor context, Font font, int mouseX, int mouseY) {
+    void extractOverlays(GuiGraphics context, Font font, int mouseX, int mouseY) {
         if (!hasOpenDropdown()) {
             return;
         }

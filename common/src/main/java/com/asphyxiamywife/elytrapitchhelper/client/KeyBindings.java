@@ -176,8 +176,8 @@ public final class KeyBindings {
         Config config = store.get();
         if (config.isReadOnly()) {
             if (client.player != null) {
-                client.player.sendOverlayMessage(Component
-                        .translatable("message.elytrapitchhelper.config.save_failed"));
+                client.player.displayClientMessage(Component
+                        .translatable("message.elytrapitchhelper.config.save_failed"), true);
             }
             return;
         }
@@ -191,15 +191,15 @@ public final class KeyBindings {
             }
             if (result.result().outcome() != ClientConfigStore.SaveOutcome.COMMITTED) {
                 if (client.player != null) {
-                    client.player.sendOverlayMessage(Component
-                            .translatable("message.elytrapitchhelper.config.save_failed"));
+                    client.player.displayClientMessage(Component
+                            .translatable("message.elytrapitchhelper.config.save_failed"), true);
                 }
                 return;
             }
             if (client.player != null) {
-                client.player.sendOverlayMessage(Component
+                client.player.displayClientMessage(Component
                         .translatable("message.elytrapitchhelper.toggle."
-                                + (config.enabled ? "on" : "off")));
+                                + (config.enabled ? "on" : "off")), true);
             }
         }, client::execute);
     }

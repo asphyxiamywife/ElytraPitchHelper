@@ -1,6 +1,6 @@
 package com.asphyxiamywife.elytrapitchhelper.screen;
 
-import net.minecraft.client.gui.GuiGraphicsExtractor;
+import net.minecraft.client.gui.GuiGraphics;
 
 public final class ScrollbarPainter {
     public static final int BAR_WIDTH = 4;
@@ -12,7 +12,7 @@ public final class ScrollbarPainter {
     private ScrollbarPainter() {
     }
 
-    public static void paint(GuiGraphicsExtractor context, int laneX, int laneWidth, int trackY,
+    public static void paint(GuiGraphics context, int laneX, int laneWidth, int trackY,
             int trackHeight, int thumbY, int thumbHeight, boolean hovered, boolean dragging) {
         int width = Math.min(BAR_WIDTH, laneWidth);
         if (width <= 0 || trackHeight <= 0) {
@@ -25,7 +25,7 @@ public final class ScrollbarPainter {
                 dragging ? THUMB_DRAG_COLOR : hovered ? THUMB_HOVER_COLOR : THUMB_COLOR);
     }
 
-    private static void bar(GuiGraphicsExtractor context, int x, int y, int width, int height, int color) {
+    private static void bar(GuiGraphics context, int x, int y, int width, int height, int color) {
         if (height <= 0) {
             return;
         }

@@ -2,7 +2,7 @@ package com.asphyxiamywife.elytrapitchhelper.screen.widget;
 
 import com.asphyxiamywife.elytrapitchhelper.util.MathUtil;
 import net.minecraft.client.gui.Font;
-import net.minecraft.client.gui.GuiGraphicsExtractor;
+import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.input.KeyEvent;
 import net.minecraft.client.input.MouseButtonEvent;
 import net.minecraft.network.chat.Component;
@@ -92,7 +92,7 @@ public final class SliderRow extends SettingRow {
     }
 
     @Override
-    protected void renderControl(GuiGraphicsExtractor context, int mouseX, int mouseY, float delta) {
+    protected void renderControl(GuiGraphics context, int mouseX, int mouseY, float delta) {
         int left = trackLeft();
         int trackWidth = trackWidth();
         int centreY = getY() + getHeight() / 2;

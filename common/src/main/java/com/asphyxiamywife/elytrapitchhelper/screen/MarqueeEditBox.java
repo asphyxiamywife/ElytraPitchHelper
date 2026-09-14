@@ -3,7 +3,7 @@ package com.asphyxiamywife.elytrapitchhelper.screen;
 import com.asphyxiamywife.elytrapitchhelper.screen.widget.FlatEditBox;
 import com.asphyxiamywife.elytrapitchhelper.util.MonotonicClock;
 import net.minecraft.client.gui.Font;
-import net.minecraft.client.gui.GuiGraphicsExtractor;
+import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.components.EditBox;
 import net.minecraft.network.chat.Component;
 
@@ -56,7 +56,7 @@ final class MarqueeEditBox extends FlatEditBox {
     }
 
     @Override
-    public void extractWidgetRenderState(GuiGraphicsExtractor context, int mouseX, int mouseY, float delta) {
+    public void renderWidget(GuiGraphics context, int mouseX, int mouseY, float delta) {
         String value = getValue();
         boolean showingHint = value.isEmpty() && !isFocused() && !marqueeHint.getString().isEmpty();
         String displayedText = showingHint ? marqueeHint.getString() : value;
@@ -66,7 +66,7 @@ final class MarqueeEditBox extends FlatEditBox {
         boolean marqueeActive = !hoverToMarquee || hovered;
         if (!marqueeActive || isFocused() || displayedText.isEmpty() || textWidth <= innerWidth) {
             marqueeWasActive = false;
-            super.extractWidgetRenderState(context, mouseX, mouseY, delta);
+            super.renderWidget(context, mouseX, mouseY, delta);
             return;
         }
 
@@ -78,7 +78,7 @@ final class MarqueeEditBox extends FlatEditBox {
             super.setTextColor(TRANSPARENT_TEXT_COLOR);
         }
         try {
-            super.extractWidgetRenderState(context, mouseX, mouseY, delta);
+            super.renderWidget(context, mouseX, mouseY, delta);
         } finally {
             if (showingHint) {
                 super.setHint(marqueeHint);
@@ -93,7 +93,7 @@ final class MarqueeEditBox extends FlatEditBox {
         int offset = marqueeOffset(overflow);
         context.enableScissor(textX, getY(), textX + innerWidth, getY() + getHeight());
         Component renderedText = showingHint ? marqueeHint : Component.literal(displayedText);
-        context.text(textRenderer, renderedText, textX - offset, textY, textColor, true);
+        context.drawString(textRenderer, renderedText, textX - offset, textY, textColor, true);
         context.disableScissor();
     }
 
