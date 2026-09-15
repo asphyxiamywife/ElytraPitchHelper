@@ -10,6 +10,7 @@ did i mention it also includes pride themes that increase ur flight abilities by
 
 ---
 
+
 ## configuration
 
 open the config screen in-game via mod menu (fabric) or the mods list (neoforge), or bind a key for it. keybinds live under **Elytra Pitch Helper** in the controls screen:
