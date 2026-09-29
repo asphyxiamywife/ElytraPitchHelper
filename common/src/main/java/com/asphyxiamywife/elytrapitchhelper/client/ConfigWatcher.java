@@ -7,6 +7,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
+import java.nio.file.ClosedWatchServiceException;
 import java.nio.file.FileSystems;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -120,6 +121,8 @@ public final class ConfigWatcher {
                 restartDelayMillis = RESTART_DELAY_MILLIS;
             } catch (InterruptedException interrupted) {
                 Thread.currentThread().interrupt();
+                return;
+            } catch (ClosedWatchServiceException closed) {
                 return;
             } catch (IOException | RuntimeException | LinkageError failure) {
                 LOGGER.warn("Config watcher failed; restarting", failure);
