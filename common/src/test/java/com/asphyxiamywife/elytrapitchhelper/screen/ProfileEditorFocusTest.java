@@ -44,10 +44,10 @@ final class ProfileEditorFocusTest {
         assertSame(original, focused.get(), "Focus must wait until Screen finishes rebuilding");
 
         queued.set(null);
-        replacement.visible = false;
+        replacement.setVisible(false);
         rebuilt.restoreSettingFocus(setting);
         assertNull(queued.get(), "A setting hidden by search or a folded section must not take focus");
-        replacement.visible = true;
+        replacement.setVisible(true);
         replacement.active = false;
         rebuilt.restoreSettingFocus(setting);
         assertNull(queued.get(), "A disabled setting must not take focus");

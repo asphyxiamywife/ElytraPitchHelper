@@ -213,7 +213,7 @@ final class ProfileEditorPanel {
             Double rowY = yByKey.get(key);
             float rowAlpha = alphaByKey.getOrDefault(key, 0.0f);
             boolean onScreen = rowY != null && layout.drawsRow(rowY) && rowAlpha > 0.0f;
-            widget.visible = onScreen;
+            widget.setVisible(onScreen);
             if (row.header() && widget instanceof SectionHeader header) {
                 header.setSearchRevealed(searching);
             }
@@ -237,7 +237,7 @@ final class ProfileEditorPanel {
         }
         if (pendingHeaderFocus != null) {
             for (Row row : rows) {
-                if (row.header() && row.section() == pendingHeaderFocus && row.widget().visible) {
+                if (row.header() && row.section() == pendingHeaderFocus && row.widget().isVisible()) {
                     host.focusAfterRebuild(row.widget());
                     pendingHeaderFocus = null;
                     break;
@@ -245,7 +245,7 @@ final class ProfileEditorPanel {
             }
         }
         if (scrollBar != null) {
-            scrollBar.visible = layout.needsScrollbar();
+            scrollBar.setVisible(layout.needsScrollbar());
             scrollBar.setContentHeight(layout.contentHeight());
             scrollBar.setSize(AbstractScrollArea.SCROLLBAR_WIDTH, layout.scrollbarHeight());
             scrollBar.setScrollPixels(layout.scroll());
@@ -297,11 +297,11 @@ final class ProfileEditorPanel {
                 layout.startX() + layout.rowWidth(), layout.viewportBottom());
         for (Row row : rows) {
             AbstractWidget widget = row.widget();
-            if (!widget.visible) {
+            if (!widget.isVisible()) {
                 continue;
             }
             widget.extractRenderState(context, mouseX, mouseY, delta);
-            widget.visible = false;
+            widget.setVisible(false);
             suppressed.add(widget);
         }
         context.disableScissor();
@@ -313,8 +313,8 @@ final class ProfileEditorPanel {
         }
         for (Row row : rows) {
             AbstractWidget widget = row.widget();
-            if (widget.visible) {
-                widget.visible = false;
+            if (widget.isVisible()) {
+                widget.setVisible(false);
                 suppressed.add(widget);
             }
         }
@@ -323,7 +323,7 @@ final class ProfileEditorPanel {
 
     void restoreRows() {
         for (AbstractWidget widget : suppressed) {
-            widget.visible = true;
+            widget.setVisible(true);
         }
         suppressed.clear();
     }
@@ -377,7 +377,7 @@ final class ProfileEditorPanel {
         applyRowLayout();
         RowPlan planned = plan.get(target);
         AbstractWidget widget = byKey.get(rowKey(planned.section(), planned.settingId()));
-        if (widget == null || !widget.visible) {
+        if (widget == null || !widget.isVisible()) {
             return false;
         }
         host.focusWidget(widget);
@@ -400,7 +400,7 @@ final class ProfileEditorPanel {
         }
         for (Row row : rows) {
             if (!row.header() && row.spec().id().equals(settingId)
-                    && row.widget().visible && row.widget().active) {
+                    && row.widget().isVisible() && row.widget().active) {
                 host.focusAfterRebuild(row.widget());
                 return;
             }
@@ -424,7 +424,7 @@ final class ProfileEditorPanel {
 
     private void refreshEnabledStates() {
         for (Row row : rows) {
-            if (!row.header() && row.widget().visible) {
+            if (!row.header() && row.widget().isVisible()) {
                 row.widget().active = row.activeWhenEnabled()
                         && SettingsRegistry.isEnabled(row.spec(), profile);
             }

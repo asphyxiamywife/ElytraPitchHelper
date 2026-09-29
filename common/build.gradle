@@ -139,7 +139,7 @@ dependencies {
     portModelImplementation 'org.junit.jupiter:junit-jupiter'
     portModelImplementation "com.google.code.gson:gson:${rootProject.gson_version}"
     portModelRuntimeOnly 'org.junit.platform:junit-platform-launcher'
-    portModelRuntimeOnly 'org.slf4j:slf4j-api:2.0.17'
+    portModelRuntimeOnly 'org.slf4j:slf4j-api:2.0.20'
 }
 
 def portCorpus = rootProject.layout.projectDirectory.dir('port-test')

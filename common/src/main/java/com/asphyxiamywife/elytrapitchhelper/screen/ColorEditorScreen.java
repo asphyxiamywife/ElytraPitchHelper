@@ -535,7 +535,7 @@ final class ColorEditorScreen extends Screen implements ConfigWorkflowChild, Col
         }
         if (customStripeButton != null) {
             customStripeButton.active = editingCustom;
-            customStripeButton.visible = editingCustom;
+            customStripeButton.setVisible(editingCustom);
         }
         boolean colorControlsActive = !prideEnabled || editingCustom;
         if (hexBox != null) {

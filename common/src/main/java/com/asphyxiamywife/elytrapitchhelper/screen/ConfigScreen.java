@@ -873,7 +873,7 @@ public final class ConfigScreen extends Screen implements ProfileEditorPanel.Hos
     protected void setInitialFocus() {
         AbstractWidget widget = pendingFocus;
         pendingFocus = null;
-        if (widget != null && widget.visible) {
+        if (widget != null && widget.isVisible()) {
             focusWidget(widget);
             return;
         }
@@ -935,7 +935,7 @@ public final class ConfigScreen extends Screen implements ProfileEditorPanel.Hos
         List<? extends GuiEventListener> children = children();
         for (int i = children.size() - 1; i >= 0; i--) {
             GuiEventListener child = children.get(i);
-            if (child instanceof CycleButton<?> cycleButton && cycleButton.active && cycleButton.visible
+            if (child instanceof CycleButton<?> cycleButton && cycleButton.active && cycleButton.isVisible()
                     && child.isMouseOver(event.x(), event.y())) {
                 cycleButton.mouseScrolled(event.x(), event.y(), 0.0, 1.0);
                 cycleButton.playDownSound(minecraft.getSoundManager());
