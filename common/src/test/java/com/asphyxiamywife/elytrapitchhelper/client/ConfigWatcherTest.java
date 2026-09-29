@@ -7,6 +7,7 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 
 import java.io.IOException;
+import java.nio.file.ClosedWatchServiceException;
 import java.nio.file.FileSystems;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -216,6 +217,18 @@ final class ConfigWatcherTest {
 
         assertFalse(supervisor.isAlive());
         assertEquals(2, attempts.get());
+    }
+
+    @Test
+    void supervisorStopsWhenWatchServiceIsClosed() {
+        AtomicInteger attempts = new AtomicInteger();
+
+        ConfigWatcher.supervise(() -> {
+            attempts.incrementAndGet();
+            throw new ClosedWatchServiceException();
+        });
+
+        assertEquals(1, attempts.get());
     }
 
     @Test
