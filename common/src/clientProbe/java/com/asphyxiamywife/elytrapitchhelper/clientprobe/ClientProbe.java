@@ -3,6 +3,7 @@ package com.asphyxiamywife.elytrapitchhelper.clientprobe;
 import com.asphyxiamywife.elytrapitchhelper.client.ClientBootstrap;
 import com.asphyxiamywife.elytrapitchhelper.flight.PlayerFlightSeam;
 import com.asphyxiamywife.elytrapitchhelper.flight.WorldFlightSeam;
+import com.asphyxiamywife.elytrapitchhelper.screen.ColorPaletteProbeScreen;
 import com.google.gson.GsonBuilder;
 import com.google.gson.JsonObject;
 import java.nio.file.Files;
@@ -31,6 +32,7 @@ import org.spongepowered.asm.mixin.MixinEnvironment;
 public final class ClientProbe {
     private static final long START = System.nanoTime();
     private static boolean opening, prepared, complete;
+    private static boolean paletteVerified;
     private static long lastProgress;
     public static boolean inHud;
     public static int hudAttachments;
@@ -48,6 +50,13 @@ public final class ClientProbe {
                         + ", flightTicks=" + (client.player == null ? -1 : client.player.getFallFlyingTicks()));
             }
             require((System.nanoTime() - START) / 1_000_000_000L < 150, "Client bootstrap timed out");
+            if (client.gui.screen() instanceof ColorPaletteProbeScreen paletteScreen) {
+                if (paletteScreen.complete()) {
+                    client.gui.setScreen(null);
+                    paletteVerified = true;
+                }
+                return;
+            }
             if (!opening) {
                 if (client.gui.overlay() != null) return;
                 if (client.gui.screen() != null && client.gui.screen().getClass().getSimpleName().equals("AccessibilityOnboardingScreen")) {
@@ -108,10 +117,15 @@ public final class ClientProbe {
             player.setXRot(ClientBootstrap.config().activeProfile().pitch().targetDownMinecraft());
             if (renderedFrames > 0 && fills > 0 && ticks > 0) {
                 require(hudAttachments == 1, "Expected one product HUD layer after crosshair");
+                if (!paletteVerified) {
+                    client.gui.setScreen(new ColorPaletteProbeScreen());
+                    return;
+                }
                 JsonObject result = new JsonObject();
                 result.addProperty("schema", 1);
                 result.addProperty("minecraftVersion", SharedConstants.getCurrentVersion().id());
                 result.addProperty("status", "PASS");
+                result.addProperty("colorPalette", true);
                 for (String claim : List.of("entrypoint", "hudAttachment", "keys", "mixinAudit", "localPlayer", "hudRender", "blockCallback", "chunkCallback")) result.addProperty(claim, true);
                 Path report = Path.of(System.getProperty("eph.clientReport"));
                 Files.createDirectories(report.getParent());

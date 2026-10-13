@@ -108,6 +108,7 @@ public final class PitchGuideHud {
 
     private void resetTrackers() {
         amplitudeTracker.reset();
+        flightDiagnostics.reset();
         resetVoidSimulation();
     }
 

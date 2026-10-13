@@ -12,18 +12,17 @@ import com.mojang.blaze3d.systems.RenderSystem;
 import com.mojang.renderpearl.api.textures.FilterMode;
 import com.mojang.renderpearl.api.textures.GpuSampler;
 import net.minecraft.client.gui.GuiGraphicsExtractor;
-import net.minecraft.client.renderer.texture.DynamicTexture;
 
 final class ColorPaletteRenderer implements AutoCloseable {
     private static final int PALETTE_TEXTURE_SCALE = 2;
     private static final int MARKER_TEXTURE_SCALE = 4;
 
-    private DynamicTexture paletteTexture;
+    private PaletteTexture paletteTexture;
     private int paletteTextureSize;
     private double paletteTextureHue = -1.0;
-    private DynamicTexture hueMarkerTexture;
+    private PaletteTexture hueMarkerTexture;
     private int hueMarkerRadius;
-    private DynamicTexture shadeMarkerTexture;
+    private PaletteTexture shadeMarkerTexture;
     private int shadeMarkerRadius;
 
     void render(GuiGraphicsExtractor context, ColorEditorLayout layout, double hue, double saturation,
@@ -90,7 +89,7 @@ final class ColorPaletteRenderer implements AutoCloseable {
             close();
             NativeImage image = new NativeImage(textureSize, textureSize, true);
             writePalettePixels(image, layout, hue);
-            paletteTexture = new DynamicTexture(() -> "elytrapitchhelper color palette", image);
+            paletteTexture = new PaletteTexture(() -> "elytrapitchhelper color palette", image);
             paletteTextureSize = textureSize;
         } else {
             writePalettePixels(paletteTexture.getPixels(), layout, hue);
@@ -145,14 +144,14 @@ final class ColorPaletteRenderer implements AutoCloseable {
     }
 
     private void drawMarker(GuiGraphicsExtractor context, int centerX, int centerY, int radius, boolean hueMarker) {
-        DynamicTexture markerTexture = markerTexture(radius, hueMarker);
+        PaletteTexture markerTexture = markerTexture(radius, hueMarker);
         int halfSize = radius + 3;
         context.blit(markerTexture.getTextureView(), linearSampler(), centerX - halfSize,
                 centerY - halfSize, centerX + halfSize + 1, centerY + halfSize + 1, 0.0f, 1.0f, 0.0f, 1.0f);
     }
 
-    private DynamicTexture markerTexture(int radius, boolean hueMarker) {
-        DynamicTexture texture = hueMarker ? hueMarkerTexture : shadeMarkerTexture;
+    private PaletteTexture markerTexture(int radius, boolean hueMarker) {
+        PaletteTexture texture = hueMarker ? hueMarkerTexture : shadeMarkerTexture;
         int cachedRadius = hueMarker ? hueMarkerRadius : shadeMarkerRadius;
         if (texture != null && cachedRadius == radius) {
             return texture;
@@ -163,7 +162,7 @@ final class ColorPaletteRenderer implements AutoCloseable {
         }
 
         NativeImage image = markerImage(radius);
-        texture = new DynamicTexture(() -> "elytrapitchhelper color marker", image);
+        texture = new PaletteTexture(() -> "elytrapitchhelper color marker", image);
         if (hueMarker) {
             hueMarkerTexture = texture;
             hueMarkerRadius = radius;
