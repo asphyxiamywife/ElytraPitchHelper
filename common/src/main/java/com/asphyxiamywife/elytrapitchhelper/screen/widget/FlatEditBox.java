@@ -52,8 +52,7 @@ public class FlatEditBox extends EditBox {
     }
 
     @Override
-    public void extractWidgetRenderState(GuiGraphicsExtractor context, int mouseX, int mouseY,
-            float delta) {
+    public void extractWidgetRenderState(GuiGraphicsExtractor context) {
         if (!isVisible()) {
             return;
         }
@@ -66,7 +65,7 @@ public class FlatEditBox extends EditBox {
         Matrix3x2fStack pose = context.pose();
         pose.pushMatrix();
         pose.translate(PAD_X, (getHeight() - LINE_HEIGHT) / 2.0f);
-        super.extractWidgetRenderState(context, mouseX, mouseY, delta);
+        super.extractWidgetRenderState(context);
         pose.popMatrix();
     }
 

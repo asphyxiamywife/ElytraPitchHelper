@@ -45,7 +45,8 @@ final class ConfigConflictScreen extends Screen {
     }
 
     @Override
-    public void extractRenderState(GuiGraphicsExtractor context, int mouseX, int mouseY, float delta) {
+    public void extractRenderState(GuiGraphicsExtractor context) {
+        int mouseX = context.mouseX();
         context.centeredText(font, title, width / 2, 12, 0xFFFFAA00);
         context.centeredText(font,
                 Component.translatable("screen.elytrapitchhelper.save_conflict.diff_hint"),
@@ -73,7 +74,7 @@ final class ConfigConflictScreen extends Screen {
             ScrollbarPainter.paint(context, right - 7, 6, top + 1, viewportHeight,
                     metrics.thumbY(), metrics.thumbHeight(), mouseX >= right - 8, false);
         }
-        super.extractRenderState(context, mouseX, mouseY, delta);
+        super.extractRenderState(context);
     }
 
     @Override

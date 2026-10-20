@@ -30,8 +30,7 @@ public class FlatButton extends Button {
     }
 
     @Override
-    protected void extractContents(GuiGraphicsExtractor context, int mouseX, int mouseY,
-            float delta) {
+    protected void extractContents(GuiGraphicsExtractor context) {
         float alpha = getAlpha();
         boolean hovered = active && isHovered();
         int background = quiet && !hovered && active ? BACKGROUND_QUIET : BACKGROUND;

@@ -291,8 +291,7 @@ final class ProfileEditorPanel {
         return null;
     }
 
-    void extractRowsClipped(GuiGraphicsExtractor context, int mouseX, int mouseY, float delta,
-            ProfileEditorLayout layout) {
+    void extractRowsClipped(GuiGraphicsExtractor context, ProfileEditorLayout layout) {
         context.enableScissor(layout.startX(), layout.startY(),
                 layout.startX() + layout.rowWidth(), layout.viewportBottom());
         for (Row row : rows) {
@@ -300,7 +299,7 @@ final class ProfileEditorPanel {
             if (!widget.isVisible()) {
                 continue;
             }
-            widget.extractRenderState(context, mouseX, mouseY, delta);
+            widget.extractRenderState(context);
             widget.setVisible(false);
             suppressed.add(widget);
         }

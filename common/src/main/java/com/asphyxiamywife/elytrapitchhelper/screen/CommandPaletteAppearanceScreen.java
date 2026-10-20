@@ -81,7 +81,7 @@ final class CommandPaletteAppearanceScreen extends Screen implements ConfigWorkf
     }
 
     @Override
-    public void extractRenderState(GuiGraphicsExtractor context, int mouseX, int mouseY, float delta) {
+    public void extractRenderState(GuiGraphicsExtractor context) {
         context.centeredText(font, title, width / 2, 15, 0xFFFFFF);
         drawPreview(context);
         Layout layout = layout();
@@ -90,7 +90,7 @@ final class CommandPaletteAppearanceScreen extends Screen implements ConfigWorkf
                 layout.controlsY() + (CONTROL_ROWS - 1) * ConfigScreen.ROW_HEIGHT
                         + ConfigScreen.CONTROL_HEIGHT,
                 false);
-        super.extractRenderState(context, mouseX, mouseY, delta);
+        super.extractRenderState(context);
     }
 
     @Override

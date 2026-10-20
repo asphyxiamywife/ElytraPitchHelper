@@ -20,8 +20,9 @@ public final class RowBackdrop extends AbstractWidget {
     }
 
     @Override
-    protected void extractWidgetRenderState(GuiGraphicsExtractor context, int mouseX, int mouseY,
-            float delta) {
+    protected void extractWidgetRenderState(GuiGraphicsExtractor context) {
+        int mouseX = context.mouseX();
+        int mouseY = context.mouseY();
         boolean hovered = mouseX >= getX() && mouseX < getX() + getWidth()
                 && mouseY >= getY() && mouseY < getY() + getHeight();
         SettingRowPainter.paintBackground(context, getX(), getY(), getWidth(), getHeight(),

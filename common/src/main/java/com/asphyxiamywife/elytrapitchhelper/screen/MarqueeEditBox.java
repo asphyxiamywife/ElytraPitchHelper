@@ -56,7 +56,7 @@ final class MarqueeEditBox extends FlatEditBox {
     }
 
     @Override
-    public void extractWidgetRenderState(GuiGraphicsExtractor context, int mouseX, int mouseY, float delta) {
+    public void extractWidgetRenderState(GuiGraphicsExtractor context) {
         String value = getValue();
         boolean showingHint = value.isEmpty() && !isFocused() && !marqueeHint.getString().isEmpty();
         String displayedText = showingHint ? marqueeHint.getString() : value;
@@ -66,7 +66,7 @@ final class MarqueeEditBox extends FlatEditBox {
         boolean marqueeActive = !hoverToMarquee || hovered;
         if (!marqueeActive || isFocused() || displayedText.isEmpty() || textWidth <= innerWidth) {
             marqueeWasActive = false;
-            super.extractWidgetRenderState(context, mouseX, mouseY, delta);
+            super.extractWidgetRenderState(context);
             return;
         }
 
@@ -78,7 +78,7 @@ final class MarqueeEditBox extends FlatEditBox {
             super.setTextColor(TRANSPARENT_TEXT_COLOR);
         }
         try {
-            super.extractWidgetRenderState(context, mouseX, mouseY, delta);
+            super.extractWidgetRenderState(context);
         } finally {
             if (showingHint) {
                 super.setHint(marqueeHint);

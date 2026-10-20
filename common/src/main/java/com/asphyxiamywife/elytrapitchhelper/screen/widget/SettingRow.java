@@ -84,8 +84,10 @@ public abstract class SettingRow extends AbstractWidget {
     }
 
     @Override
-    protected void extractWidgetRenderState(GuiGraphicsExtractor context, int mouseX, int mouseY,
-            float delta) {
+    protected void extractWidgetRenderState(GuiGraphicsExtractor context) {
+        int mouseX = context.mouseX();
+        int mouseY = context.mouseY();
+        float delta = context.partialTicks();
         SettingRowPainter.paintBackground(context, getX(), getY(), getWidth(), getHeight(),
                 active && isHovered() && !overlayOpen.getAsBoolean(), isFocused(), alpha);
         SettingRowPainter.paintLabel(context, font, label, getX(), getY(), getHeight(), depth,

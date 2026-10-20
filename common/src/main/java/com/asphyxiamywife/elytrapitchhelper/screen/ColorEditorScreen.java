@@ -228,7 +228,9 @@ final class ColorEditorScreen extends Screen implements ConfigWorkflowChild, Col
     }
 
     @Override
-    public void extractRenderState(GuiGraphicsExtractor context, int mouseX, int mouseY, float delta) {
+    public void extractRenderState(GuiGraphicsExtractor context) {
+        int mouseX = context.mouseX();
+        int mouseY = context.mouseY();
         ColorEditorLayout layout = colorEditorLayout();
         boolean dropdownOpen = prideFlagDropdown != null && prideFlagDropdown.isOpen();
         int contentMouseX = dropdownOpen ? -1 : mouseX;
@@ -250,7 +252,11 @@ final class ColorEditorScreen extends Screen implements ConfigWorkflowChild, Col
 
         context.text(font, Component.translatable("option.elytrapitchhelper.color.hex"), previewX, layout.hexY() + 6,
                 0xFFFFFF);
-        super.extractRenderState(context, contentMouseX, contentMouseY, delta);
+        if (dropdownOpen) {
+            context.extractWithoutMouse(() -> super.extractRenderState(context));
+        } else {
+            super.extractRenderState(context);
+        }
         if (dropdownOpen) {
             context.nextStratum();
             prideFlagDropdown.extractDropdownOverlay(context, font, mouseX, mouseY);

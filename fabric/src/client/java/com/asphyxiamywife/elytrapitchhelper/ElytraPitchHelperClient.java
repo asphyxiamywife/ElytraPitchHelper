@@ -3,6 +3,7 @@ package com.asphyxiamywife.elytrapitchhelper;
 import com.asphyxiamywife.elytrapitchhelper.client.ClientBootstrap;
 import com.asphyxiamywife.elytrapitchhelper.config.Config;
 import com.asphyxiamywife.elytrapitchhelper.fabric.FabricPlatformRuntime;
+import com.asphyxiamywife.elytrapitchhelper.fabric.FabricHudElement;
 import net.fabricmc.api.ClientModInitializer;
 import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientLifecycleEvents;
 import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
@@ -38,6 +39,6 @@ public final class ElytraPitchHelperClient implements ClientModInitializer {
 
     private void registerHud() {
         HudElementRegistry.attachElementAfter(VanillaHudElements.CROSSHAIR, id("pitch_guides"),
-                bootstrap.hud()::render);
+                new FabricHudElement(bootstrap.hud()));
     }
 }

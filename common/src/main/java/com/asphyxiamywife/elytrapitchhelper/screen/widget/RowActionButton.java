@@ -28,8 +28,7 @@ public final class RowActionButton extends AbstractWidget {
     }
 
     @Override
-    protected void extractWidgetRenderState(GuiGraphicsExtractor context, int mouseX, int mouseY,
-            float delta) {
+    protected void extractWidgetRenderState(GuiGraphicsExtractor context) {
         SettingRowPainter.paintSegment(context, font, getMessage(), getX(), getY(), getWidth(),
                 getHeight(), isHovered(), active, getAlpha());
         if (isFocused()) {

@@ -50,9 +50,9 @@ final class ConfigSaveFailureScreen extends Screen {
     }
 
     @Override
-    public void extractRenderState(GuiGraphicsExtractor context, int mouseX, int mouseY, float delta) {
+    public void extractRenderState(GuiGraphicsExtractor context) {
         context.centeredText(font, title, width / 2, 18, 0xFFFF5555);
-        super.extractRenderState(context, mouseX, mouseY, delta);
+        super.extractRenderState(context);
     }
 
     @Override

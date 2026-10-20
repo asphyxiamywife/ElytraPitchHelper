@@ -224,7 +224,9 @@ public final class ConfigScreen extends Screen implements ProfileEditorPanel.Hos
     }
 
     @Override
-    public void extractRenderState(GuiGraphicsExtractor context, int mouseX, int mouseY, float delta) {
+    public void extractRenderState(GuiGraphicsExtractor context) {
+        int mouseX = context.mouseX();
+        int mouseY = context.mouseY();
         Component renderedTitle = editingProfile()
                 ? null
                 : Component.translatable("screen.elytrapitchhelper.profiles.title");
@@ -244,23 +246,29 @@ public final class ConfigScreen extends Screen implements ProfileEditorPanel.Hos
                     width / 2, 28, 0xFFFF5555);
         }
         boolean dropdownOpen = dropdowns.anyOpen();
-        int contentMouseX = dropdownOpen ? -1 : mouseX;
-        int contentMouseY = dropdownOpen ? -1 : mouseY;
         ProfileEditorPanel panel = editorPanel;
-        if (panel != null) {
-            panel.extractRowsClipped(context, contentMouseX, contentMouseY, delta, editorLayout());
-        }
-        try {
-            super.extractRenderState(context, contentMouseX, contentMouseY, delta);
-        } finally {
-            if (panel != null) {
-                panel.restoreRows();
-            }
+        if (dropdownOpen) {
+            context.extractWithoutMouse(() -> extractContent(context, panel));
+        } else {
+            extractContent(context, panel);
         }
         if (listPanel != null) {
             listPanel.extractChevrons(context);
         }
         dropdowns.extractOverlays(context, font, mouseX, mouseY);
+    }
+
+    private void extractContent(GuiGraphicsExtractor context, ProfileEditorPanel panel) {
+        try {
+            if (panel != null) {
+                panel.extractRowsClipped(context, editorLayout());
+            }
+            super.extractRenderState(context);
+        } finally {
+            if (panel != null) {
+                panel.restoreRows();
+            }
+        }
     }
 
     @Override

@@ -247,7 +247,7 @@ public final class DropdownButton<T> extends Button {
     }
 
     @Override
-    protected void extractContents(GuiGraphicsExtractor context, int mouseX, int mouseY, float delta) {
+    protected void extractContents(GuiGraphicsExtractor context) {
         if (!rowStyle) {
             extractDefaultSprite(context);
             extractDefaultLabel(context.textRendererForWidget(this, HoveredTextEffects.NONE));

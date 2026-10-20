@@ -34,7 +34,9 @@ final class ProfileScrollBar extends AbstractScrollArea {
     }
 
     @Override
-    protected void extractWidgetRenderState(GuiGraphicsExtractor context, int mouseX, int mouseY, float delta) {
+    protected void extractWidgetRenderState(GuiGraphicsExtractor context) {
+        int mouseX = context.mouseX();
+        int mouseY = context.mouseY();
         if (!scrollable()) {
             return;
         }

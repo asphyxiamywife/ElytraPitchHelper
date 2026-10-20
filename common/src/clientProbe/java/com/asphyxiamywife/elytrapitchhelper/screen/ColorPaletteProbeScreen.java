@@ -13,7 +13,7 @@ public final class ColorPaletteProbeScreen extends Screen {
     }
 
     @Override
-    public void extractRenderState(GuiGraphicsExtractor graphics, int mouseX, int mouseY, float partialTick) {
+    public void extractRenderState(GuiGraphicsExtractor graphics) {
         int size = frames < 3 ? 128 : 160;
         double hue = frames < 2 ? 0.25 : 0.75;
         var layout = new ColorEditorLayout(20, 20, size, 0, 0, 0, 0, 0, 0, 0, 0, 0);

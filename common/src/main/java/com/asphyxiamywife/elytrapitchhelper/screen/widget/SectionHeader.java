@@ -59,8 +59,7 @@ public final class SectionHeader extends AbstractWidget {
     }
 
     @Override
-    protected void extractWidgetRenderState(GuiGraphicsExtractor context, int mouseX, int mouseY,
-            float delta) {
+    protected void extractWidgetRenderState(GuiGraphicsExtractor context) {
         SettingRowPainter.paintBackground(context, getX(), getY(), getWidth(), getHeight(),
                 isHovered(), isFocused(), getAlpha());
         int baseline = getY() + (getHeight() - font.lineHeight) / 2 + 1;

@@ -18,11 +18,11 @@ final class FlatTextArea extends FittingMultiLineTextWidget {
     }
 
     @Override
-    protected void extractScrollbar(GuiGraphicsExtractor context, int mouseX, int mouseY) {
+    protected void extractScrollbar(GuiGraphicsExtractor context) {
         if (!scrollable()) {
             return;
         }
         ScrollbarPainter.paint(context, scrollBarX(), scrollbarWidth(), getY(), getHeight(),
-                scrollBarY(), scrollerHeight(), isOverScrollbar(mouseX, mouseY), false);
+                scrollBarY(), scrollerHeight(), isOverScrollbar(context.mouseX(), context.mouseY()), false);
     }
 }

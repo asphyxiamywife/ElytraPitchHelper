@@ -65,11 +65,11 @@ public final class CommandPaletteScreen extends Screen implements ConfigWorkflow
     }
 
     @Override
-    public void extractBackground(GuiGraphicsExtractor context, int mouseX, int mouseY, float delta) {
+    public void extractBackground(GuiGraphicsExtractor context) {
         if (lastScreen != null) {
-            lastScreen.extractBackground(context, mouseX, mouseY, delta);
+            lastScreen.extractBackground(context);
         } else {
-            super.extractBackground(context, mouseX, mouseY, delta);
+            super.extractBackground(context);
         }
         minecraft.gui.hud.extractDeferredSubtitles();
     }
@@ -81,11 +81,11 @@ public final class CommandPaletteScreen extends Screen implements ConfigWorkflow
     }
 
     @Override
-    public void extractRenderState(GuiGraphicsExtractor context, int mouseX, int mouseY, float delta) {
+    public void extractRenderState(GuiGraphicsExtractor context) {
         refreshResultsIfNeeded();
         CommandPaletteAppearanceSettings appearance = appearance();
         if (lastScreen != null) {
-            lastScreen.extractRenderState(context, mouseX, mouseY, delta);
+            lastScreen.extractRenderState(context);
             context.nextStratum();
         }
         context.fill(0, 0, width, height,
@@ -99,7 +99,7 @@ public final class CommandPaletteScreen extends Screen implements ConfigWorkflow
         CommandPalettePreviewRenderer.drawPanel(context, panelX, panelY, panelWidth, panelHeight,
                 appearance);
 
-        super.extractRenderState(context, mouseX, mouseY, delta);
+        super.extractRenderState(context);
         CommandPalettePreviewRenderer.drawActionRows(context, font, panelX, panelY, panelWidth, results,
                 selectedIndex, appearance);
     }

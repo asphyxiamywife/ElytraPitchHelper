@@ -14,7 +14,7 @@ public final class ActiveProfileButton extends Button {
     }
 
     @Override
-    protected void extractContents(GuiGraphicsExtractor context, int mouseX, int mouseY, float delta) {
+    protected void extractContents(GuiGraphicsExtractor context) {
         int size = 12;
         int x = getX() + (getWidth() - size) / 2;
         int y = getY() + (getHeight() - size) / 2;
